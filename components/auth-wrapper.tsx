@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 
 interface User {
@@ -13,6 +12,16 @@ interface User {
 
 interface AuthWrapperProps {
   children: React.ReactNode
+}
+
+const AuthContext = createContext<{ user: User | null; isLoading: boolean } | undefined>(undefined)
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthWrapper")
+  }
+  return context
 }
 
 export function AuthWrapper({ children }: AuthWrapperProps) {
@@ -55,5 +64,5 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   }
 
   // If authenticated, render children
-  return <>{children}</>
+  return <AuthContext.Provider value={{ user, isLoading }}>{children}</AuthContext.Provider>
 }

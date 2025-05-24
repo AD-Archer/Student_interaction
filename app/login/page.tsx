@@ -72,8 +72,6 @@ export default function LoginPage() {
               <p className="text-xs text-gray-600">Building 21 Workforce Development</p>
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Staff Sign In</h2>
-          <p className="text-gray-600">Access the Student Interaction System</p>
         </div>
 
         {/* Login Form */}
@@ -171,11 +169,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500">
-          <p>© 2024 Building 21 Workforce Development</p>
-          <p className="mt-1">Secure staff access only</p>
-        </div>
+       
       </div>
     </div>
   )
