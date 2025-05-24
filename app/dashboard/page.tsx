@@ -113,7 +113,7 @@ const interactionTypes = [
   { value: "behavioral", label: "Behavioral Intervention" },
 ]
 
-export function Page() {
+export default function Page() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStudent, setSelectedStudent] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
@@ -531,5 +531,3 @@ export function Page() {
     </div>
   )
 }
-
-export default Page
