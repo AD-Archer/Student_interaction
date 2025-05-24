@@ -11,7 +11,7 @@
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Filter, Download, TrendingUp, TrendingDown, Activity } from "lucide-react"
-import { MobileHeader } from "@/components/mobile-header"
+import { Header } from "@/components/header"
 import { KeyMetrics } from "./components/KeyMetrics"
 import { InteractionTrends } from "./components/InteractionTrends"
 import { InteractionTypes } from "./components/InteractionTypes"
@@ -66,7 +66,7 @@ export default function AnalyticsPage() {
 	// I keep the header and filter controls here for clarity
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-			<MobileHeader />
+			<Header />
 			<main className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
 				<div className="space-y-6 sm:space-y-8">
 					{/* Header Section */}

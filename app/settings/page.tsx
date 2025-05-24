@@ -14,7 +14,7 @@ import {
   Sparkles,
   SettingsIcon,
 } from "lucide-react"
-import { MobileHeader } from "@/components/mobile-header"
+import { Header } from "@/components/header"
 import { StaffManagement } from "./components/StaffManagement"
 import { SystemSettings } from "./components/SystemSettings"
 import { NotificationPreferences } from "./components/NotificationPreferences"
@@ -126,7 +126,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <MobileHeader />
+      <Header />
       <main className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
           {/* Header */}

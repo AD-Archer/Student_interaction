@@ -1,29 +1,30 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
-  User,
+  Sparkles,
   MessageSquare,
+  Users,
+  Plus,
+  BarChart3,
+  Clock,
   AlertCircle,
   Search,
-  Plus,
-  Eye,
-  Edit,
-  Sparkles,
-  Mail,
-  Clock,
-  Users,
-  BarChart3,
   Filter,
   ChevronRight,
+  User,
+  Eye,
+  Edit,
+  Mail,
 } from "lucide-react"
 import Link from "next/link"
-import { MobileHeader } from "@/components/mobile-header"
+import { Header } from "@/components/header"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AiInsightsPanel } from "./components/ai-insights-panel"
 
 const interactions = [
   {
@@ -117,8 +118,8 @@ export function Page() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStudent, setSelectedStudent] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
-  const [selectedInteraction, setSelectedInteraction] = useState<(typeof interactions)[0] | null>(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [showAiInsights, setShowAiInsights] = useState(false) // Always show AI Insights as a sidebar
 
   const filteredInteractions = interactions.filter((interaction) => {
     const matchesSearch =
@@ -163,373 +164,372 @@ export function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <MobileHeader />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 relative flex">
+      {/* Main Content */}
+      <div className="flex-1">
+        <div className="relative z-10">
+          <Header />
+        </div>
 
-      <main className="pb-6">
-        <div className="px-4 sm:px-6 lg:px-8 space-y-6">
-          {/* Hero Section - Mobile Optimized */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-4 sm:p-6 lg:p-8 text-white mt-4">
-            <div className="space-y-4">
-              <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Welcome back, Tahir!</h1>
-                <p className="text-blue-100 text-sm sm:text-base lg:text-lg mt-2">
-                  You have {interactions.filter((i) => i.followUp.overdue).length} overdue follow-ups and{" "}
-                  {interactions.filter((i) => i.followUp.required && !i.followUp.overdue).length} pending tasks.
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link href="/create" className="flex-1">
-                  <Button variant="secondary" className="w-full bg-white text-blue-600 hover:bg-gray-100">
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Interaction
-                  </Button>
-                </Link>
-                <Link href="/analytics" className="flex-1">
-                  <Button
-                    variant="secondary"
-                    className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30"
-                  >
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    View Analytics
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Grid - Mobile Responsive */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-              <CardContent className="p-3 sm:p-4 lg:p-6">
-                <div className="text-center lg:text-left">
-                  <div className="flex items-center justify-center lg:justify-start mb-2">
-                    <div className="bg-blue-200 p-2 rounded-full">
-                      <MessageSquare className="h-4 w-4 lg:h-5 lg:w-5 text-blue-700" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-medium text-blue-600">Total</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900">{interactions.length}</p>
-                  <p className="text-xs text-blue-600 mt-1 hidden sm:block">+2 from yesterday</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-              <CardContent className="p-3 sm:p-4 lg:p-6">
-                <div className="text-center lg:text-left">
-                  <div className="flex items-center justify-center lg:justify-start mb-2">
-                    <div className="bg-green-200 p-2 rounded-full">
-                      <Users className="h-4 w-4 lg:h-5 lg:w-5 text-green-700" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-medium text-green-600">Students</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-900">4</p>
-                  <p className="text-xs text-green-600 mt-1 hidden sm:block">All programs</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-              <CardContent className="p-3 sm:p-4 lg:p-6">
-                <div className="text-center lg:text-left">
-                  <div className="flex items-center justify-center lg:justify-start mb-2">
-                    <div className="bg-yellow-200 p-2 rounded-full">
-                      <Clock className="h-4 w-4 lg:h-5 lg:w-5 text-yellow-700" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-medium text-yellow-600">Pending</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-yellow-900">
-                    {interactions.filter((i) => i.followUp.required && !i.followUp.overdue).length}
-                  </p>
-                  <p className="text-xs text-yellow-600 mt-1 hidden sm:block">Due this week</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-              <CardContent className="p-3 sm:p-4 lg:p-6">
-                <div className="text-center lg:text-left">
-                  <div className="flex items-center justify-center lg:justify-start mb-2">
-                    <div className="bg-red-200 p-2 rounded-full">
-                      <AlertCircle className="h-4 w-4 lg:h-5 lg:w-5 text-red-700" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-medium text-red-600">Overdue</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-900">
-                    {interactions.filter((i) => i.followUp.overdue).length}
-                  </p>
-                  <p className="text-xs text-red-600 mt-1 hidden sm:block">Needs attention</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Search and Filters - Mobile Optimized */}
-          <Card className="shadow-lg">
-            <CardContent className="p-4 sm:p-6">
+        <main className="pb-6">
+          <div className="px-4 sm:px-6 lg:px-8 space-y-6">
+            {/* Hero Section */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-4 sm:p-6 lg:p-8 text-white mt-4">
               <div className="space-y-4">
-                {/* Search Bar */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search interactions, students, or notes..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 border-gray-300 focus:border-blue-500"
-                  />
+                <div>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">
+                    Welcome back, Tahir!
+                  </h1>
+                  <p className="text-blue-100 text-sm sm:text-base lg:text-lg mt-2">
+                    You have{" "}
+                    {interactions.filter((i) => i.followUp.overdue).length} overdue
+                    follow-ups and{" "}
+                    {interactions.filter(
+                      (i) => i.followUp.required && !i.followUp.overdue
+                    ).length}{" "}
+                    pending tasks.
+                  </p>
                 </div>
-
-                {/* Filter Toggle */}
-                <div className="flex justify-between items-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="flex items-center space-x-2"
-                  >
-                    <Filter className="h-4 w-4" />
-                    <span>Filters</span>
-                    <ChevronRight className={`h-4 w-4 transition-transform ${showFilters ? "rotate-90" : ""}`} />
-                  </Button>
-                  <Badge variant="outline" className="text-gray-600">
-                    {filteredInteractions.length} results
-                  </Badge>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href="/create" className="flex-1">
+                    <Button
+                      variant="secondary"
+                      className="w-full bg-white text-blue-600 hover:bg-gray-100"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Interaction
+                    </Button>
+                  </Link>
+                  <Link href="/analytics" className="flex-1">
+                    <Button
+                      variant="secondary"
+                      className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30"
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      View Analytics
+                    </Button>
+                  </Link>
                 </div>
-
-                {/* Collapsible Filters */}
-                {showFilters && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
-                    <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Filter by student" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {students.map((student) => (
-                          <SelectItem key={student.id} value={student.id}>
-                            {student.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={selectedType} onValueChange={setSelectedType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Filter by type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {interactionTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Interactions List - Mobile Optimized */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Recent Interactions</h2>
             </div>
 
-            {filteredInteractions.map((interaction) => (
-              <Card
-                key={interaction.id}
-                className={`hover:shadow-lg transition-all duration-200 ${getStatusColor(interaction)}`}
-              >
-                <CardContent className="p-4 sm:p-6">
-                  <div className="space-y-4">
-                    {/* Header */}
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <div className="bg-gray-100 p-1.5 rounded-full">
-                            <User className="h-4 w-4 text-gray-600" />
-                          </div>
-                          <h3 className="font-semibold text-gray-900 truncate">{interaction.studentName}</h3>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline" className={getProgramColor(interaction.program)}>
-                            {interaction.program}
-                          </Badge>
-                          <Badge className={getTypeColor(interaction.type)}>{interaction.type}</Badge>
-                          <span className="text-xs text-gray-500">ID: {interaction.studentId}</span>
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedInteraction(interaction)}
-                        className="ml-2 shrink-0"
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span className="hidden sm:inline ml-2">View</span>
-                      </Button>
-                    </div>
-
-                    {/* Content */}
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-sm font-medium text-gray-700 mb-1">Reason:</p>
-                        <p className="text-sm text-gray-600 bg-red-50 p-2 rounded border border-red-200">
-                          {interaction.reason}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <p className="font-medium text-gray-700">Staff:</p>
-                          <p className="text-gray-600">{interaction.staffMember}</p>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-700">Date:</p>
-                          <p className="text-gray-600">
-                            {interaction.date} at {interaction.time}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Follow-up Status */}
-                      {interaction.followUp.required && (
-                        <div
-                          className={`flex items-center space-x-2 p-2 rounded-lg ${
-                            interaction.followUp.overdue ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {interaction.followUp.overdue ? (
-                            <AlertCircle className="h-4 w-4" />
-                          ) : (
-                            <Clock className="h-4 w-4" />
-                          )}
-                          <span className="text-sm font-medium">
-                            Follow-up: {interaction.followUp.date}
-                            {interaction.followUp.overdue && " (Overdue)"}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                        {interaction.followUp.required && (
-                          <Button variant="outline" size="sm" className="flex-1 text-blue-600 hover:bg-blue-50">
-                            <Mail className="h-4 w-4 mr-2" />
-                            Follow-up
-                          </Button>
-                        )}
+            {/* Stats Grid - Mobile Responsive */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <div className="text-center lg:text-left">
+                    <div className="flex items-center justify-center lg:justify-start mb-2">
+                      <div className="bg-blue-200 p-2 rounded-full">
+                        <MessageSquare className="h-4 w-4 lg:h-5 lg:w-5 text-blue-700" />
                       </div>
                     </div>
+                    <p className="text-xs sm:text-sm font-medium text-blue-600">
+                      Total
+                    </p>
+                    <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900">
+                      {interactions.length}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1 hidden sm:block">
+                      +2 from yesterday
+                    </p>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
 
-          {filteredInteractions.length === 0 && (
-            <Card className="text-center py-12">
-              <CardContent>
-                <MessageSquare className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-medium text-gray-900 mb-2">No interactions found</h3>
-                <p className="text-gray-600 mb-6">Try adjusting your search or filter criteria</p>
-                <Link href="/create">
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create First Interaction
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-
-      {/* Mobile-Optimized Modal */}
-      {selectedInteraction && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-          <Card className="w-full max-h-[90vh] overflow-y-auto sm:max-w-2xl sm:rounded-lg rounded-t-2xl sm:rounded-b-lg">
-            <CardHeader className="sticky top-0 bg-white border-b z-10">
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-                    <span>{selectedInteraction.studentName}</span>
-                    <Badge className={getTypeColor(selectedInteraction.type)}>{selectedInteraction.type}</Badge>
-                  </CardTitle>
-                  <CardDescription className="text-sm sm:text-base mt-2">
-                    {selectedInteraction.date} at {selectedInteraction.time} • Staff: {selectedInteraction.staffMember}
-                  </CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => setSelectedInteraction(null)}>
-                  ✕
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6 p-4 sm:p-6">
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Reason</h4>
-                <p className="text-gray-700 bg-red-50 p-3 sm:p-4 rounded-lg border border-red-200">
-                  {selectedInteraction.reason}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Notes</h4>
-                <p className="text-gray-700 bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-200 leading-relaxed">
-                  {selectedInteraction.notes}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3 flex items-center space-x-2">
-                  <Sparkles className="h-5 w-5 text-blue-600" />
-                  <span>AI Summary</span>
-                </h4>
-                <p className="text-gray-700 bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-200 leading-relaxed">
-                  {selectedInteraction.aiSummary}
-                </p>
-              </div>
-
-              {selectedInteraction.followUp.required && (
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-3">Follow-up</h4>
-                  <div
-                    className={`p-3 sm:p-4 rounded-lg border ${
-                      selectedInteraction.followUp.overdue ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200"
-                    }`}
-                  >
-                    <p className="text-gray-700">
-                      Scheduled for: {selectedInteraction.followUp.date}
-                      {selectedInteraction.followUp.overdue && (
-                        <span className="text-red-600 font-medium ml-2">(Overdue)</span>
-                      )}
+              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <div className="text-center lg:text-left">
+                    <div className="flex items-center justify-center lg:justify-start mb-2">
+                      <div className="bg-green-200 p-2 rounded-full">
+                        <Users className="h-4 w-4 lg:h-5 lg:w-5 text-green-700" />
+                      </div>
+                    </div>
+                    <p className="text-xs sm:text-sm font-medium text-green-600">
+                      Students
+                    </p>
+                    <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-900">
+                      4
+                    </p>
+                    <p className="text-xs text-green-600 mt-1 hidden sm:block">
+                      All programs
                     </p>
                   </div>
-                </div>
-              )}
+                </CardContent>
+              </Card>
 
-              <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
-                <Button variant="outline" className="flex-1">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Interaction
-                </Button>
-                {selectedInteraction.followUp.required && (
-                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Send Follow-up Email
+              <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <div className="text-center lg:text-left">
+                    <div className="flex items-center justify-center lg:justify-start mb-2">
+                      <div className="bg-yellow-200 p-2 rounded-full">
+                        <Clock className="h-4 w-4 lg:h-5 lg:w-5 text-yellow-700" />
+                      </div>
+                    </div>
+                    <p className="text-xs sm:text-sm font-medium text-yellow-600">
+                      Pending
+                    </p>
+                    <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-yellow-900">
+                      {interactions.filter(
+                        (i) => i.followUp.required && !i.followUp.overdue
+                      ).length}
+                    </p>
+                    <p className="text-xs text-yellow-600 mt-1 hidden sm:block">
+                      Due this week
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <div className="text-center lg:text-left">
+                    <div className="flex items-center justify-center lg:justify-start mb-2">
+                      <div className="bg-red-200 p-2 rounded-full">
+                        <AlertCircle className="h-4 w-4 lg:h-5 lg:w-5 text-red-700" />
+                      </div>
+                    </div>
+                    <p className="text-xs sm:text-sm font-medium text-red-600">
+                      Overdue
+                    </p>
+                    <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-900">
+                      {interactions.filter((i) => i.followUp.overdue).length}
+                    </p>
+                    <p className="text-xs text-red-600 mt-1 hidden sm:block">
+                      Needs attention
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Search and Filters - Mobile Optimized */}
+            <Card className="shadow-lg">
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-4">
+                  {/* Search Bar */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search interactions, students, or notes..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 border-gray-300 focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Filter Toggle */}
+                  <div className="flex justify-between items-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="flex items-center space-x-2"
+                    >
+                      <Filter className="h-4 w-4" />
+                      <span>Filters</span>
+                      <ChevronRight
+                        className={`h-4 w-4 transition-transform ${
+                          showFilters ? "rotate-90" : ""
+                        }`}
+                      />
+                    </Button>
+                    <Badge variant="outline" className="text-gray-600">
+                      {filteredInteractions.length} results
+                    </Badge>
+                  </div>
+
+                  {/* Collapsible Filters */}
+                  {showFilters && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+                      <Select
+                        value={selectedStudent}
+                        onValueChange={setSelectedStudent}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filter by student" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {students.map((student) => (
+                            <SelectItem key={student.id} value={student.id}>
+                              {student.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Select value={selectedType} onValueChange={setSelectedType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filter by type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {interactionTypes.map((type) => (
+                            <SelectItem key={type.value} value={type.value}>
+                              {type.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Interactions List - Mobile Optimized */}
+            <div className="relative">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                    Recent Interactions
+                  </h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAiInsights(!showAiInsights)}
+                  >
+                    <Sparkles className="h-4 w-4 mr-1" />
+                    {showAiInsights ? 'Hide Insights' : 'Show Insights'}
                   </Button>
+                </div>
+                {filteredInteractions.map((interaction) => (
+                  <Card
+                    key={interaction.id}
+                    className={`hover:shadow-lg transition-all duration-200 ${getStatusColor(
+                      interaction
+                    )}`}
+                  >
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="space-y-4">
+                        {/* Header */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <div className="bg-gray-100 p-1.5 rounded-full">
+                                <User className="h-4 w-4 text-gray-600" />
+                              </div>
+                              <h3 className="font-semibold text-gray-900 truncate">
+                                {interaction.studentName}
+                              </h3>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge
+                                variant="outline"
+                                className={getProgramColor(interaction.program)}
+                              >
+                                {interaction.program}
+                              </Badge>
+                              <Badge className={getTypeColor(interaction.type)}>
+                                {interaction.type}
+                              </Badge>
+                              <span className="text-xs text-gray-500">
+                                ID: {interaction.studentId}
+                              </span>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" className="ml-2 shrink-0">
+                            <Eye className="h-4 w-4" />
+                            <span className="hidden sm:inline ml-2">View</span>
+                          </Button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm font-medium text-gray-700 mb-1">
+                              Reason:
+                            </p>
+                            <p className="text-sm text-gray-600 bg-red-50 p-2 rounded border border-red-200">
+                              {interaction.reason}
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="font-medium text-gray-700">Staff:</p>
+                              <p className="text-gray-600">{interaction.staffMember}</p>
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-700">Date:</p>
+                              <p className="text-gray-600">
+                                {interaction.date} at {interaction.time}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Follow-up Status */}
+                          {interaction.followUp.required && (
+                            <div
+                              className={`flex items-center space-x-2 p-2 rounded-lg ${
+                                interaction.followUp.overdue
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-yellow-100 text-yellow-700"
+                              }`}
+                            >
+                              {interaction.followUp.overdue ? (
+                                <AlertCircle className="h-4 w-4" />
+                              ) : (
+                                <Clock className="h-4 w-4" />
+                              )}
+                              <span className="text-sm font-medium">
+                                Follow-up: {interaction.followUp.date}
+                                {interaction.followUp.overdue && " (Overdue)"}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Action Buttons */}
+                          <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
+                            <Button variant="outline" size="sm" className="flex-1">
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
+                            {interaction.followUp.required && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 text-blue-600 hover:bg-blue-50"
+                              >
+                                <Mail className="h-4 w-4 mr-2" />
+                                Follow-up
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                {filteredInteractions.length === 0 && (
+                  <Card className="text-center py-12">
+                    <CardContent>
+                      <MessageSquare className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-xl font-medium text-gray-900 mb-2">
+                        No interactions found
+                      </h3>
+                      <p className="text-gray-600 mb-6">
+                        Try adjusting your search or filter criteria
+                      </p>
+                      <Link href="/create">
+                        <Button className="bg-blue-600 hover:bg-blue-700">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create First Interaction
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              {/* Sidebar for AI Insights, absolutely positioned */}
+              {showAiInsights && (
+                <div className="absolute top-0 right-0 w-96 ml-4">
+                  <AiInsightsPanel isOpen={showAiInsights} onClose={() => setShowAiInsights(false)} />
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   )
 }

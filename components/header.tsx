@@ -21,7 +21,7 @@ interface User {
   role: string
 }
 
-export function MobileHeader() {
+export function Header() {
   const router = useRouter()
   const pathname = usePathname()
   const [user, setUser] = useState<User | null>(null)
@@ -44,12 +44,12 @@ export function MobileHeader() {
     switch (pathname) {
       case "/":
         return "Dashboard"
-      case "/create":
-        return "New Interaction"
-      case "/settings":
-        return "Settings"
-      case "/analytics":
-        return "Analytics"
+        case "/settings":
+          return "Settings"
+          case "/analytics":
+            return "Analytics"
+            case "/create":
+              return "New Interaction"
       default:
         return "Dashboard"
     }
@@ -58,8 +58,8 @@ export function MobileHeader() {
   const navigationItems = [
     { href: "/", label: "Dashboard", icon: BarChart3, active: pathname === "/" },
     { href: "/analytics", label: "Analytics", icon: TrendingUp, active: pathname === "/analytics" },
-    { href: "/create", label: "New Interaction", icon: Plus, active: pathname === "/create" },
     { href: "/settings", label: "Settings", icon: Settings, active: pathname === "/settings" },
+    { href: "/create", label: "New Interaction", icon: Plus, active: pathname === "/create" },
   ]
 
   const handleNavClick = () => {
@@ -84,11 +84,6 @@ export function MobileHeader() {
 
           {/* Mobile Actions */}
           <div className="flex items-center space-x-2 md:space-x-4">
-            {/* Notifications - Hidden on small screens */}
-            <Button variant="outline" size="sm" className="relative hidden sm:flex">
-              <Bell className="h-4 w-4" />
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-            </Button>
 
             {/* User Menu - Desktop */}
             {user && (
