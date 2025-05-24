@@ -21,7 +21,6 @@ import {
   Mail,
 } from "lucide-react"
 import Link from "next/link"
-import { Header } from "@/components/header"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AiInsightsPanel } from "./components/ai-insights-panel"
@@ -168,7 +167,6 @@ export function Page() {
       {/* Main Content */}
       <div className="flex-1">
         <div className="relative z-10">
-          <Header />
         </div>
 
         <main className="pb-6">

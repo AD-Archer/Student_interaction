@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 
 import { AuthWrapper } from "@/components/auth-wrapper"
+import { GlobalLayout } from "@/components/global-layout"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -33,8 +34,11 @@ export default function RootLayout({
         <meta name="twitter:description" content="Student interaction tracking system" />
       </head>
       <body className={inter.className}>
-
-          <AuthWrapper>{children}</AuthWrapper>
+        <AuthWrapper>
+          <GlobalLayout>
+            {children}
+          </GlobalLayout>
+        </AuthWrapper>
 
         {/* Footer */}
         <footer className="bg-gray-100 text-center text-sm text-gray-500 py-4">
