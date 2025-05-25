@@ -13,34 +13,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { CalendarDays, User, Send, Sparkles, ArrowLeft, CheckCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { FormData, formInteractionTypes as interactionTypes, formStudents as students } from "@/lib/data"
 
-interface FormData {
-  studentName: string
-  studentId: string
-  interactionType: string
-  reason: string
-  notes: string
-  followUpEmail: boolean
-  followUpDate: string
-}
-
-const interactionTypes = [
-  { value: "coaching", label: "Coaching | Job Readiness" },
-  { value: "pip", label: "Performance Improvement Plan" },
-  { value: "career", label: "Career Counseling" },
-  { value: "academic", label: "Academic Support" },
-  { value: "behavioral", label: "Behavioral Intervention" },
-  { value: "other", label: "Other" },
-]
-
-const students = [
-  { id: "0001", name: "Micheal Newman", program: "foundations" },
-  { id: "0002", name: "Amira Johnson", program: "101" },
-  { id: "0003", name: "Koleona Smith", program: "lightspeed" },
-  { id: "0004", name: "Zaire Williams", program: "liftoff" },
-]
-
-export function MobileForm() {
+export function Form() {
   const router = useRouter()
   const [formData, setFormData] = useState<FormData>({
     studentName: "",

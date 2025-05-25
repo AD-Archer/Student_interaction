@@ -1,4 +1,4 @@
-import { MobileForm } from "@/components/mobile-form"
+import { Form } from "@/components/form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
@@ -23,7 +23,7 @@ export default function CreateInteractionPage() {
               <CardDescription>Fill out all required fields to log the student interaction</CardDescription>
             </CardHeader>
             <CardContent>
-              <MobileForm />
+              <Form />
             </CardContent>
           </Card>
         </div>

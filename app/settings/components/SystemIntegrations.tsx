@@ -10,18 +10,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Globe } from "lucide-react"
 import React from "react"
+import { SystemIntegration } from "@/lib/data"
 
 export const SystemIntegrations = ({ systemIntegrations, getStatusColor }: {
-  systemIntegrations: Array<{
-    name: string
-    description: string
-    status: string
-    lastSync: string
-    icon: React.ElementType
-  }>,
+  systemIntegrations: Array<SystemIntegration & { icon: React.ElementType }>,
   getStatusColor: (status: string) => string
 }) => (
-  <Card className="shadow-lg">
+  <Card className="shadow-lg w-full">
     <CardHeader>
       <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
         <Globe className="h-5 w-5 text-blue-600" />
@@ -30,7 +25,7 @@ export const SystemIntegrations = ({ systemIntegrations, getStatusColor }: {
       <CardDescription>Manage external services and API connections</CardDescription>
     </CardHeader>
     <CardContent>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
         {systemIntegrations.map((integration, index) => (
           <div key={index} className="p-4 sm:p-6 border rounded-xl bg-gray-50">
             <div className="flex items-center justify-between mb-4">

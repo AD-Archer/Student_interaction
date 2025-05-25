@@ -13,20 +13,13 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Edit, Lock, Plus } from "lucide-react"
 import React from "react"
+import { StaffMember } from "@/lib/data"
 
 export const StaffManagement = ({ staffMembers, getPermissionColor }: {
-  staffMembers: Array<{
-    id: number
-    name: string
-    email: string
-    role: string
-    status: string
-    lastLogin: string
-    permissions: string[]
-  }>,
+  staffMembers: StaffMember[],
   getPermissionColor: (permission: string) => string
 }) => (
-  <>
+  <div className="w-full">
     <Card className="shadow-lg">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
@@ -45,7 +38,7 @@ export const StaffManagement = ({ staffMembers, getPermissionColor }: {
           {staffMembers.map((staff) => (
             <div
               key={staff.id}
-              className="flex flex-col lg:flex-row lg:items-center justify-between p-4 sm:p-6 border rounded-xl bg-gray-50 space-y-4 lg:space-y-0"
+              className="flex flex-col lg:flex-row lg:items-center justify-between p-4 sm:p-6 border rounded-xl bg-gray-50 space-y-4 lg:space-y-0 transition-all hover:shadow-md"
             >
               <div className="flex items-center space-x-4">
                 <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-2 sm:p-3 rounded-full">
@@ -98,7 +91,7 @@ export const StaffManagement = ({ staffMembers, getPermissionColor }: {
       </CardHeader>
       <CardContent>
         <form className="space-y-4 sm:space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="space-y-2">
               <Label htmlFor="staffName">Full Name</Label>
               <Input id="staffName" placeholder="Enter full name" />
@@ -108,7 +101,7 @@ export const StaffManagement = ({ staffMembers, getPermissionColor }: {
               <Input id="staffEmail" type="email" placeholder="Enter email address" />
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="space-y-2">
               <Label htmlFor="staffRole">Role/Title</Label>
               <Select>
@@ -146,5 +139,5 @@ export const StaffManagement = ({ staffMembers, getPermissionColor }: {
         </form>
       </CardContent>
     </Card>
-  </>
+  </div>
 )

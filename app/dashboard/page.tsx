@@ -24,111 +24,48 @@ import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AiInsightsPanel } from "./components/ai-insights-panel"
-
-const interactions = [
-  {
-    id: 1,
-    studentName: "Micheal Newman",
-    studentId: "0001",
-    program: "foundations",
-    type: "Coaching",
-    reason: "Job interview preparation",
-    notes:
-      "Worked on interview skills, practiced common questions, discussed professional attire. Student showed good progress and confidence.",
-    date: "2024-12-12",
-    time: "10:30 AM",
-    staffMember: "Tahir Lee",
-    status: "completed",
-    followUp: { required: true, date: "2024-12-20", overdue: false },
-    aiSummary:
-      "Student received coaching on interview preparation with focus on confidence building and professional presentation.",
-  },
-  {
-    id: 2,
-    studentName: "Amira Johnson",
-    studentId: "0002",
-    program: "101",
-    type: "Academic Support",
-    reason: "Course planning assistance",
-    notes:
-      "Reviewed current course load, discussed upcoming semester options, identified areas needing additional support.",
-    date: "2024-12-11",
-    time: "2:15 PM",
-    staffMember: "Barbara Cicalese",
-    status: "completed",
-    followUp: { required: true, date: "2024-12-18", overdue: false },
-    aiSummary:
-      "Academic planning session focused on course selection and identifying support needs for upcoming semester.",
-  },
-  {
-    id: 3,
-    studentName: "Koleona Smith",
-    studentId: "0003",
-    program: "lightspeed",
-    type: "Career Counseling",
-    reason: "Industry exploration",
-    notes:
-      "Explored different career paths in technology, discussed internship opportunities, reviewed portfolio development.",
-    date: "2024-12-10",
-    time: "11:00 AM",
-    staffMember: "Charles Mitchell",
-    status: "completed",
-    followUp: { required: false },
-    aiSummary:
-      "Career exploration session covering technology industry opportunities and portfolio development strategies.",
-  },
-  {
-    id: 4,
-    studentName: "Zaire Williams",
-    studentId: "0004",
-    program: "liftoff",
-    type: "Performance Improvement",
-    reason: "Attendance improvement",
-    notes:
-      "Discussed attendance patterns, identified barriers to consistent attendance, developed action plan for improvement.",
-    date: "2024-12-09",
-    time: "9:45 AM",
-    staffMember: "Tahir Lee",
-    status: "completed",
-    followUp: { required: true, date: "2024-12-15", overdue: true },
-    aiSummary:
-      "Performance improvement plan established to address attendance issues with specific action items and timeline.",
-  },
-]
-
-const students = [
-  { id: "all", name: "All Students" },
-  { id: "0001", name: "Micheal Newman" },
-  { id: "0002", name: "Amira Johnson" },
-  { id: "0003", name: "Koleona Smith" },
-  { id: "0004", name: "Zaire Williams" },
-]
-
-const interactionTypes = [
-  { value: "all", label: "All Types" },
-  { value: "coaching", label: "Coaching" },
-  { value: "academic", label: "Academic Support" },
-  { value: "career", label: "Career Counseling" },
-  { value: "performance", label: "Performance Improvement" },
-  { value: "behavioral", label: "Behavioral Intervention" },
-]
+import { interactions, students, interactionTypeOptions as interactionTypes, staffMembers } from "@/lib/data"
 
 export default function Page() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStudent, setSelectedStudent] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
+  const [selectedStaff, setSelectedStaff] = useState("all")
   const [showFilters, setShowFilters] = useState(false)
-  const [showAiInsights, setShowAiInsights] = useState(false) // Always show AI Insights as a sidebar
+  const [showAiInsights, setShowAiInsights] = useState(false)
+
+  // Transform staffMembers to use in filter dropdown
+  const staffOptions = [
+    { id: "all", name: "All Staff" },
+    ...staffMembers.map(staff => ({ id: staff.id.toString(), name: staff.name }))
+  ]
 
   const filteredInteractions = interactions.filter((interaction) => {
+    // Enhanced search functionality to search by first name, last name, or ID
+    const searchTermLower = searchTerm.toLowerCase()
+    
     const matchesSearch =
-      interaction.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      interaction.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      interaction.notes.toLowerCase().includes(searchTerm.toLowerCase())
+      // Student name search (first or last name)
+      interaction.studentName.toLowerCase().includes(searchTermLower) ||
+      // Student ID search
+      interaction.studentId.includes(searchTermLower) ||
+      // Content search
+      interaction.reason.toLowerCase().includes(searchTermLower) ||
+      interaction.notes.toLowerCase().includes(searchTermLower) ||
+      // Staff member search (first or last name)
+      interaction.staffMember.toLowerCase().includes(searchTermLower)
+      
+    // Filter by selected student
     const matchesStudent = selectedStudent === "all" || interaction.studentId === selectedStudent
+    
+    // Filter by selected interaction type
     const matchesType = selectedType === "all" || interaction.type.toLowerCase().includes(selectedType)
+    
+    // Filter by staff member
+    const matchesStaff = selectedStaff === "all" || 
+      interaction.staffMember === staffMembers.find(sm => sm.id.toString() === selectedStaff)?.name
 
-    return matchesSearch && matchesStudent && matchesType
+    return matchesSearch && matchesStudent && matchesType && matchesStaff
   })
 
   const getStatusColor = (interaction: (typeof interactions)[0]) => {
@@ -338,7 +275,7 @@ export default function Page() {
 
                   {/* Collapsible Filters */}
                   {showFilters && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
                       <Select
                         value={selectedStudent}
                         onValueChange={setSelectedStudent}
@@ -363,6 +300,19 @@ export default function Page() {
                           {interactionTypes.map((type) => (
                             <SelectItem key={type.value} value={type.value}>
                               {type.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Select value={selectedStaff} onValueChange={setSelectedStaff}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filter by staff" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {staffOptions.map((staff) => (
+                            <SelectItem key={staff.id} value={staff.id}>
+                              {staff.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

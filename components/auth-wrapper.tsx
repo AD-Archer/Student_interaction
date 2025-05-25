@@ -1,14 +1,16 @@
+/**
+ * auth-wrapper.tsx
+ * This client component handles authentication and route protection for the application.
+ * It checks if the user is logged in and redirects to login page when trying to access 
+ * protected routes while unauthenticated. It also creates and maintains an authentication
+ * context that child components can use to access user data.
+ */
+
 "use client"
 
-import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
-
-interface User {
-  email: string
-  name: string
-  role: string
-}
+import { User } from "@/lib/data"
 
 interface AuthWrapperProps {
   children: React.ReactNode
@@ -29,20 +31,33 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   const pathname = usePathname()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  
+  // Define public routes that don't require authentication; memoize to keep reference stable
+  const publicRoutes = React.useMemo(() => ["/info", "/login"], [])
 
   useEffect(() => {
-    // Check if user is logged in
-    const currentUser = localStorage.getItem("currentUser")
+    try {
+      // Check if user is logged in using client-side storage
+      if (typeof window !== 'undefined') {
+        const currentUser = localStorage.getItem("currentUser")
+        
+        // Ensure pathname is always a string before using it
+        const safePathname = pathname || "";
 
-    if (currentUser) {
-      setUser(JSON.parse(currentUser))
-    } else if (pathname !== "/login") {
-      // Redirect to login if not authenticated and not already on login page
-      router.push("/login")
+        if (currentUser) {
+          setUser(JSON.parse(currentUser))
+        } else if (!publicRoutes.includes(safePathname)) {
+          // Redirect to login if not authenticated and not on a public route
+          router.push("/login")
+        }
+      }
+    } catch (error) {
+      console.error("Error in auth check:", error)
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
-  }, [pathname, router])
+  // Adding publicRoutes to dependency array to fix React Hook warning
+  }, [pathname, router, publicRoutes])
 
   // Show loading spinner while checking auth
   if (isLoading) {
@@ -53,16 +68,19 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     )
   }
 
-  // If on login page, always show it
-  if (pathname === "/login") {
-    return <>{children}</>
+  // Create the auth context value that will be passed to children
+  const authContextValue = { user, isLoading }
+  
+  // For public routes or logged in users, render the children within the context
+  const safePathname = pathname || "";
+  if (publicRoutes.includes(safePathname) || user) {
+    console.log("AuthWrapper: Rendering children for", safePathname);
+    return (
+      <AuthContext.Provider value={authContextValue}>
+        {children}
+      </AuthContext.Provider>
+    )
   }
-
-  // If not authenticated, don't render anything (redirect will happen)
-  if (!user) {
-    return null
-  }
-
-  // If authenticated, render children
-  return <AuthContext.Provider value={{ user, isLoading }}>{children}</AuthContext.Provider>
+  
+  return null
 }

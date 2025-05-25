@@ -6,7 +6,7 @@
  */
 "use client"
 
-import { ReactNode } from "react"
+import { ReactNode, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { Header } from "./header"
 
@@ -16,7 +16,13 @@ interface GlobalLayoutProps {
 
 export function GlobalLayout({ children }: GlobalLayoutProps) {
   const pathname = usePathname()
-  const showHeader = pathname !== "/login"
+  const showHeader = pathname !== "/login" && pathname !== "/info"
+
+  useEffect(() => {
+    console.log("GlobalLayout rendering children for:", pathname);
+  }, [pathname]);
+
+  console.log("GlobalLayout: Rendering children:", children);
 
   return (
     <>
