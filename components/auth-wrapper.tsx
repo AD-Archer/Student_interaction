@@ -3,12 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
-
-interface User {
-  email: string
-  name: string
-  role: string
-}
+import { User } from "@/lib/data"
 
 interface AuthWrapperProps {
   children: React.ReactNode

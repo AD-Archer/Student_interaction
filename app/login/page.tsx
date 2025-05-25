@@ -10,12 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Lock, Mail, Building2, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
-
-const staffMembers = [
-  { email: "barbara@launchpad.org", password: "staff123", name: "Barbara Cicalese", role: "Senior Counselor" },
-  { email: "tahir@launchpad.org", password: "staff123", name: "Tahir Lee", role: "Workforce Coordinator" },
-  { email: "charles@launchpad.org", password: "staff123", name: "Charles Mitchell", role: "Program Manager" },
-]
+import { staffMembers } from "@/lib/data"
 
 export default function LoginPage() {
   const router = useRouter()

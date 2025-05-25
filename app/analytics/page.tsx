@@ -17,37 +17,7 @@ import { InteractionTypes } from "./components/InteractionTypes"
 import { ProgramPerformance } from "./components/ProgramPerformance"
 import { StaffPerformance } from "./components/StaffPerformance"
 import { QuickInsights } from "./components/QuickInsights"
-
-// Mock data for charts (I keep this here for now, but move to a data layer if it grows)
-const interactionTrends = [
-	{ month: "Jan", interactions: 45, followUps: 12 },
-	{ month: "Feb", interactions: 52, followUps: 15 },
-	{ month: "Mar", interactions: 48, followUps: 11 },
-	{ month: "Apr", interactions: 61, followUps: 18 },
-	{ month: "May", interactions: 55, followUps: 14 },
-	{ month: "Jun", interactions: 67, followUps: 20 },
-]
-
-const programData = [
-	{ program: "Foundations", students: 8, interactions: 24, successRate: 87 },
-	{ program: "101", students: 6, interactions: 18, successRate: 92 },
-	{ program: "Lightspeed", students: 5, interactions: 15, successRate: 85 },
-	{ program: "Liftoff", students: 4, interactions: 12, successRate: 90 },
-]
-
-const staffPerformance = [
-	{ name: "Tahir Lee", interactions: 28, avgRating: 4.8, followUpRate: 95 },
-	{ name: "Barbara Cicalese", interactions: 25, avgRating: 4.9, followUpRate: 98 },
-	{ name: "Charles Mitchell", interactions: 22, avgRating: 4.7, followUpRate: 92 },
-]
-
-const interactionTypes = [
-	{ type: "Coaching", count: 32, percentage: 45, trend: "up" },
-	{ type: "Academic Support", count: 18, percentage: 25, trend: "up" },
-	{ type: "Career Counseling", count: 12, percentage: 17, trend: "stable" },
-	{ type: "Performance Improvement", count: 6, percentage: 8, trend: "down" },
-	{ type: "Behavioral Intervention", count: 4, percentage: 5, trend: "down" },
-]
+import { interactionTrends, programData, staffPerformance, interactionTypes } from "@/lib/data"
 
 // I keep this utility here for icon selection, pass to child as needed
 const getTrendIcon = (trend: string) => {

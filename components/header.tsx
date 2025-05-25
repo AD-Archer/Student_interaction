@@ -7,12 +7,7 @@ import { LogOut, Settings, Plus, Building2, BarChart3, TrendingUp, Menu } from "
 import { useRouter, usePathname } from "next/navigation"
 import { LucideUser } from "lucide-react"
 import Link from "next/link"
-
-interface User {
-  email: string
-  name: string
-  role: string
-}
+import { User } from "@/lib/data"
 
 export function Header() {
   const router = useRouter()

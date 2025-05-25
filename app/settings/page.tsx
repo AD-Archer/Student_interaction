@@ -15,38 +15,10 @@ import {
 import { StaffManagement } from "./components/StaffManagement"
 import { SystemSettings } from "./components/SystemSettings"
 import { SystemIntegrations } from "./components/SystemIntegrations"
+import { staffMembers } from "@/lib/data"
 
-
-const staffMembers = [
-  {
-    id: 1,
-    name: "Barbara Cicalese",
-    email: "barbara@launchpad.org",
-    role: "Senior Counselor",
-    status: "active",
-    lastLogin: "2 hours ago",
-    permissions: ["read", "write", "admin"],
-  },
-  {
-    id: 2,
-    name: "Tahir Lee",
-    email: "tahir@launchpad.org",
-    role: "Workforce Coordinator",
-    status: "active",
-    lastLogin: "Currently online",
-    permissions: ["read", "write", "admin"],
-  },
-  {
-    id: 3,
-    name: "Charles Mitchell",
-    email: "charles@launchpad.org",
-    role: "Program Manager",
-    status: "active",
-    lastLogin: "1 day ago",
-    permissions: ["read", "write"],
-  },
-]
-
+// Note: We're keeping the systemIntegrations definition here because it requires
+// actual Lucide icon components, while our centralized data would need mapping
 const systemIntegrations = [
   {
     name: "Playlab AI",
