@@ -8,3 +8,4 @@ export const metadata = {
   description: "Student interaction tracking system for Building 21 Workforce Development",
   metadataBase: new URL("https://lsf.adarcher.app"),
 };
+
