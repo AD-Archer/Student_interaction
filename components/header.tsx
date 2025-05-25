@@ -155,15 +155,14 @@ export function Header() {
                     </nav>
 
                     {/* Quick Actions */}
-                    <div className="mt-8 space-y-3">
+                    {/* <div className="mt-8 space-y-3">
                       <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Quick Actions</h3>
                       <Button className="w-full justify-start bg-blue-600 hover:bg-blue-700" onClick={() => { router.push("/create"); handleNavClick(); }}>
                         <Plus className="h-4 w-4 mr-3" />
                         New Interaction
                       </Button>
-                    </div>
+                    </div> */}
                   </div>
-
                   {/* Menu Footer */}
                   <div className="p-6 border-t bg-gray-50">
                     <Button
