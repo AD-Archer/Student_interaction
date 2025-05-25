@@ -11,6 +11,8 @@
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Filter, Download, TrendingUp, TrendingDown, Activity } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Loader } from "@/components/ui/loader";
 import { KeyMetrics } from "./components/KeyMetrics"
 import { InteractionTrends } from "./components/InteractionTrends"
 import { InteractionTypes } from "./components/InteractionTypes"
@@ -32,7 +34,26 @@ const getTrendIcon = (trend: string) => {
 }
 
 export default function AnalyticsPage() {
-	// I keep the header and filter controls here for clarity
+	const [isLoading, setIsLoading] = useState(true);
+
+	useEffect(() => {
+		// Simulate data fetching
+		const fetchData = async () => {
+			setIsLoading(true);
+			await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulated delay
+			setIsLoading(false);
+		};
+		fetchData();
+	}, []);
+
+	if (isLoading) {
+		return (
+			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
+				<Loader /> {/* Replace with your actual loading animation */}
+			</div>
+		);
+	}
+
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
 			<main className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -95,5 +116,5 @@ export default function AnalyticsPage() {
 				</div>
 			</main>
 		</div>
-	)
+	);
 }
