@@ -9,13 +9,7 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Users } from "lucide-react"
-
-export type StaffPerformanceData = {
-  name: string
-  interactions: number
-  avgRating: number
-  followUpRate: number
-}
+import { StaffPerformanceData } from "@/lib/data"
 
 // I keep this component focused on rendering the staff performance section
 export const StaffPerformance = ({ data }: { data: StaffPerformanceData[] }) => (

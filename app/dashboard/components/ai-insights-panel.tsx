@@ -12,62 +12,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Sparkles, TrendingUp, AlertTriangle, Users, MessageSquare, Save, X } from "lucide-react"
-
-const aiInsights = [
-	{
-		type: "trend",
-		title: "Attendance Patterns",
-		description: "3 students showing improved attendance after coaching sessions",
-		severity: "positive",
-		icon: TrendingUp,
-	},
-	{
-		type: "alert",
-		title: "Follow-up Required",
-		description: "Zaire Williams has missed 2 scheduled follow-ups",
-		severity: "warning",
-		icon: AlertTriangle,
-	},
-	{
-		type: "insight",
-		title: "Program Success",
-		description: "Lightspeed program students show 85% engagement rate",
-		severity: "positive",
-		icon: Users,
-	},
-	{
-		type: "recommendation",
-		title: "Intervention Needed",
-		description: "Consider group coaching for time management skills",
-		severity: "info",
-		icon: MessageSquare,
-	},
-]
-
-const recentNotes = [
-	{
-		id: 1,
-		author: "Tahir Lee",
-		content:
-			"Need to follow up on Micheal's interview preparation. He's showing great progress but needs confidence building.",
-		timestamp: "2 hours ago",
-		priority: "high",
-	},
-	{
-		id: 2,
-		author: "Barbara Cicalese",
-		content: "Amira is excelling in academic support. Consider advancing her to next program level.",
-		timestamp: "4 hours ago",
-		priority: "medium",
-	},
-	{
-		id: 3,
-		author: "Charles Mitchell",
-		content: "Group session on career exploration was very successful. Students engaged well.",
-		timestamp: "1 day ago",
-		priority: "low",
-	},
-]
+import { aiInsights, recentNotes } from "@/lib/data"
+import { resolveIconComponent } from "@/lib/utils"
 
 interface AiInsightsPanelProps {
 	isOpen: boolean
@@ -146,17 +92,22 @@ export function AiInsightsPanel({ isOpen, onClose }: AiInsightsPanelProps) {
 							<CardDescription>Automated analysis of student interactions</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-3">
-							{aiInsights.map((insight, index) => (
-								<div key={index} className={`p-3 rounded-lg border ${getSeverityColor(insight.severity)}`}>
-									<div className="flex items-start space-x-2">
-										<insight.icon className="h-4 w-4 mt-0.5 flex-shrink-0" />
-										<div className="flex-1">
-											<h4 className="font-medium text-sm">{insight.title}</h4>
-											<p className="text-xs mt-1 opacity-90">{insight.description}</p>
+							{aiInsights.map((insight, index) => {
+								// Get the icon component using our utility function
+								const IconComponent = resolveIconComponent(insight.icon, MessageSquare);
+									
+								return (
+									<div key={index} className={`p-3 rounded-lg border ${getSeverityColor(insight.severity)}`}>
+										<div className="flex items-start space-x-2">
+											<IconComponent className="h-4 w-4 mt-0.5 flex-shrink-0" />
+											<div className="flex-1">
+												<h4 className="font-medium text-sm">{insight.title}</h4>
+												<p className="text-xs mt-1 opacity-90">{insight.description}</p>
+											</div>
 										</div>
 									</div>
-								</div>
-							))}
+								);
+							})}
 						</CardContent>
 					</Card>
 

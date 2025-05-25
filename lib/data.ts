@@ -4,8 +4,19 @@
 // It serves as a single source of truth for data that will eventually
 // be replaced by actual database calls.
 // 
+// For components that need to render UI elements like icons, we store string
+// names that can be resolved to actual React components at render time using
+// the resolveIconComponent utility function from lib/utils.ts.
+//
 // Future devs: When implementing a database, you'll want to convert these
 // exports into async functions that fetch from your database instead.
+// For example:
+//
+// export async function getStudents(): Promise<Student[]> {
+//   return db.student.findMany();
+// }
+//
+// See DATA_LAYER.md for full implementation details and database migration path.
 // -----------------------------------------------------------------------------
 
 // Types
@@ -90,6 +101,31 @@ export interface SystemIntegration {
   description: string
   status: string
   lastSync: string
+}
+
+// AI Insights and notes from dashboard
+export interface AiInsight {
+  type: string
+  title: string
+  description: string
+  severity: "positive" | "warning" | "info" | "negative"
+  icon?: string // Using string here since we'll resolve to component in the UI
+}
+
+export interface StaffNote {
+  id: number
+  author: string
+  content: string
+  timestamp: string
+  priority: "high" | "medium" | "low"
+}
+
+// System settings from settings page
+export interface SystemSettingsState {
+  autoBackup: boolean
+  aiSummaries: boolean
+  dataRetention: string
+  sessionTimeout: string
 }
 
 // Form data structure from components/form.tsx
@@ -242,6 +278,63 @@ export const formStudents: Student[] = [
   { id: "0004", name: "Zaire Williams", program: "liftoff" },
 ]
 
+// Dashboard AI insights and notes
+export const aiInsights: AiInsight[] = [
+  {
+    type: "trend",
+    title: "Attendance Patterns",
+    description: "3 students showing improved attendance after coaching sessions",
+    severity: "positive",
+    icon: "TrendingUp",
+  },
+  {
+    type: "alert",
+    title: "Follow-up Required",
+    description: "Zaire Williams has missed 2 scheduled follow-ups",
+    severity: "warning",
+    icon: "AlertTriangle",
+  },
+  {
+    type: "insight",
+    title: "Program Success",
+    description: "Lightspeed program students show 85% engagement rate",
+    severity: "positive",
+    icon: "Users",
+  },
+  {
+    type: "recommendation",
+    title: "Intervention Needed",
+    description: "Consider group coaching for time management skills",
+    severity: "info",
+    icon: "MessageSquare",
+  },
+]
+
+export const recentNotes: StaffNote[] = [
+  {
+    id: 1,
+    author: "Tahir Lee",
+    content:
+      "Need to follow up on Micheal's interview preparation. He's showing great progress but needs confidence building.",
+    timestamp: "2 hours ago",
+    priority: "high",
+  },
+  {
+    id: 2,
+    author: "Barbara Cicalese",
+    content: "Amira is excelling in academic support. Consider advancing her to next program level.",
+    timestamp: "4 hours ago",
+    priority: "medium",
+  },
+  {
+    id: 3,
+    author: "Charles Mitchell",
+    content: "Group session on career exploration was very successful. Students engaged well.",
+    timestamp: "1 day ago",
+    priority: "low",
+  },
+]
+
 // Login and Settings page data
 export const staffMembers: StaffMember[] = [
   {
@@ -314,3 +407,11 @@ export const systemIntegrationData: SystemIntegrationData[] = [
     lastSync: "Real-time",
   },
 ]
+
+// Settings page default values
+export const defaultSystemSettings: SystemSettingsState = {
+  autoBackup: true,
+  aiSummaries: true,
+  dataRetention: "2years",
+  sessionTimeout: "8hours",
+}

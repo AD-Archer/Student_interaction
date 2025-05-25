@@ -13,13 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Shield, Sparkles, Database, Download, Upload, Trash2 } from "lucide-react"
 import React from "react"
-
-export type SystemSettingsState = {
-  autoBackup: boolean
-  aiSummaries: boolean
-  dataRetention: string
-  sessionTimeout: string
-}
+import { SystemSettingsState } from "@/lib/data"
 
 export const SystemSettings = ({ systemSettings, setSystemSettings }: {
   systemSettings: SystemSettingsState

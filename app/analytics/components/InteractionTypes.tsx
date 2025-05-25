@@ -8,13 +8,7 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { PieChart } from "lucide-react"
-
-export type InteractionType = {
-  type: string
-  count: number
-  percentage: number
-  trend: string
-}
+import { InteractionType } from "@/lib/data"
 
 // I keep this component focused on rendering the interaction types chart
 export const InteractionTypes = ({

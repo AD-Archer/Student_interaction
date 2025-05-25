@@ -7,12 +7,7 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { BarChart3 } from "lucide-react"
-
-export type InteractionTrend = {
-  month: string
-  interactions: number
-  followUps: number
-}
+import { InteractionTrend } from "@/lib/data"
 
 // I keep this component focused on rendering the trends chart
 export const InteractionTrends = ({ data }: { data: InteractionTrend[] }) => (

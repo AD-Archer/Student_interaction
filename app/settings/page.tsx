@@ -5,50 +5,36 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   User,
   Shield,
-  Database,
-  Mail,
   Globe,
-  Activity,
-  Sparkles,
   SettingsIcon,
 } from "lucide-react"
 import { StaffManagement } from "./components/StaffManagement"
 import { SystemSettings } from "./components/SystemSettings"
 import { SystemIntegrations } from "./components/SystemIntegrations"
-import { staffMembers } from "@/lib/data"
+import { staffMembers, systemIntegrationData } from "@/lib/data"
+import { resolveIconComponent } from "@/lib/utils"
 
-// Note: We're keeping the systemIntegrations definition here because it requires
-// actual Lucide icon components, while our centralized data would need mapping
-const systemIntegrations = [
-  {
-    name: "Playlab AI",
-    description: "AI-powered interaction summaries and insights",
-    status: "connected",
-    lastSync: "5 minutes ago",
-    icon: Sparkles,
-  },
-  {
-    name: "Email System",
-    description: "Automated follow-up emails and notifications",
-    status: "connected",
-    lastSync: "1 hour ago",
-    icon: Mail,
-  },
-  {
-    name: "Database Backup",
-    description: "Automated daily backups to secure cloud storage",
-    status: "active",
-    lastSync: "12 hours ago",
-    icon: Database,
-  },
-  {
-    name: "Analytics Engine",
-    description: "Real-time data processing and reporting",
-    status: "connected",
-    lastSync: "Real-time",
-    icon: Activity,
-  },
-]
+// Map our centralized system integration data with icon components
+const systemIntegrations = systemIntegrationData.map(integration => {
+  // Create an icon mapping for known integrations
+  const iconMapping: Record<string, keyof typeof import("lucide-react")> = {
+    "Playlab AI": "Sparkles",
+    "Email System": "Mail",
+    "Database Backup": "Database",
+    "Analytics Engine": "Activity"
+  };
+  
+  // Get the icon name or use a default
+  const iconName = iconMapping[integration.name] || "Globe";
+  
+  // Return the integration with the resolved icon component
+  return {
+    ...integration,
+    icon: resolveIconComponent(iconName)
+  };
+});
+
+import { defaultSystemSettings } from "@/lib/data"
 
 export default function SettingsPage() {
   const [] = useState({
@@ -58,12 +44,7 @@ export default function SettingsPage() {
     overdueReminders: true,
   })
 
-  const [systemSettings, setSystemSettings] = useState({
-    autoBackup: true,
-    aiSummaries: true,
-    dataRetention: "2years",
-    sessionTimeout: "8hours",
-  })
+  const [systemSettings, setSystemSettings] = useState(defaultSystemSettings)
 
   const getStatusColor = (status: string) => {
     switch (status) {

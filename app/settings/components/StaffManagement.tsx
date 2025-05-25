@@ -13,17 +13,10 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Edit, Lock, Plus } from "lucide-react"
 import React from "react"
+import { StaffMember } from "@/lib/data"
 
 export const StaffManagement = ({ staffMembers, getPermissionColor }: {
-  staffMembers: Array<{
-    id: number
-    name: string
-    email: string
-    role: string
-    status: string
-    lastLogin: string
-    permissions: string[]
-  }>,
+  staffMembers: StaffMember[],
   getPermissionColor: (permission: string) => string
 }) => (
   <div className="w-full">

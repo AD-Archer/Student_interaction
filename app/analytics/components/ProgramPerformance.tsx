@@ -7,13 +7,7 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-
-export type ProgramData = {
-  program: string
-  students: number
-  interactions: number
-  successRate: number
-}
+import { ProgramData } from "@/lib/data"
 
 // I keep this component focused on rendering the program performance grid
 export const ProgramPerformance = ({ data }: { data: ProgramData[] }) => (

@@ -10,15 +10,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Globe } from "lucide-react"
 import React from "react"
+import { SystemIntegration } from "@/lib/data"
 
 export const SystemIntegrations = ({ systemIntegrations, getStatusColor }: {
-  systemIntegrations: Array<{
-    name: string
-    description: string
-    status: string
-    lastSync: string
-    icon: React.ElementType
-  }>,
+  systemIntegrations: Array<SystemIntegration & { icon: React.ElementType }>,
   getStatusColor: (status: string) => string
 }) => (
   <Card className="shadow-lg w-full">

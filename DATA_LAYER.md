@@ -15,9 +15,9 @@ All mock data for the application is now centralized in `/lib/data.ts`. This fil
 ### Types Defined
 
 - `User`: Authentication user model used for login and display
-- `InteractionTrend`: Analytics trend data
-- `ProgramData`: Program performance metrics  
-- `StaffPerformanceData`: Staff performance metrics
+- `InteractionTrend`: Analytics trend data for charting
+- `ProgramData`: Program performance metrics for analytics
+- `StaffPerformanceData`: Staff performance metrics for analytics
 - `InteractionType`: Categories of interactions with statistics
 - `Interaction`: Detailed interaction records
 - `Student`: Student information including program
@@ -25,6 +25,9 @@ All mock data for the application is now centralized in `/lib/data.ts`. This fil
 - `StaffMember`: Staff information with authentication and permissions
 - `SystemIntegration`: External system connection details
 - `FormData`: Form submission structure
+- `AiInsight`: AI-generated insights for the dashboard
+- `StaffNote`: Staff notes and observations from dashboard
+- `SystemSettingsState`: Application settings configuration
 
 ### Benefits of Centralization
 
@@ -108,6 +111,129 @@ export async function deleteStaffMember(id: number): Promise<void> {
 }
 ```
 
+## Sample Database Schema
+
+Below is a sample Prisma schema that could be used to implement a database based on our current data structure:
+
+```prisma
+// This is a sample schema.prisma file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  role      String
+  password  String
+  status    String   @default("active")
+  lastLogin DateTime @default(now())
+  permissions String[]
+  interactions Interaction[] @relation("StaffMember")
+  notes     StaffNote[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Student {
+  id          String   @id
+  name        String
+  program     String
+  interactions Interaction[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Interaction {
+  id          Int      @id @default(autoincrement())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id])
+  type        String
+  reason      String
+  notes       String
+  date        DateTime
+  staffMemberId Int
+  staffMember User    @relation("StaffMember", fields: [staffMemberId], references: [id])
+  status      String
+  followUpRequired Boolean @default(false)
+  followUpDate DateTime?
+  followUpCompleted Boolean @default(false)
+  aiSummary   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StaffNote {
+  id          Int      @id @default(autoincrement())
+  authorId    Int
+  author      User     @relation(fields: [authorId], references: [id])
+  content     String
+  priority    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SystemSettings {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SystemIntegration {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  status      String
+  iconName    String
+  lastSync    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AiInsight {
+  id          Int      @id @default(autoincrement())
+  type        String
+  title       String
+  description String
+  severity    String
+  iconName    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+```
+
+## Special Handling Notes
+
+### Icon Components
+
+Some data structures reference icons that need to be rendered as React components. We handle this using our utility function in `lib/utils.ts`:
+
+1. **Icon Resolution Utility**:
+   - We've created a `resolveIconComponent` utility function that converts string icon names to actual Lucide icon components
+   - This allows us to store simple string names in our data layer while rendering actual components in the UI
+
+2. **For SystemIntegrations**:
+   - The central data model uses `systemIntegrationData` with string icon names
+   - In the settings page, we map this data to include actual icon components using our utility function
+   - The `SystemIntegrations` component accepts the mapped data with resolved icon components
+
+3. **For AI Insights**:
+   - We store the icon name as a string in the centralized data
+   - The component that renders these insights uses `resolveIconComponent` to dynamically resolve the icon names to components
+   
+This approach cleanly separates data concerns (what can be stored in a database) from UI concerns (React components) while providing a consistent pattern across the application.
+
+This approach separates data concerns (what can be stored in a database) from UI concerns (React components).
+
 ## Additional Considerations
 
 1. **Authentication**: Replace the mock login with a proper authentication system
@@ -117,3 +243,27 @@ export async function deleteStaffMember(id: number): Promise<void> {
 5. **Error Handling**: Implement proper error handling for database operations
 
 By following this migration path, you can smoothly transition from mock data to a real database without major architectural changes to your application.
+
+## Implementation Progress
+
+### Completed
+- ✅ Centralized all data in `/lib/data.ts` with proper TypeScript interfaces
+- ✅ Updated all components to use the centralized data
+- ✅ Created consistent patterns for handling UI components like icons
+- ✅ Added utility function `resolveIconComponent` to map string icon names to React components
+- ✅ Documented migration path to actual database implementation
+
+### Next Steps
+1. **Database Setup**:
+   - Choose a database (PostgreSQL recommended)
+   - Install Prisma or another ORM
+   - Create schema based on existing TypeScript interfaces
+
+2. **API Implementation**:
+   - Convert static exports to async functions
+   - Implement data fetching with proper error handling
+   - Add caching for performance optimization
+
+3. **Authentication Integration**:
+   - Replace mock authentication with proper auth system
+   - Implement role-based access control using existing permission structure
