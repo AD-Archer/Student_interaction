@@ -78,6 +78,7 @@ export interface Student {
   id: string
   name: string
   program?: string // Adding program for form component
+  staff?: string // Adding staff to associate students with staff members
 }
 
 export interface InteractionTypeOption {

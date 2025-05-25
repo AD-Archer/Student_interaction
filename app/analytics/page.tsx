@@ -17,6 +17,7 @@ import { interactions, formStudents } from "@/lib/data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { InsightsOverview } from "./components/insights-overview"
+import { Input } from "@/components/ui/input"
 
 // Identify students needing follow-up
 const getFollowUpRequiredInteractions = () => {
@@ -37,12 +38,30 @@ const getOverdueFollowUps = () => {
 export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [selectedProgram, setSelectedProgram] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("")
+
   // Stats derived from data
   const [stats, setStats] = useState({
     totalStudents: 0,
     needInteraction: 0,
     followUpsRequired: 0,
     followUpsOverdue: 0
+  })
+
+  const enrichedStudents = formStudents.map(student => {
+    const interaction = interactions.find(interaction => interaction.studentId === student.id)
+    return {
+      ...student,
+      staff: interaction ? interaction.staffMember : "N/A"
+    }
+  })
+
+  const filteredStudents = enrichedStudents.filter(student => {
+    const query = searchQuery.toLowerCase()
+    return (
+      student.name.toLowerCase().includes(query) ||
+      student.id.toString().includes(query)
+    )
   })
 
   // Calculate metrics based on selected program
@@ -101,8 +120,15 @@ export default function AnalyticsPage() {
               </p>
             </div>
             
-            {/* Program Filter */}
+            {/* Program Filter and Search */}
             <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search by name, staff, or ID"
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full"
+                />
+              </div>
               <Select 
                 defaultValue="all" 
                 onValueChange={(value) => setSelectedProgram(value)}
@@ -224,7 +250,7 @@ export default function AnalyticsPage() {
                 <CardContent className="space-y-2">
                   {stats.needInteraction > 0 ? (
                     <div className="border rounded-md divide-y">
-                      {formStudents
+                      {filteredStudents
                         .filter(student => 
                           selectedProgram === "all" ? true : student.program === selectedProgram
                         )
@@ -235,6 +261,9 @@ export default function AnalyticsPage() {
                               <p className="font-medium">{student.name}</p>
                               <p className="text-sm text-gray-500">
                                 ID: {student.id} • Program: {student.program}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Staff: {student.staff}
                               </p>
                             </div>
                             <Button variant="outline" size="sm">
@@ -270,6 +299,9 @@ export default function AnalyticsPage() {
                                 <p className="font-medium">{interaction.studentName}</p>
                                 <p className="text-sm text-gray-500">
                                   ID: {interaction.studentId} • Program: {interaction.program}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  Staff: {interaction.staffMember}
                                 </p>
                               </div>
                               <Button variant="outline" size="sm">
@@ -320,6 +352,9 @@ export default function AnalyticsPage() {
                                 </div>
                                 <p className="text-sm text-gray-500">
                                   ID: {interaction.studentId} • Program: {interaction.program}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  Staff: {interaction.staffMember}
                                 </p>
                               </div>
                               <Button variant="default" size="sm" className="bg-red-600 hover:bg-red-700">
