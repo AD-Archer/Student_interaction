@@ -24,24 +24,48 @@ import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AiInsightsPanel } from "./components/ai-insights-panel"
-import { interactions, students, interactionTypeOptions as interactionTypes } from "@/lib/data"
+import { interactions, students, interactionTypeOptions as interactionTypes, staffMembers } from "@/lib/data"
 
 export default function Page() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStudent, setSelectedStudent] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
+  const [selectedStaff, setSelectedStaff] = useState("all")
   const [showFilters, setShowFilters] = useState(false)
-  const [showAiInsights, setShowAiInsights] = useState(false) // Always show AI Insights as a sidebar
+  const [showAiInsights, setShowAiInsights] = useState(false)
+
+  // Transform staffMembers to use in filter dropdown
+  const staffOptions = [
+    { id: "all", name: "All Staff" },
+    ...staffMembers.map(staff => ({ id: staff.id.toString(), name: staff.name }))
+  ]
 
   const filteredInteractions = interactions.filter((interaction) => {
+    // Enhanced search functionality to search by first name, last name, or ID
+    const searchTermLower = searchTerm.toLowerCase()
+    
     const matchesSearch =
-      interaction.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      interaction.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      interaction.notes.toLowerCase().includes(searchTerm.toLowerCase())
+      // Student name search (first or last name)
+      interaction.studentName.toLowerCase().includes(searchTermLower) ||
+      // Student ID search
+      interaction.studentId.includes(searchTermLower) ||
+      // Content search
+      interaction.reason.toLowerCase().includes(searchTermLower) ||
+      interaction.notes.toLowerCase().includes(searchTermLower) ||
+      // Staff member search (first or last name)
+      interaction.staffMember.toLowerCase().includes(searchTermLower)
+      
+    // Filter by selected student
     const matchesStudent = selectedStudent === "all" || interaction.studentId === selectedStudent
+    
+    // Filter by selected interaction type
     const matchesType = selectedType === "all" || interaction.type.toLowerCase().includes(selectedType)
+    
+    // Filter by staff member
+    const matchesStaff = selectedStaff === "all" || 
+      interaction.staffMember === staffMembers.find(sm => sm.id.toString() === selectedStaff)?.name
 
-    return matchesSearch && matchesStudent && matchesType
+    return matchesSearch && matchesStudent && matchesType && matchesStaff
   })
 
   const getStatusColor = (interaction: (typeof interactions)[0]) => {
@@ -251,7 +275,7 @@ export default function Page() {
 
                   {/* Collapsible Filters */}
                   {showFilters && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
                       <Select
                         value={selectedStudent}
                         onValueChange={setSelectedStudent}
@@ -276,6 +300,19 @@ export default function Page() {
                           {interactionTypes.map((type) => (
                             <SelectItem key={type.value} value={type.value}>
                               {type.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Select value={selectedStaff} onValueChange={setSelectedStaff}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filter by staff" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {staffOptions.map((staff) => (
+                            <SelectItem key={staff.id} value={staff.id}>
+                              {staff.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
