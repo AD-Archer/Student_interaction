@@ -41,9 +41,12 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       if (typeof window !== 'undefined') {
         const currentUser = localStorage.getItem("currentUser")
         
+        // Ensure pathname is always a string before using it
+        const safePathname = pathname || "";
+
         if (currentUser) {
           setUser(JSON.parse(currentUser))
-        } else if (!publicRoutes.includes(pathname)) {
+        } else if (!publicRoutes.includes(safePathname)) {
           // Redirect to login if not authenticated and not on a public route
           router.push("/login")
         }
@@ -69,8 +72,9 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   const authContextValue = { user, isLoading }
   
   // For public routes or logged in users, render the children within the context
-  if (publicRoutes.includes(pathname) || user) {
-    console.log("AuthWrapper: Rendering children for", pathname);
+  const safePathname = pathname || "";
+  if (publicRoutes.includes(safePathname) || user) {
+    console.log("AuthWrapper: Rendering children for", safePathname);
     return (
       <AuthContext.Provider value={authContextValue}>
         {children}

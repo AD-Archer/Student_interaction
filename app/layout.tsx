@@ -1,5 +1,4 @@
 import type React from "react";
-import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -10,83 +9,27 @@ import { notFound } from 'next/navigation';
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "Launchpad Philly Student Interaction Tracker - Building 21",
-  description: "Student interaction tracking system for Building 21 Workforce Development",
-  metadataBase: new URL("https://interactiontracker.launchpadphilly.org"),
-  alternates: { canonical: "/" },
-  openGraph: {
-    title: "Launchpad Philly Student Interaction Tracker - Building 21",
-    description: "Student interaction tracking system for Building 21 Workforce Development.",
-    url: "https://interactiontracker.launchpadphilly.org",
-    siteName: "Launchpad Philly Student Interaction Tracker",
-    images: [
-      {
-        url: "/launchpadlogo.png",
-        width: 1200,
-        height: 630,
-        alt: "Launchpad Philly Logo",
-      },
-      {
-        url: "/images/kwan.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Kwan",
-      },
-    ],
-    locale: "en_US",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Launchpad Philly Student Interaction Tracker - Building 21",
-    description: "Student interaction tracking system for Building 21 Workforce Development.",
-    images: ["/launchpadlogo.png"],
-    creator: "@ad_archer_",
-  },
-  keywords: [
-    "Launchpad Philly",
-    "Building 21",
-    "Workforce Development",
-    "Student Tracking",
-    "Education Management",
-    "Student Progress",
-    "Antonio Archer",
-  ],
-  authors: [{ name: "Antonio Archer", url: "https://www.antonioarcher.com" }],
-  creator: "Antonio Archer",
-  publisher: "Building 21 Workforce Development",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  icons: {
-    icon: "/launchpadlogo.png",
-    shortcut: "/launchpadlogo.png",
-    other: [  { rel: "apple-touch-icon", url: "/launchpadlogo.png" }],
-    apple: "/launchpadlogo.png",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
-};
+const imageReferences = [
+  { url: '/launchpadlogo.png', description: 'Launchpad Philly Logo' },
+  { url: '/images/kwan.jpg', description: 'Kwan' },
+  { url: '/images/logos/antonioarcherlogo.png', description: 'Antonio Archer Logo' },
+  { url: '/images/logos/lp_logo_black.svg', description: 'Launchpad Logo Black' },
+  { url: '/images/logos/lp_logo_transparent.png', description: 'Launchpad Logo Transparent' },
+  { url: '/images/screenshots/desktop/ai_insights.png', description: 'AI Insights Desktop Screenshot' },
+  { url: '/images/screenshots/desktop/analytics.png', description: 'Analytics Desktop Screenshot' },
+  { url: '/images/screenshots/desktop/frontpage.png', description: 'Frontpage Desktop Screenshot' },
+  { url: '/images/screenshots/desktop/settings.png', description: 'Settings Desktop Screenshot' },
+  { url: '/images/screenshots/mobile/Ai_insights.png', description: 'AI Insights Mobile Screenshot' },
+  { url: '/images/screenshots/mobile/analytics.png', description: 'Analytics Mobile Screenshot' },
+  { url: '/images/screenshots/mobile/create.png', description: 'Create Mobile Screenshot' },
+  { url: '/images/screenshots/mobile/dashboard.png', description: 'Dashboard Mobile Screenshot' },
+];
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const keywordsString = Array.isArray(metadata.keywords) ? metadata.keywords.join(", ") : metadata.keywords || "";
-
   return (
     <html lang="en">
       <head>
@@ -128,7 +71,6 @@ export default function RootLayout({
                 'price': '0',
                 'priceCurrency': 'USD'
               },
-              'keywords': keywordsString
             }),
           }}
           strategy="afterInteractive"
@@ -148,5 +90,5 @@ export default function RootLayout({
   );
 }
 
-export { notFound };
+export { notFound, imageReferences };
 
