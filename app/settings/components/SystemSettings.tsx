@@ -25,8 +25,8 @@ export const SystemSettings = ({ systemSettings, setSystemSettings }: {
   systemSettings: SystemSettingsState
   setSystemSettings: React.Dispatch<React.SetStateAction<SystemSettingsState>>
 }) => (
-  <>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+  <div className="w-full">
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
@@ -149,5 +149,5 @@ export const SystemSettings = ({ systemSettings, setSystemSettings }: {
         </div>
       </CardContent>
     </Card>
-  </>
+  </div>
 )

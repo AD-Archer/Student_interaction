@@ -40,7 +40,7 @@ const students = [
   { id: "0004", name: "Zaire Williams", program: "liftoff" },
 ]
 
-export function MobileForm() {
+export function Form() {
   const router = useRouter()
   const [formData, setFormData] = useState<FormData>({
     studentName: "",

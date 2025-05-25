@@ -5,10 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   User,
   Shield,
-  Bell,
   Database,
   Mail,
-  Palette,
   Globe,
   Activity,
   Sparkles,
@@ -16,9 +14,8 @@ import {
 } from "lucide-react"
 import { StaffManagement } from "./components/StaffManagement"
 import { SystemSettings } from "./components/SystemSettings"
-import { NotificationPreferences } from "./components/NotificationPreferences"
 import { SystemIntegrations } from "./components/SystemIntegrations"
-import { AppearanceBranding } from "./components/AppearanceBranding"
+
 
 const staffMembers = [
   {
@@ -82,7 +79,7 @@ const systemIntegrations = [
 ]
 
 export default function SettingsPage() {
-  const [notifications, setNotifications] = useState({
+  const [] = useState({
     emailAlerts: true,
     pushNotifications: false,
     weeklyReports: true,
@@ -125,8 +122,8 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <main className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
+      <main className="px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="max-w-full mx-auto space-y-6 sm:space-y-8">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white">
             <div className="flex items-center space-x-3 sm:space-x-4">
@@ -143,60 +140,49 @@ export default function SettingsPage() {
           {/* Settings Tabs */}
           <Tabs defaultValue="staff" className="space-y-4 sm:space-y-6">
             <div className="overflow-x-auto">
-              <TabsList className="grid w-full grid-cols-5 bg-white shadow-sm min-w-max">
-                <TabsTrigger value="staff" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm">
-                  <User className="h-3 w-3 sm:h-4 sm:w-4" />
+              <TabsList className="grid w-full grid-cols-3 bg-white shadow-sm min-w-max">
+                <TabsTrigger value="staff" className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base">
+                  <User className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   <span>Staff</span>
                 </TabsTrigger>
-                <TabsTrigger value="system" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm">
-                  <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+                <TabsTrigger value="system" className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base">
+                  <Shield className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   <span>System</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="notifications"
-                  className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"
-                >
-                  <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>Alerts</span>
-                </TabsTrigger>
+                
                 <TabsTrigger
                   value="integrations"
-                  className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"
+                  className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base"
                 >
-                  <Globe className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <Globe className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   <span>Integrations</span>
                 </TabsTrigger>
-                <TabsTrigger value="appearance" className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm">
-                  <Palette className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>Theme</span>
-                </TabsTrigger>
+               
               </TabsList>
             </div>
 
             {/* Staff Management Tab */}
             <TabsContent value="staff" className="space-y-4 sm:space-y-6">
-              <StaffManagement staffMembers={staffMembers} getPermissionColor={getPermissionColor} />
+              <div className="w-full px-0 lg:px-0">
+                <StaffManagement staffMembers={staffMembers} getPermissionColor={getPermissionColor} />
+              </div>
             </TabsContent>
 
             {/* System Settings Tab */}
             <TabsContent value="system" className="space-y-4 sm:space-y-6">
-              <SystemSettings systemSettings={systemSettings} setSystemSettings={setSystemSettings} />
+              <div className="w-full px-0 lg:px-0">
+                <SystemSettings systemSettings={systemSettings} setSystemSettings={setSystemSettings} />
+              </div>
             </TabsContent>
 
-            {/* Notifications Tab */}
-            <TabsContent value="notifications" className="space-y-4 sm:space-y-6">
-              <NotificationPreferences notifications={notifications} setNotifications={setNotifications} />
-            </TabsContent>
 
             {/* Integrations Tab */}
             <TabsContent value="integrations" className="space-y-4 sm:space-y-6">
-              <SystemIntegrations systemIntegrations={systemIntegrations} getStatusColor={getStatusColor} />
+              <div className="w-full px-0 lg:px-0">
+                <SystemIntegrations systemIntegrations={systemIntegrations} getStatusColor={getStatusColor} />
+              </div>
             </TabsContent>
 
-            {/* Appearance Tab */}
-            <TabsContent value="appearance" className="space-y-4 sm:space-y-6">
-              <AppearanceBranding />
-            </TabsContent>
           </Tabs>
         </div>
       </main>

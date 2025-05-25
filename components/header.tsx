@@ -2,15 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { LogOut, Settings, Bell, Plus, Building2, BarChart3, TrendingUp, Menu } from "lucide-react"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { LogOut, Settings, Plus, Building2, BarChart3, TrendingUp, Menu } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import { LucideUser } from "lucide-react"
 import Link from "next/link"
@@ -78,7 +71,7 @@ export function Header() {
             </div>
             <div>
               <h1 className="text-lg md:text-xl font-bold text-gray-900">Launchpad</h1>
-              <p className="text-xs text-gray-500 hidden sm:block">Building 21 Workforce Development</p>
+              <p className="text-xs text-gray-500 hidden sm:block">Student Interaction Tracker</p>
             </div>
           </div>
 
@@ -88,43 +81,32 @@ export function Header() {
             {/* User Menu - Desktop */}
             {user && (
               <div className="hidden md:block">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="flex items-center space-x-2 px-3">
-                      <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-1.5 rounded-full">
-                        <LucideUser className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <div className="text-left hidden lg:block">
-                        <div className="text-sm font-medium">{user.name}</div>
-                        <div className="text-xs text-gray-500">{user.role}</div>
-                      </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onClick={() => router.push("/settings")}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Sign Out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center space-x-2 px-3"
+                  onClick={() => setIsMenuOpen(true)}
+                >
+                  <div className="bg-gradient-to-br from-blue-100 to-blue-200 p-1.5 rounded-full">
+                    <LucideUser className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="text-left hidden lg:block">
+                    <div className="text-sm font-medium">{user.name}</div>
+                    <div className="text-xs text-gray-500">{user.role}</div>
+                  </div>
+                </Button>
               </div>
             )}
 
-            {/* Mobile Menu */}
+            {/* Mobile Menu Trigger */}
+            <Button variant="outline" size="sm" className="md:hidden" onClick={() => setIsMenuOpen(true)}>
+              <Menu className="h-4 w-4" />
+            </Button>
+            
+            {/* Shared Sidebar Sheet - Used by both mobile menu and desktop user profile */}
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="md:hidden">
-                  <Menu className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
               <SheetContent side="right" className="w-80 p-0">
                 <div className="flex flex-col h-full">
-                  {/* Mobile Menu Header */}
+                  {/* Menu Header */}
                   <div className="p-6 border-b bg-gradient-to-r from-blue-600 to-blue-700 text-white">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -133,7 +115,7 @@ export function Header() {
                         </div>
                         <div>
                           <h2 className="font-bold">Launchpad</h2>
-                          <p className="text-sm text-blue-100">Workforce Development</p>
+                          <p className="text-sm text-blue-100">Student Interaction Tracker</p>
                         </div>
                       </div>
                     </div>
@@ -175,18 +157,14 @@ export function Header() {
                     {/* Quick Actions */}
                     <div className="mt-8 space-y-3">
                       <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Quick Actions</h3>
-                      <Button className="w-full justify-start bg-blue-600 hover:bg-blue-700" onClick={handleNavClick}>
+                      <Button className="w-full justify-start bg-blue-600 hover:bg-blue-700" onClick={() => { router.push("/create"); handleNavClick(); }}>
                         <Plus className="h-4 w-4 mr-3" />
                         New Interaction
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start" onClick={handleNavClick}>
-                        <Bell className="h-4 w-4 mr-3" />
-                        Notifications
                       </Button>
                     </div>
                   </div>
 
-                  {/* Mobile Menu Footer */}
+                  {/* Menu Footer */}
                   <div className="p-6 border-t bg-gray-50">
                     <Button
                       variant="outline"
