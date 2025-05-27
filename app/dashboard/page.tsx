@@ -34,8 +34,10 @@ import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AiInsightsPanel } from "./components/ai-insights-panel"
+import { useAuth } from "@/components/auth-wrapper"
 
 export default function Page() {
+  const { user: activeUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStudent, setSelectedStudent] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
@@ -43,6 +45,7 @@ export default function Page() {
   const [showFilters, setShowFilters] = useState(false)
   const [showAiInsights, setShowAiInsights] = useState(false)
   const [interactions, setInteractions] = useState(getInteractions())
+  const [aiPanelData, setAiPanelData] = useState<{ title: string; notes: string[] }>({ title: "", notes: [] });
 
   // Keep dashboard in sync with localStorage (e.g., after create/edit)
   useEffect(() => {
@@ -133,7 +136,7 @@ export default function Page() {
               <div className="space-y-4">
                 <div>
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">
-                    Welcome back, Tahir!
+                    Welcome back, {activeUser?.name || "User"}!
                   </h1>
                   <p className="text-blue-100 text-sm sm:text-base lg:text-lg mt-2">
                     You have{" "}
@@ -394,7 +397,18 @@ export default function Page() {
                               </span>
                             </div>
                           </div>
-                          <Button variant="outline" size="sm" className="ml-2 shrink-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="ml-2 shrink-0"
+                            onClick={() => {
+                              setAiPanelData({
+                                title: `Summary for ${interaction.studentName}`,
+                                notes: interaction.notes.split("\n"),
+                              });
+                              setShowAiInsights(true);
+                            }}
+                          >
                             <Eye className="h-4 w-4" />
                             <span className="hidden sm:inline ml-2">View</span>
                           </Button>
@@ -499,7 +513,7 @@ export default function Page() {
               {/* Sidebar for AI Insights, absolutely positioned */}
               {showAiInsights && (
                 <div className="absolute top-0 right-0 w-96 ml-4">
-                  <AiInsightsPanel isOpen={showAiInsights} onClose={() => setShowAiInsights(false)} />
+                  <AiInsightsPanel isOpen={showAiInsights} onClose={() => setShowAiInsights(false)} title={aiPanelData.title} notes={aiPanelData.notes} />
                 </div>
               )}
             </div>

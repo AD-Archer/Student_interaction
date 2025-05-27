@@ -18,9 +18,11 @@ import { resolveIconComponent } from "@/lib/utils"
 interface AiInsightsPanelProps {
 	isOpen: boolean
 	onClose: () => void
+	title?: string
+	notes?: string[]
 }
 
-export function AiInsightsPanel({ isOpen, onClose }: AiInsightsPanelProps) {
+export function AiInsightsPanel({ isOpen, onClose, title, notes }: AiInsightsPanelProps) {
 	const [newNote, setNewNote] = useState("")
 
 	const getSeverityColor = (severity: string) => {
@@ -75,12 +77,31 @@ export function AiInsightsPanel({ isOpen, onClose }: AiInsightsPanelProps) {
 					<div className="flex items-center justify-between">
 						<div className="flex items-center space-x-2">
 							<Sparkles className="h-5 w-5 text-blue-600" />
-							<h2 className="text-lg font-semibold text-gray-900">AI Insights & Notes</h2>
+							<h2 className="text-lg font-semibold text-gray-900">{title || "AI Insights & Notes"}</h2>
 						</div>
 						<Button variant="outline" size="sm" onClick={onClose}>
 							<X className="h-4 w-4" />
 						</Button>
 					</div>
+
+					{/* Interaction Notes */}
+					{notes && notes.length > 0 && (
+						<Card>
+							<CardHeader className="pb-3">
+								<CardTitle className="text-base">Interaction Notes</CardTitle>
+								<CardDescription>Summary of the interaction</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-2">
+								<ul className="list-disc pl-5">
+									{notes.map((note, index) => (
+										<li key={index} className="text-sm text-gray-700">
+											{note}
+										</li>
+									))}
+								</ul>
+							</CardContent>
+						</Card>
+					)}
 
 					{/* AI Insights */}
 					<Card>
