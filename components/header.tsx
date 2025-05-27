@@ -8,23 +8,16 @@ import { useRouter, usePathname } from "next/navigation"
 import { LucideUser } from "lucide-react"
 import Link from "next/link"
 import { User } from "@/lib/data"
+import { useAuth } from "@/components/auth-wrapper"
 
 export function Header() {
   const router = useRouter()
   const pathname = usePathname()
-  const [user, setUser] = useState<User | null>(null)
+  const { user, logout } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  useEffect(() => {
-    const currentUser = localStorage.getItem("currentUser")
-    if (currentUser) {
-      setUser(JSON.parse(currentUser))
-    }
-  }, [])
-
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser")
-    router.push("/login")
+  const handleLogout = async () => {
+    await logout()
     setIsMenuOpen(false)
   }
 

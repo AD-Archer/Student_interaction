@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Lock, Mail, Building2, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { staffMembers } from "@/lib/data"
+import { login } from "@/lib/api"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -27,20 +28,14 @@ export default function LoginPage() {
     setIsLoading(true)
     setError("")
 
-    // Simulate authentication delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Check credentials
-    const staff = staffMembers.find(
-      (member) => member.email === formData.email && member.password === formData.password,
-    )
-
-    if (staff) {
-      // Store user info in localStorage (in real app, use proper auth)
-      localStorage.setItem("currentUser", JSON.stringify(staff))
+    try {
+      const result = await login(formData.email, formData.password)
+      
+      // Redirect to home page - session is now stored in HTTP-only cookie
       router.push("/")
-    } else {
-      setError("Invalid email or password. Please try again.")
+    } catch (error: any) {
+      console.error("Login error:", error)
+      setError(error.message || "An error occurred during login. Please try again.")
     }
 
     setIsLoading(false)
@@ -49,7 +44,7 @@ export default function LoginPage() {
   const handleDemoLogin = (staffMember: (typeof staffMembers)[0]) => {
     setFormData({
       email: staffMember.email,
-      password: staffMember.password,
+      password: "staff123", // All demo accounts use this password
     })
   }
 

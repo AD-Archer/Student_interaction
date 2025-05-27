@@ -18,10 +18,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { CalendarDays, User, Send, Sparkles, ArrowLeft, CheckCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { FormData, formInteractionTypes as interactionTypes, formStudents as students, getInteractionById, createInteraction, updateInteraction } from "@/lib/data"
+import { FormData, formInteractionTypes as interactionTypes, formStudents as students } from "@/lib/data"
+import { interactionsAPI } from "@/lib/api"
+import { useAuth } from "@/components/auth-wrapper"
 
 export function Form({ interactionId }: { interactionId?: number }) {
   const router = useRouter()
+  const { user } = useAuth()
   const [formData, setFormData] = useState<FormData>({
     studentName: "",
     studentId: "",
@@ -33,6 +36,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [showAiSummary, setShowAiSummary] = useState(false)
   const [aiSummary, setAiSummary] = useState("")
   const [notesLoading, setNotesLoading] = useState(false)
@@ -57,20 +61,27 @@ export function Form({ interactionId }: { interactionId?: number }) {
   // Prefill form if editing
   useEffect(() => {
     if (interactionId !== undefined) {
-      const existing = getInteractionById(interactionId)
-      if (existing) {
-        setFormData({
-          studentName: existing.studentName,
-          studentId: existing.studentId,
-          interactionType: existing.type,
-          reason: existing.reason,
-          notes: existing.notes,
-          followUpEmail: existing.followUp.required,
-          followUpDate: existing.followUp.date || "",
-        })
-        setFollowUpStudent(existing.followUp.required)
-        setFollowUpStaff(false) // I don't track staff follow-up separately in data
+      const loadInteraction = async () => {
+        try {
+          const interaction = await interactionsAPI.getById(interactionId)
+          setFormData({
+            studentName: interaction.studentName,
+            studentId: interaction.studentId,
+            interactionType: interaction.type,
+            reason: interaction.reason,
+            notes: interaction.notes,
+            followUpEmail: interaction.followUp.required,
+            followUpDate: interaction.followUp.date || "",
+          })
+          setFollowUpStudent(interaction.followUp.required)
+          setFollowUpStaff(false) // I don't track staff follow-up separately in data
+        } catch (error) {
+          console.error('Error loading interaction:', error)
+          // Handle error - perhaps show a message to user
+          setLoading(false)
+        }
       }
+      loadInteraction()
     }
   }, [interactionId])
 
@@ -78,49 +89,57 @@ export function Form({ interactionId }: { interactionId?: number }) {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Build interaction object for storage
-    const selectedStudent = students.find(s => s.id === formData.studentId)
-    const now = new Date()
-    const dateStr = now.toISOString().slice(0, 10)
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    const baseInteraction = {
-      studentName: selectedStudent?.name || formData.studentName,
-      studentId: formData.studentId,
-      program: selectedStudent?.program || "",
-      type: formData.interactionType,
-      reason: formData.reason,
-      notes: formData.notes,
-      date: dateStr,
-      time: timeStr,
-      staffMember: "Tahir Lee", // I use static staff for now
-      status: "completed",
-      followUp: {
-        required: formData.followUpEmail,
-        date: formData.followUpEmail ? formData.followUpDate : undefined,
-        overdue: false, // I don't calculate overdue here
-      },
-      aiSummary: generateAiSummary(formData),
-    }
+    try {
+      // Build interaction object for API
+      const selectedStudent = students.find(s => s.id === formData.studentId)
+      const now = new Date()
+      const dateStr = now.toISOString().slice(0, 10)
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      
+      const interactionData = {
+        studentName: selectedStudent?.name || formData.studentName,
+        studentId: formData.studentId,
+        program: selectedStudent?.program || "",
+        type: formData.interactionType,
+        reason: formData.reason,
+        notes: formData.notes,
+        date: dateStr,
+        time: timeStr,
+        staffMember: user?.name || "Unknown Staff",
+        staffMemberId: 1, // TODO: Get actual staff ID from user when available
+        aiSummary: generateAiSummary(formData),
+        followUp: {
+          required: formData.followUpEmail,
+          date: formData.followUpEmail ? formData.followUpDate : undefined,
+          overdue: false,
+        }
+      }
 
-    let saved
-    if (interactionId !== undefined) {
-      // Update existing
-      saved = updateInteraction(interactionId, baseInteraction)
-    } else {
-      // Create new
-      saved = createInteraction(baseInteraction)
-    }
+      let saved
+      if (interactionId !== undefined) {
+        // Update existing
+        saved = await interactionsAPI.update(interactionId, interactionData)
+      } else {
+        // Create new
+        saved = await interactionsAPI.create(interactionData)
+      }
 
-    if (saved && saved.aiSummary) {
-      setAiSummary(saved.aiSummary)
-      setShowAiSummary(true)
-    }
-    setIsSubmitting(false)
+      if (saved && saved.aiSummary) {
+        setAiSummary(saved.aiSummary)
+        setShowAiSummary(true)
+      }
 
-    // Redirect to dashboard after a short delay
-    setTimeout(() => {
-      router.push("/")
-    }, 2000)
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        router.push("/")
+      }, 2000)
+
+    } catch (error) {
+      console.error('Error saving interaction:', error)
+      // TODO: Show error message to user
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const generateAiSummary = (data: FormData): string => {
