@@ -1,4 +1,4 @@
-import { Form } from "@/components/form"
+import { Form } from "@/app/create/components/form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
