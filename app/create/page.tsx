@@ -1,14 +1,27 @@
+// -----------------------------------------------------------------------------
+// app/create/page.tsx
+// This page renders the student interaction creation/editing form. It detects
+// the 'id' query parameter to determine if the user is editing an existing
+// interaction, and passes it to the form for prefill and update logic.
+// -----------------------------------------------------------------------------
+
+"use client"
+
 import { Form } from "@/app/create/components/form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 
 export default function CreateInteractionPage() {
+  // I check for an 'id' query parameter to support editing
+  const searchParams = useSearchParams()
+  const id = searchParams?.get("id")
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-
-
+      {/* ...existing code... */}
       <main className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="max-w-2xl mx-auto">
           <Link href="/">
@@ -23,7 +36,8 @@ export default function CreateInteractionPage() {
               <CardDescription>Fill out all required fields to log the student interaction</CardDescription>
             </CardHeader>
             <CardContent>
-              <Form />
+              {/* I pass the id (if present) to the form for edit mode */}
+              <Form interactionId={id ? Number(id) : undefined} />
             </CardContent>
           </Card>
         </div>

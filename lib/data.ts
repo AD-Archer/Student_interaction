@@ -416,3 +416,66 @@ export const defaultSystemSettings: SystemSettingsState = {
   dataRetention: "2years",
   sessionTimeout: "8hours",
 }
+
+// -----------------------------------------------------------------------------
+// LocalStorage CRUD utilities for Interactions
+// These functions provide persistent storage for student interactions using
+// the browser's localStorage API. This allows the app to create, read, update,
+// and list interactions without a backend. All interaction data is stored under
+// the 'interactions' key in localStorage. If no data exists, we fall back to
+// the initial mock data above. Future devs: Replace with real API/database calls.
+// -----------------------------------------------------------------------------
+
+/**
+ * Get all interactions from localStorage, or fall back to initial mock data.
+ * I use this everywhere that needs the current list of interactions.
+ */
+export function getInteractions(): Interaction[] {
+  if (typeof window === 'undefined') return interactions // SSR fallback
+  const raw = localStorage.getItem('interactions')
+  if (!raw) return interactions
+  try {
+    return JSON.parse(raw) as Interaction[]
+  } catch {
+    return interactions
+  }
+}
+
+/**
+ * Get a single interaction by id. Returns undefined if not found.
+ */
+export function getInteractionById(id: number): Interaction | undefined {
+  return getInteractions().find((i) => i.id === id)
+}
+
+/**
+ * Create a new interaction and persist it. Returns the new interaction.
+ * I auto-increment the id based on the highest current id.
+ */
+export function createInteraction(newInteraction: Omit<Interaction, 'id'>): Interaction {
+  const all = getInteractions()
+  const nextId = all.length > 0 ? Math.max(...all.map(i => i.id)) + 1 : 1
+  const interaction: Interaction = { ...newInteraction, id: nextId }
+  localStorage.setItem('interactions', JSON.stringify([interaction, ...all]))
+  return interaction
+}
+
+/**
+ * Update an existing interaction by id. Returns the updated interaction, or undefined if not found.
+ */
+export function updateInteraction(id: number, updated: Partial<Interaction>): Interaction | undefined {
+  const all = getInteractions()
+  const idx = all.findIndex(i => i.id === id)
+  if (idx === -1) return undefined
+  const merged = { ...all[idx], ...updated }
+  all[idx] = merged
+  localStorage.setItem('interactions', JSON.stringify(all))
+  return merged
+}
+
+/**
+ * Replace all interactions (for bulk operations or resets).
+ */
+export function setInteractions(newList: Interaction[]): void {
+  localStorage.setItem('interactions', JSON.stringify(newList))
+}

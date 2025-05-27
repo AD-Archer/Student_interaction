@@ -1,6 +1,16 @@
+// -----------------------------------------------------------------------------
+// app/dashboard/page.tsx
+// Dashboard page for Launchpad Philly Student Interaction Tracker.
+// This page displays recent student interactions, stats, and allows filtering,
+// searching, and editing. Interactions are loaded dynamically from localStorage
+// using getInteractions() for persistence. All UI updates automatically reflect
+// the latest data. Future devs: Replace localStorage with real API/database.
+// -----------------------------------------------------------------------------
+
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { getInteractions, students, interactionTypeOptions as interactionTypes, staffMembers } from "@/lib/data"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +34,6 @@ import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AiInsightsPanel } from "./components/ai-insights-panel"
-import { interactions, students, interactionTypeOptions as interactionTypes, staffMembers } from "@/lib/data"
 
 export default function Page() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -33,6 +42,17 @@ export default function Page() {
   const [selectedStaff, setSelectedStaff] = useState("all")
   const [showFilters, setShowFilters] = useState(false)
   const [showAiInsights, setShowAiInsights] = useState(false)
+  const [interactions, setInteractions] = useState(getInteractions())
+
+  // Keep dashboard in sync with localStorage (e.g., after create/edit)
+  useEffect(() => {
+    // I listen for storage events so the dashboard updates if another tab changes data
+    const sync = () => setInteractions(getInteractions())
+    window.addEventListener('storage', sync)
+    // I also refresh on mount in case data changed elsewhere
+    sync()
+    return () => window.removeEventListener('storage', sync)
+  }, [])
 
   // Transform staffMembers to use in filter dropdown
   const staffOptions = [
@@ -427,7 +447,15 @@ export default function Page() {
 
                           {/* Action Buttons */}
                           <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
-                            <Button variant="outline" size="sm" className="flex-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => {
+                                // Navigate to /create with the interaction ID as a query parameter
+                                window.location.href = `/create?id=${interaction.id}`;
+                              }}
+                            >
                               <Edit className="h-4 w-4 mr-2" />
                               Edit
                             </Button>
