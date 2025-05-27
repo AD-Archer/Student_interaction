@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
 // GET /api/students - Fetch all students
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const students = await db.student.findMany({
       orderBy: {

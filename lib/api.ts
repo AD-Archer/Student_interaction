@@ -1,4 +1,50 @@
 // API utility functions for frontend
+
+// Type definitions for API data
+interface CreateInteractionData {
+  studentName: string
+  studentId: string
+  program?: string
+  type: string
+  reason: string
+  notes: string
+  date: string
+  time: string
+  staffMember: string
+  staffMemberId: number
+  aiSummary?: string
+  followUp: {
+    required: boolean
+    date?: string
+    overdue?: boolean
+  }
+}
+
+interface UpdateInteractionData {
+  studentName?: string
+  studentId?: string
+  program?: string
+  type?: string
+  reason?: string
+  notes?: string
+  date?: string
+  time?: string
+  staffMember?: string
+  staffMemberId?: number
+  aiSummary?: string
+  followUp?: {
+    required: boolean
+    date?: string
+    overdue?: boolean
+  }
+}
+
+interface CreateStudentData {
+  id: string
+  name: string
+  program: string
+}
+
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://your-domain.com/api' 
   : '/api'
@@ -73,7 +119,7 @@ export const interactionsAPI = {
     return response.json()
   },
 
-  async create(data: any) {
+  async create(data: CreateInteractionData) {
     const response = await fetch(`${API_BASE_URL}/interactions`, {
       method: 'POST',
       headers: {
@@ -90,7 +136,7 @@ export const interactionsAPI = {
     return response.json()
   },
 
-  async update(id: number, data: any) {
+  async update(id: number, data: UpdateInteractionData) {
     const response = await fetch(`${API_BASE_URL}/interactions/${id}`, {
       method: 'PUT',
       headers: {
@@ -131,7 +177,7 @@ export const studentsAPI = {
     return response.json()
   },
 
-  async create(data: { id: string; name: string; program: string }) {
+  async create(data: CreateStudentData) {
     const response = await fetch(`${API_BASE_URL}/students`, {
       method: 'POST',
       headers: {
@@ -143,6 +189,32 @@ export const studentsAPI = {
     if (!response.ok) {
       const error = await response.json()
       throw new Error(error.error || 'Failed to create student')
+    }
+    
+    return response.json()
+  }
+}
+
+// Staff API functions
+export const staffAPI = {
+  async getAll() {
+    const response = await fetch(`${API_BASE_URL}/staff`)
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch staff')
+    }
+    
+    return response.json()
+  }
+}
+
+// Interaction Types API functions
+export const interactionTypesAPI = {
+  async getAll() {
+    const response = await fetch(`${API_BASE_URL}/interaction-types`)
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch interaction types')
     }
     
     return response.json()

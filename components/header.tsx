@@ -1,17 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { LogOut, Settings, Plus, Building2, BarChart3, TrendingUp, Menu } from "lucide-react"
-import { useRouter, usePathname } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { LucideUser } from "lucide-react"
 import Link from "next/link"
-import { User } from "@/lib/data"
 import { useAuth } from "@/components/auth-wrapper"
 
 export function Header() {
-  const router = useRouter()
   const pathname = usePathname()
   const { user, logout } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)

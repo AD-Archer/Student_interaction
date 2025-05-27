@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
 // GET /api/interactions - Fetch all interactions
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const interactions = await db.interaction.findMany({
       include: {

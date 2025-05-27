@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
         authenticated: true
       })
       
-    } catch (jwtError) {
+    } catch {
       // Token is invalid or expired
       return NextResponse.json(
         { user: null, authenticated: false },

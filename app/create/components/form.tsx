@@ -36,7 +36,6 @@ export function Form({ interactionId }: { interactionId?: number }) {
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [showAiSummary, setShowAiSummary] = useState(false)
   const [aiSummary, setAiSummary] = useState("")
   const [notesLoading, setNotesLoading] = useState(false)
@@ -78,7 +77,6 @@ export function Form({ interactionId }: { interactionId?: number }) {
         } catch (error) {
           console.error('Error loading interaction:', error)
           // Handle error - perhaps show a message to user
-          setLoading(false)
         }
       }
       loadInteraction()

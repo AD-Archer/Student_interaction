@@ -29,13 +29,17 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const result = await login(formData.email, formData.password)
+      await login(formData.email, formData.password)
       
       // Redirect to home page - session is now stored in HTTP-only cookie
       router.push("/")
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login error:", error)
-      setError(error.message || "An error occurred during login. Please try again.")
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError("An error occurred during login. Please try again.")
+      }
     }
 
     setIsLoading(false)
