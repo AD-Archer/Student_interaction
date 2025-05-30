@@ -1,3 +1,10 @@
+/**
+ * API route for individual interaction operations by ID.
+ * Handles GET, PUT, DELETE for dynamic [id] under /api/interactions.
+ * Next.js App Router provides context.params as a Promise<{ id: string }>.
+ * Future maintainers: update param extraction if App Router API evolves.
+ */
+
 // API route for individual interaction operations
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
@@ -5,10 +12,11 @@ import { db } from '@/lib/db'
 // GET /api/interactions/[id] - Fetch single interaction
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idParam } = await context.params
+    const id = parseInt(idParam)
     
     if (isNaN(id)) {
       return NextResponse.json(
@@ -73,10 +81,11 @@ export async function GET(
 // PUT /api/interactions/[id] - Update interaction
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idParam } = await context.params
+    const id = parseInt(idParam)
     
     if (isNaN(id)) {
       return NextResponse.json(
@@ -166,10 +175,11 @@ export async function PUT(
 // DELETE /api/interactions/[id] - Delete interaction
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id)
+    const { id: idParam } = await context.params
+    const id = parseInt(idParam)
     
     if (isNaN(id)) {
       return NextResponse.json(
