@@ -1,9 +1,25 @@
 // API route for staff operations
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+// Build CORS headers per request to support credentials
+function buildCorsHeaders(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*'
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true'
+  }
+}
+
+// Handle preflight requests
+export async function OPTIONS(request: NextRequest) {
+  return NextResponse.json(null, { status: 204, headers: buildCorsHeaders(request) })
+}
+
 // GET /api/staff - Fetch all staff members
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const staff = await db.user.findMany({
       where: {
@@ -30,13 +46,13 @@ export async function GET() {
       ...staff
     ]
 
-    return NextResponse.json(staffWithAll)
+    return NextResponse.json(staffWithAll, { headers: buildCorsHeaders(request) })
 
   } catch (error) {
     console.error('Error fetching staff:', error)
     return NextResponse.json(
       { error: 'Failed to fetch staff' },
-      { status: 500 }
+      { status: 500, headers: buildCorsHeaders(request) }
     )
   }
 }

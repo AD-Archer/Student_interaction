@@ -45,9 +45,7 @@ interface CreateStudentData {
   program: string
 }
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-domain.com/api' 
-  : '/api'
+const API_BASE_URL = '/api'
 
 // Auth API functions
 export const authAPI = {
@@ -57,6 +55,7 @@ export const authAPI = {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Include cookies for session
       body: JSON.stringify({ email, password }),
     })
     
@@ -74,6 +73,7 @@ export const authAPI = {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Include cookies for session
     })
     
     if (!response.ok) {
@@ -100,7 +100,9 @@ export const authAPI = {
 // Interactions API functions
 export const interactionsAPI = {
   async getAll() {
-    const response = await fetch(`${API_BASE_URL}/interactions`)
+    const response = await fetch(`${API_BASE_URL}/interactions`, {
+      credentials: 'include', // Include cookies for session
+    })
     
     if (!response.ok) {
       throw new Error('Failed to fetch interactions')
@@ -110,7 +112,9 @@ export const interactionsAPI = {
   },
 
   async getById(id: number) {
-    const response = await fetch(`${API_BASE_URL}/interactions/${id}`)
+    const response = await fetch(`${API_BASE_URL}/interactions/${id}`, {
+      credentials: 'include', // Include cookies for session
+    })
     
     if (!response.ok) {
       throw new Error('Failed to fetch interaction')
@@ -125,6 +129,7 @@ export const interactionsAPI = {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Include cookies for session
       body: JSON.stringify(data),
     })
     
@@ -142,6 +147,7 @@ export const interactionsAPI = {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Include cookies for session
       body: JSON.stringify(data),
     })
     
@@ -155,6 +161,7 @@ export const interactionsAPI = {
   async delete(id: number) {
     const response = await fetch(`${API_BASE_URL}/interactions/${id}`, {
       method: 'DELETE',
+      credentials: 'include', // Include cookies for session
     })
     
     if (!response.ok) {
@@ -168,7 +175,9 @@ export const interactionsAPI = {
 // Students API functions
 export const studentsAPI = {
   async getAll() {
-    const response = await fetch(`${API_BASE_URL}/students`)
+    const response = await fetch(`${API_BASE_URL}/students`, {
+      credentials: 'include', // Include cookies for session
+    })
     
     if (!response.ok) {
       throw new Error('Failed to fetch students')
@@ -183,6 +192,7 @@ export const studentsAPI = {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Include cookies for session
       body: JSON.stringify(data),
     })
     
@@ -198,7 +208,9 @@ export const studentsAPI = {
 // Staff API functions
 export const staffAPI = {
   async getAll() {
-    const response = await fetch(`${API_BASE_URL}/staff`)
+    const response = await fetch(`${API_BASE_URL}/staff`, {
+      credentials: 'include', // Include cookies for session
+    })
     
     if (!response.ok) {
       throw new Error('Failed to fetch staff')
@@ -211,7 +223,9 @@ export const staffAPI = {
 // Interaction Types API functions
 export const interactionTypesAPI = {
   async getAll() {
-    const response = await fetch(`${API_BASE_URL}/interaction-types`)
+    const response = await fetch(`${API_BASE_URL}/interaction-types`, {
+      credentials: 'include', // Include cookies for session
+    })
     
     if (!response.ok) {
       throw new Error('Failed to fetch interaction types')

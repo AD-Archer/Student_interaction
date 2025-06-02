@@ -2,8 +2,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+// Build CORS headers per request to support credentials
+function buildCorsHeaders(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*'
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true'
+  }
+}
+
+// Handle preflight requests
+export async function OPTIONS(request: NextRequest) {
+  return NextResponse.json(null, { status: 204, headers: buildCorsHeaders(request) })
+}
+
 // GET /api/students - Fetch all students
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const students = await db.student.findMany({
       orderBy: {
@@ -17,13 +33,13 @@ export async function GET() {
       ...students
     ]
 
-    return NextResponse.json(studentsWithAll)
+    return NextResponse.json(studentsWithAll, { headers: buildCorsHeaders(request) })
 
   } catch (error) {
     console.error('Error fetching students:', error)
     return NextResponse.json(
       { error: 'Failed to fetch students' },
-      { status: 500 }
+      { status: 500, headers: buildCorsHeaders(request) }
     )
   }
 }

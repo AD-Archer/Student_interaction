@@ -8,6 +8,12 @@
 // API route for individual interaction operations
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { buildCorsHeaders, handleOptionsRequest } from '@/lib/cors'
+
+// Handle preflight requests
+export async function OPTIONS(request: NextRequest) {
+  return handleOptionsRequest(request)
+}
 
 // GET /api/interactions/[id] - Fetch single interaction
 export async function GET(
@@ -21,7 +27,7 @@ export async function GET(
     if (isNaN(id)) {
       return NextResponse.json(
         { error: 'Invalid interaction ID' },
-        { status: 400 }
+        { status: 400, headers: buildCorsHeaders(request) }
       )
     }
 
@@ -43,7 +49,7 @@ export async function GET(
     if (!interaction) {
       return NextResponse.json(
         { error: 'Interaction not found' },
-        { status: 404 }
+        { status: 404, headers: buildCorsHeaders(request) }
       )
     }
 
@@ -68,13 +74,13 @@ export async function GET(
       }
     }
 
-    return NextResponse.json(formattedInteraction)
+    return NextResponse.json(formattedInteraction, { headers: buildCorsHeaders(request) })
 
   } catch (error) {
     console.error('Error fetching interaction:', error)
     return NextResponse.json(
       { error: 'Failed to fetch interaction' },
-      { status: 500 }
+      { status: 500, headers: buildCorsHeaders(request) }
     )
   }
 }
