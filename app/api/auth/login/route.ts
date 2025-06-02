@@ -41,7 +41,8 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         password: true,
         role: true,
         status: true,

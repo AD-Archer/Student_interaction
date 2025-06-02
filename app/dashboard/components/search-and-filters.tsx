@@ -43,7 +43,10 @@ export function SearchAndFilters({
   // Transform staff to use in filter dropdown
   const staffOptions = [
     { id: "all", name: "All Staff" },
-    ...staff.map(staffMember => ({ id: staffMember.id.toString(), name: staffMember.name }))
+    ...staff.map(staffMember => ({ 
+      id: staffMember.id.toString(), 
+      name: `${staffMember.firstName} ${staffMember.lastName}` 
+    }))
   ]
 
   return (
@@ -95,7 +98,7 @@ export function SearchAndFilters({
                 <SelectContent>
                   {students.map((student) => (
                     <SelectItem key={student.id} value={student.id}>
-                      {student.name}
+                      {student.id === "all" ? "All Students" : `${student.firstName} ${student.lastName}`}
                     </SelectItem>
                   ))}
                 </SelectContent>

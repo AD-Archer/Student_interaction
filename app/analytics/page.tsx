@@ -58,9 +58,13 @@ export default function AnalyticsPage() {
 
   const filteredStudents = enrichedStudents.filter(student => {
     const query = searchQuery.toLowerCase()
+    // I need to safely handle cases where student names might be undefined and combine first/last names
+    const studentName = `${student.firstName || ''} ${student.lastName || ''}`.toLowerCase().trim()
+    const studentId = student.id?.toString() || ''
+    
     return (
-      student.name.toLowerCase().includes(query) ||
-      student.id.toString().includes(query)
+      studentName.includes(query) ||
+      studentId.includes(query)
     )
   })
 
@@ -258,7 +262,7 @@ export default function AnalyticsPage() {
                         .map((student, index) => (
                           <div key={index} className="p-4 flex justify-between items-center">
                             <div>
-                              <p className="font-medium">{student.name}</p>
+                              <p className="font-medium">{`${student.firstName || ''} ${student.lastName || ''}`.trim()}</p>
                               <p className="text-sm text-gray-500">
                                 ID: {student.id} • Program: {student.program}
                               </p>

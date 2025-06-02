@@ -11,7 +11,8 @@ export async function GET() {
       },
       select: {
         id: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         email: true,
         role: true,
         status: true,
@@ -19,13 +20,13 @@ export async function GET() {
         lastLogin: true
       },
       orderBy: {
-        name: 'asc'
+        firstName: 'asc'
       }
     })
 
     // Add "All Staff" option for compatibility with frontend filters
     const staffWithAll = [
-      { id: "all", name: "All Staff", email: "", role: "", status: "", permissions: [], lastLogin: null },
+      { id: "all", firstName: "All", lastName: "Staff", email: "", role: "", status: "", permissions: [], lastLogin: null },
       ...staff
     ]
 

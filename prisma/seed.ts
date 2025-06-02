@@ -11,19 +11,22 @@ async function main() {
   const staffMembers = [
     {
       email: "barbara@launchpad.org",
-      name: "Barbara Cicalese",
+      firstName: "Barbara",
+      lastName: "Cicalese",
       role: "Senior Counselor",
       permissions: ["read", "write", "admin"],
     },
     {
       email: "tahir@launchpad.org", 
-      name: "Tahir Lee",
+      firstName: "Tahir",
+      lastName: "Lee",
       role: "Workforce Coordinator",
       permissions: ["read", "write", "admin"],
     },
     {
       email: "charles@launchpad.org",
-      name: "Charles Mitchell", 
+      firstName: "Charles",
+      lastName: "Mitchell", 
       role: "Program Manager",
       permissions: ["read", "write"],
     }
@@ -46,10 +49,10 @@ async function main() {
 
   // Create students
   const students = [
-    { id: "0001", name: "Micheal Newman", program: "foundations" },
-    { id: "0002", name: "Amira Johnson", program: "101" },
-    { id: "0003", name: "Koleona Smith", program: "lightspeed" },
-    { id: "0004", name: "Zaire Williams", program: "liftoff" },
+    { id: "0001", firstName: "Micheal", lastName: "Newman", program: "foundations" },
+    { id: "0002", firstName: "Amira", lastName: "Wilson", program: "101" },
+    { id: "0003", firstName: "Koleona", lastName: "Chrek", program: "lightspeed" },
+    { id: "0004", firstName: "Zaire", lastName: "DeBose", program: "liftoff" },
   ]
 
   console.log('Creating students...')
@@ -70,7 +73,8 @@ async function main() {
     const interactions = [
       {
         studentId: "0001",
-        studentName: "Micheal Newman",
+        studentFirstName: "Micheal",
+        studentLastName: "Newman",
         program: "foundations",
         type: "Coaching",
         reason: "Interview preparation and confidence building",
@@ -87,7 +91,8 @@ async function main() {
       },
       {
         studentId: "0002", 
-        studentName: "Amira Johnson",
+        studentFirstName: "Amira",
+        studentLastName: "Johnson",
         program: "101",
         type: "Academic Support",
         reason: "Course planning assistance",
@@ -104,7 +109,8 @@ async function main() {
       },
       {
         studentId: "0003",
-        studentName: "Koleona Smith", 
+        studentFirstName: "Koleona",
+        studentLastName: "Smith", 
         program: "lightspeed",
         type: "Career Counseling",
         reason: "Industry networking and job search strategies",

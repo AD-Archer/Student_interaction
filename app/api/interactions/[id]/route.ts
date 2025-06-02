@@ -32,7 +32,8 @@ export async function GET(
         staff: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             role: true
           }
         }
@@ -49,7 +50,7 @@ export async function GET(
     // Transform data to match frontend format
     const formattedInteraction = {
       id: interaction.id,
-      studentName: interaction.studentName,
+      studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
       studentId: interaction.studentId,
       program: interaction.program,
       type: interaction.type,
@@ -110,11 +111,16 @@ export async function PUT(
       followUp
     } = data
 
+    // Split student name into first and last name for storage
+    const [studentFirstName, ...lastNameParts] = studentName?.split(' ') || ['', '']
+    const studentLastName = lastNameParts.join(' ')
+
     // Update the interaction
     const interaction = await db.interaction.update({
       where: { id },
       data: {
-        studentName,
+        studentFirstName,
+        studentLastName,
         studentId,
         program,
         type,
@@ -133,7 +139,8 @@ export async function PUT(
         staff: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             role: true
           }
         }
@@ -143,7 +150,7 @@ export async function PUT(
     // Transform response to match frontend format
     const formattedInteraction = {
       id: interaction.id,
-      studentName: interaction.studentName,
+      studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
       studentId: interaction.studentId,
       program: interaction.program,
       type: interaction.type,

@@ -17,7 +17,8 @@ datasource db {
 model User {
   id          Int      @id @default(autoincrement())
   email       String   @unique
-  name        String
+  firstName   String
+  lastName    String
   password    String   // Will be hashed
   role        String
   status      String   @default("active")
@@ -37,9 +38,10 @@ model User {
 
 // Student model
 model Student {
-  id       String @id // Using string for student IDs like "0001"
-  name     String
-  program  String // "foundations", "101", "lightspeed", "liftoff"
+  id        String @id // Using string for student IDs like "0001"
+  firstName String
+  lastName  String
+  program   String // "foundations", "101", "lightspeed", "liftoff"
   
   // Relations
   interactions Interaction[]
@@ -54,7 +56,8 @@ model Student {
 model Interaction {
   id           Int      @id @default(autoincrement())
   studentId    String
-  studentName  String   // Denormalized for easier queries
+  studentFirstName String // Denormalized for easier queries
+  studentLastName  String // Denormalized for easier queries
   program      String
   type         String   // "Coaching", "Academic Support", etc.
   reason       String

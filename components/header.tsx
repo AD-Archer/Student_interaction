@@ -76,7 +76,7 @@ export function Header() {
                     <LucideUser className="h-4 w-4 text-blue-600" />
                   </div>
                   <div className="text-left hidden lg:block">
-                    <div className="text-sm font-medium">{user.name}</div>
+                    <div className="text-sm font-medium">{`${user.firstName} ${user.lastName}`}</div>
                     <div className="text-xs text-gray-500">{user.role}</div>
                   </div>
                 </Button>
@@ -112,7 +112,7 @@ export function Header() {
                             <LucideUser className="h-5 w-5" />
                           </div>
                           <div>
-                            <div className="font-medium">{user.name}</div>
+                            <div className="font-medium">{`${user.firstName} ${user.lastName}`}</div>
                             <div className="text-sm text-blue-100">{user.role}</div>
                           </div>
                         </div>

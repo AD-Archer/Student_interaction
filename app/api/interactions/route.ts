@@ -11,7 +11,8 @@ export async function GET() {
         staff: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             role: true
           }
         }
@@ -24,7 +25,7 @@ export async function GET() {
     // Transform data to match current frontend format
     const formattedInteractions = interactions.map(interaction => ({
       id: interaction.id,
-      studentName: interaction.studentName,
+      studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
       studentId: interaction.studentId,
       program: interaction.program,
       type: interaction.type,
@@ -73,6 +74,10 @@ export async function POST(request: NextRequest) {
       followUp
     } = data
 
+    // Split student name into first and last name for storage
+    const [studentFirstName, ...lastNameParts] = studentName?.split(' ') || ['', '']
+    const studentLastName = lastNameParts.join(' ')
+
     // Validate required fields
     if (!studentName || !studentId || !type || !reason || !staffMember || !staffMemberId) {
       return NextResponse.json(
@@ -84,7 +89,8 @@ export async function POST(request: NextRequest) {
     // Create the interaction
     const interaction = await db.interaction.create({
       data: {
-        studentName,
+        studentFirstName,
+        studentLastName,
         studentId,
         program: program || '',
         type,
@@ -105,7 +111,8 @@ export async function POST(request: NextRequest) {
         staff: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             role: true
           }
         }
@@ -115,7 +122,7 @@ export async function POST(request: NextRequest) {
     // Transform response to match frontend format
     const formattedInteraction = {
       id: interaction.id,
-      studentName: interaction.studentName,
+      studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
       studentId: interaction.studentId,
       program: interaction.program,
       type: interaction.type,

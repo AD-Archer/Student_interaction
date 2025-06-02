@@ -7,13 +7,13 @@ export async function GET() {
   try {
     const students = await db.student.findMany({
       orderBy: {
-        name: 'asc'
+        firstName: 'asc'
       }
     })
 
     // Add "All Students" option for compatibility with frontend
     const studentsWithAll = [
-      { id: "all", name: "All Students", program: "" },
+      { id: "all", firstName: "All", lastName: "Students", program: "" },
       ...students
     ]
 
@@ -33,12 +33,12 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
     
-    const { id, name, program } = data
+    const { id, firstName, lastName, program } = data
 
     // Validate required fields
-    if (!id || !name || !program) {
+    if (!id || !firstName || !lastName || !program) {
       return NextResponse.json(
-        { error: 'Student ID, name, and program are required' },
+        { error: 'Student ID, first name, last name, and program are required' },
         { status: 400 }
       )
     }
@@ -59,7 +59,8 @@ export async function POST(request: NextRequest) {
     const student = await db.student.create({
       data: {
         id,
-        name,
+        firstName,
+        lastName,
         program
       }
     })

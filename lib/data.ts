@@ -23,7 +23,8 @@
 // User type for authentication used across auth-wrapper and header components
 export interface User {
   email: string
-  name: string  
+  firstName: string
+  lastName: string
   role: string
 }
 
@@ -41,7 +42,8 @@ export interface ProgramData {
 }
 
 export interface StaffPerformanceData {
-  name: string
+  firstName: string
+  lastName: string
   interactions: number
   avgRating: number
   followUpRate: number
@@ -76,7 +78,8 @@ export interface Interaction {
 
 export interface Student {
   id: string
-  name: string
+  firstName: string
+  lastName: string
   program?: string // Adding program for form component
   staff?: string // Adding staff to associate students with staff members
 }
@@ -90,7 +93,8 @@ export interface StaffMember {
   id: number // Making this required for settings page
   email: string
   password: string // Required for login page
-  name: string
+  firstName: string
+  lastName: string
   role: string
   status: string // Required for settings page
   lastLogin: string // Required for settings page
@@ -160,9 +164,9 @@ export const programData: ProgramData[] = [
 ]
 
 export const staffPerformance: StaffPerformanceData[] = [
-  { name: "Tahir Lee", interactions: 28, avgRating: 4.8, followUpRate: 95 },
-  { name: "Barbara Cicalese", interactions: 25, avgRating: 4.9, followUpRate: 98 },
-  { name: "Charles Mitchell", interactions: 22, avgRating: 4.7, followUpRate: 92 },
+  { firstName: "Tahir", lastName: "Lee", interactions: 28, avgRating: 4.8, followUpRate: 95 },
+  { firstName: "Barbara", lastName: "Cicalese", interactions: 25, avgRating: 4.9, followUpRate: 98 },
+  { firstName: "Charles", lastName: "Mitchell", interactions: 22, avgRating: 4.7, followUpRate: 92 },
 ]
 
 export const interactionTypes: InteractionType[] = [
@@ -246,11 +250,11 @@ export const interactions: Interaction[] = [
 ]
 
 export const students: Student[] = [
-  { id: "all", name: "All Students" },
-  { id: "0001", name: "Micheal Newman" },
-  { id: "0002", name: "Amira Johnson" },
-  { id: "0003", name: "Koleona Smith" },
-  { id: "0004", name: "Zaire Williams" },
+  { id: "all", firstName: "All", lastName: "Students" },
+  { id: "0001", firstName: "Micheal", lastName: "Newman" },
+  { id: "0002", firstName: "Amira", lastName: "Johnson" },
+  { id: "0003", firstName: "Koleona", lastName: "Smith" },
+  { id: "0004", firstName: "Zaire", lastName: "Williams" },
 ]
 
 export const interactionTypeOptions: InteractionTypeOption[] = [
@@ -273,10 +277,10 @@ export const formInteractionTypes: InteractionTypeOption[] = [
 ]
 
 export const formStudents: Student[] = [
-  { id: "0001", name: "Micheal Newman", program: "foundations" },
-  { id: "0002", name: "Amira Johnson", program: "101" },
-  { id: "0003", name: "Koleona Smith", program: "lightspeed" },
-  { id: "0004", name: "Zaire Williams", program: "liftoff" },
+  { id: "0001", firstName: "Micheal", lastName: "Newman", program: "foundations" },
+  { id: "0002", firstName: "Amira", lastName: "Johnson", program: "101" },
+  { id: "0003", firstName: "Koleona", lastName: "Smith", program: "lightspeed" },
+  { id: "0004", firstName: "Zaire", lastName: "Williams", program: "liftoff" },
 ]
 
 // Dashboard AI insights and notes
@@ -340,7 +344,8 @@ export const recentNotes: StaffNote[] = [
 export const staffMembers: StaffMember[] = [
   {
     id: 1,
-    name: "Barbara Cicalese",
+    firstName: "Barbara",
+    lastName: "Cicalese",
     email: "barbara@launchpad.org",
     password: "staff123",
     role: "Senior Counselor",
@@ -350,7 +355,8 @@ export const staffMembers: StaffMember[] = [
   },
   {
     id: 2,
-    name: "Tahir Lee",
+    firstName: "Tahir",
+    lastName: "Lee",
     email: "tahir@launchpad.org",
     password: "staff123",
     role: "Workforce Coordinator",
@@ -360,7 +366,8 @@ export const staffMembers: StaffMember[] = [
   },
   {
     id: 3,
-    name: "Charles Mitchell",
+    firstName: "Charles",
+    lastName: "Mitchell",
     email: "charles@launchpad.org",
     password: "staff123",
     role: "Program Manager",
