@@ -23,7 +23,8 @@
 // User type for authentication used across auth-wrapper and header components
 export interface User {
   email: string
-  name: string  
+  firstName: string
+  lastName: string
   role: string
 }
 
@@ -41,7 +42,8 @@ export interface ProgramData {
 }
 
 export interface StaffPerformanceData {
-  name: string
+  firstName: string
+  lastName: string
   interactions: number
   avgRating: number
   followUpRate: number
@@ -76,7 +78,8 @@ export interface Interaction {
 
 export interface Student {
   id: string
-  name: string
+  firstName: string
+  lastName: string
   program?: string // Adding program for form component
   staff?: string // Adding staff to associate students with staff members
 }
@@ -90,7 +93,8 @@ export interface StaffMember {
   id: number // Making this required for settings page
   email: string
   password: string // Required for login page
-  name: string
+  firstName: string
+  lastName: string
   role: string
   status: string // Required for settings page
   lastLogin: string // Required for settings page
@@ -160,9 +164,9 @@ export const programData: ProgramData[] = [
 ]
 
 export const staffPerformance: StaffPerformanceData[] = [
-  { name: "Tahir Lee", interactions: 28, avgRating: 4.8, followUpRate: 95 },
-  { name: "Barbara Cicalese", interactions: 25, avgRating: 4.9, followUpRate: 98 },
-  { name: "Charles Mitchell", interactions: 22, avgRating: 4.7, followUpRate: 92 },
+  { firstName: "Tahir", lastName: "Lee", interactions: 28, avgRating: 4.8, followUpRate: 95 },
+  { firstName: "Barbara", lastName: "Cicalese", interactions: 25, avgRating: 4.9, followUpRate: 98 },
+  { firstName: "Charles", lastName: "Mitchell", interactions: 22, avgRating: 4.7, followUpRate: 92 },
 ]
 
 export const interactionTypes: InteractionType[] = [
@@ -246,11 +250,11 @@ export const interactions: Interaction[] = [
 ]
 
 export const students: Student[] = [
-  { id: "all", name: "All Students" },
-  { id: "0001", name: "Micheal Newman" },
-  { id: "0002", name: "Amira Johnson" },
-  { id: "0003", name: "Koleona Smith" },
-  { id: "0004", name: "Zaire Williams" },
+  { id: "all", firstName: "All", lastName: "Students" },
+  { id: "0001", firstName: "Micheal", lastName: "Newman" },
+  { id: "0002", firstName: "Amira", lastName: "Johnson" },
+  { id: "0003", firstName: "Koleona", lastName: "Smith" },
+  { id: "0004", firstName: "Zaire", lastName: "Williams" },
 ]
 
 export const interactionTypeOptions: InteractionTypeOption[] = [
@@ -273,10 +277,10 @@ export const formInteractionTypes: InteractionTypeOption[] = [
 ]
 
 export const formStudents: Student[] = [
-  { id: "0001", name: "Micheal Newman", program: "foundations" },
-  { id: "0002", name: "Amira Johnson", program: "101" },
-  { id: "0003", name: "Koleona Smith", program: "lightspeed" },
-  { id: "0004", name: "Zaire Williams", program: "liftoff" },
+  { id: "0001", firstName: "Micheal", lastName: "Newman", program: "foundations" },
+  { id: "0002", firstName: "Amira", lastName: "Johnson", program: "101" },
+  { id: "0003", firstName: "Koleona", lastName: "Smith", program: "lightspeed" },
+  { id: "0004", firstName: "Zaire", lastName: "Williams", program: "liftoff" },
 ]
 
 // Dashboard AI insights and notes
@@ -340,7 +344,8 @@ export const recentNotes: StaffNote[] = [
 export const staffMembers: StaffMember[] = [
   {
     id: 1,
-    name: "Barbara Cicalese",
+    firstName: "Barbara",
+    lastName: "Cicalese",
     email: "barbara@launchpad.org",
     password: "staff123",
     role: "Senior Counselor",
@@ -350,7 +355,8 @@ export const staffMembers: StaffMember[] = [
   },
   {
     id: 2,
-    name: "Tahir Lee",
+    firstName: "Tahir",
+    lastName: "Lee",
     email: "tahir@launchpad.org",
     password: "staff123",
     role: "Workforce Coordinator",
@@ -360,7 +366,8 @@ export const staffMembers: StaffMember[] = [
   },
   {
     id: 3,
-    name: "Charles Mitchell",
+    firstName: "Charles",
+    lastName: "Mitchell",
     email: "charles@launchpad.org",
     password: "staff123",
     role: "Program Manager",
@@ -418,64 +425,117 @@ export const defaultSystemSettings: SystemSettingsState = {
 }
 
 // -----------------------------------------------------------------------------
-// LocalStorage CRUD utilities for Interactions
-// These functions provide persistent storage for student interactions using
-// the browser's localStorage API. This allows the app to create, read, update,
-// and list interactions without a backend. All interaction data is stored under
-// the 'interactions' key in localStorage. If no data exists, we fall back to
-// the initial mock data above. Future devs: Replace with real API/database calls.
+// Database CRUD utilities for Interactions
+// These functions provide data access for student interactions using
+// the API endpoints that connect to the database. This replaces the previous
+// localStorage-based approach for persistent data storage.
 // -----------------------------------------------------------------------------
 
 /**
- * Get all interactions from localStorage, or fall back to initial mock data.
- * I use this everywhere that needs the current list of interactions.
+ * Get all interactions from the database via API.
+ * Note: This is now async and should be used with await.
  */
-export function getInteractions(): Interaction[] {
+export async function getInteractions(): Promise<Interaction[]> {
   if (typeof window === 'undefined') return interactions // SSR fallback
-  const raw = localStorage.getItem('interactions')
-  if (!raw) return interactions
+  
   try {
-    return JSON.parse(raw) as Interaction[]
-  } catch {
-    return interactions
+    const response = await fetch('/api/interactions')
+    if (!response.ok) {
+      console.error('Failed to fetch interactions, falling back to mock data')
+      return interactions
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching interactions:', error)
+    return interactions // Fallback to mock data
   }
 }
 
 /**
- * Get a single interaction by id. Returns undefined if not found.
+ * Get a single interaction by id from the database via API.
+ * Returns undefined if not found.
  */
-export function getInteractionById(id: number): Interaction | undefined {
-  return getInteractions().find((i) => i.id === id)
+export async function getInteractionById(id: number): Promise<Interaction | undefined> {
+  if (typeof window === 'undefined') {
+    return interactions.find((i) => i.id === id) // SSR fallback
+  }
+  
+  try {
+    const response = await fetch(`/api/interactions/${id}`)
+    if (!response.ok) {
+      return undefined
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching interaction:', error)
+    return undefined
+  }
 }
 
 /**
- * Create a new interaction and persist it. Returns the new interaction.
- * I auto-increment the id based on the highest current id.
+ * Create a new interaction via API and persist it to database.
+ * Returns the new interaction.
  */
-export function createInteraction(newInteraction: Omit<Interaction, 'id'>): Interaction {
-  const all = getInteractions()
-  const nextId = all.length > 0 ? Math.max(...all.map(i => i.id)) + 1 : 1
-  const interaction: Interaction = { ...newInteraction, id: nextId }
-  localStorage.setItem('interactions', JSON.stringify([interaction, ...all]))
-  return interaction
+export async function createInteraction(newInteraction: Omit<Interaction, 'id'>): Promise<Interaction> {
+  try {
+    const response = await fetch('/api/interactions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newInteraction),
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to create interaction')
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error creating interaction:', error)
+    throw error
+  }
 }
 
 /**
- * Update an existing interaction by id. Returns the updated interaction, or undefined if not found.
+ * Update an existing interaction by id via API.
+ * Returns the updated interaction, or throws an error if not found.
  */
-export function updateInteraction(id: number, updated: Partial<Interaction>): Interaction | undefined {
-  const all = getInteractions()
-  const idx = all.findIndex(i => i.id === id)
-  if (idx === -1) return undefined
-  const merged = { ...all[idx], ...updated }
-  all[idx] = merged
-  localStorage.setItem('interactions', JSON.stringify(all))
-  return merged
+export async function updateInteraction(id: number, updated: Partial<Interaction>): Promise<Interaction> {
+  try {
+    const response = await fetch(`/api/interactions/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updated),
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to update interaction')
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error updating interaction:', error)
+    throw error
+  }
 }
 
 /**
- * Replace all interactions (for bulk operations or resets).
+ * Delete an interaction by id via API.
  */
-export function setInteractions(newList: Interaction[]): void {
-  localStorage.setItem('interactions', JSON.stringify(newList))
+export async function deleteInteraction(id: number): Promise<void> {
+  try {
+    const response = await fetch(`/api/interactions/${id}`, {
+      method: 'DELETE',
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete interaction')
+    }
+  } catch (error) {
+    console.error('Error deleting interaction:', error)
+    throw error
+  }
 }

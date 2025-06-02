@@ -11,12 +11,17 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { User } from "@/lib/data"
+import { authAPI } from "@/lib/api"
 
 interface AuthWrapperProps {
   children: React.ReactNode
 }
 
-const AuthContext = createContext<{ user: User | null; isLoading: boolean } | undefined>(undefined)
+const AuthContext = createContext<{ 
+  user: User | null; 
+  isLoading: boolean;
+  logout: () => Promise<void>;
+} | undefined>(undefined)
 
 export function useAuth() {
   const context = useContext(AuthContext)
@@ -36,26 +41,33 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   const publicRoutes = React.useMemo(() => ["/info", "/login"], [])
 
   useEffect(() => {
-    try {
-      // Check if user is logged in using client-side storage
-      if (typeof window !== 'undefined') {
-        const currentUser = localStorage.getItem("currentUser")
-        
-        // Ensure pathname is always a string before using it
+    const checkAuth = async () => {
+      try {
+        // Check for server-side session only - no localStorage fallback
+        const sessionResult = await authAPI.checkSession()
+        if (sessionResult.authenticated && sessionResult.user) {
+          setUser(sessionResult.user)
+        } else {
+          // No valid session found
+          const safePathname = pathname || "";
+          if (!publicRoutes.includes(safePathname)) {
+            // Redirect to login if not authenticated and not on a public route
+            router.push("/login")
+          }
+        }
+      } catch (error) {
+        console.error("Error in auth check:", error)
+        // If there's an error, redirect to login unless on a public route
         const safePathname = pathname || "";
-
-        if (currentUser) {
-          setUser(JSON.parse(currentUser))
-        } else if (!publicRoutes.includes(safePathname)) {
-          // Redirect to login if not authenticated and not on a public route
+        if (!publicRoutes.includes(safePathname)) {
           router.push("/login")
         }
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error("Error in auth check:", error)
-    } finally {
-      setIsLoading(false)
     }
+
+    checkAuth()
   // Adding publicRoutes to dependency array to fix React Hook warning
   }, [pathname, router, publicRoutes])
 
@@ -68,8 +80,21 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     )
   }
 
+  const logout = async () => {
+    try {
+      // Call logout API to clear server-side session
+      await authAPI.logout()
+    } catch (error) {
+      console.error("Logout API error:", error)
+    } finally {
+      // Clear local state and redirect
+      setUser(null)
+      router.push("/login")
+    }
+  }
+
   // Create the auth context value that will be passed to children
-  const authContextValue = { user, isLoading }
+  const authContextValue = { user, isLoading, logout }
   
   // For public routes or logged in users, render the children within the context
   const safePathname = pathname || "";

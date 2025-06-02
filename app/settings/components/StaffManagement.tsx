@@ -46,7 +46,7 @@ export const StaffManagement = ({ staffMembers, getPermissionColor }: {
                   <svg className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{staff.name}</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{`${staff.firstName} ${staff.lastName}`}</h3>
                   <p className="text-xs sm:text-sm text-gray-600 truncate">{staff.email}</p>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     <Badge variant="secondary" className="text-xs">{staff.role}</Badge>

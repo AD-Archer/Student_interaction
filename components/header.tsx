@@ -1,30 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { LogOut, Settings, Plus, Building2, BarChart3, TrendingUp, Menu } from "lucide-react"
-import { useRouter, usePathname } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { LucideUser } from "lucide-react"
 import Link from "next/link"
-import { User } from "@/lib/data"
+import { useAuth } from "@/components/auth-wrapper"
 
 export function Header() {
-  const router = useRouter()
   const pathname = usePathname()
-  const [user, setUser] = useState<User | null>(null)
+  const { user, logout } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  useEffect(() => {
-    const currentUser = localStorage.getItem("currentUser")
-    if (currentUser) {
-      setUser(JSON.parse(currentUser))
-    }
-  }, [])
-
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser")
-    router.push("/login")
+  const handleLogout = async () => {
+    await logout()
     setIsMenuOpen(false)
   }
 
@@ -85,7 +76,7 @@ export function Header() {
                     <LucideUser className="h-4 w-4 text-blue-600" />
                   </div>
                   <div className="text-left hidden lg:block">
-                    <div className="text-sm font-medium">{user.name}</div>
+                    <div className="text-sm font-medium">{`${user.firstName} ${user.lastName}`}</div>
                     <div className="text-xs text-gray-500">{user.role}</div>
                   </div>
                 </Button>
@@ -121,7 +112,7 @@ export function Header() {
                             <LucideUser className="h-5 w-5" />
                           </div>
                           <div>
-                            <div className="font-medium">{user.name}</div>
+                            <div className="font-medium">{`${user.firstName} ${user.lastName}`}</div>
                             <div className="text-sm text-blue-100">{user.role}</div>
                           </div>
                         </div>

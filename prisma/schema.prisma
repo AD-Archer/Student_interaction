@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for staff members and authentication
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  firstName   String
+  lastName    String
+  password    String   // Will be hashed
+  role        String
+  status      String   @default("active")
+  lastLogin   DateTime @default(now())
+  permissions String[] // Array of permission strings
+  
+  // Relations
+  interactions Interaction[] @relation("StaffMember")
+  notes        StaffNote[]
+  sessions     Session[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+// Student model
+model Student {
+  id        String @id // Using string for student IDs like "0001"
+  firstName String
+  lastName  String
+  program   String // "foundations", "101", "lightspeed", "liftoff"
+  
+  // Relations
+  interactions Interaction[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("students")
+}
+
+// Interaction model for student interactions
+model Interaction {
+  id           Int      @id @default(autoincrement())
+  studentId    String
+  studentFirstName String // Denormalized for easier queries
+  studentLastName  String // Denormalized for easier queries
+  program      String
+  type         String   // "Coaching", "Academic Support", etc.
+  reason       String
+  notes        String
+  date         String   // Keeping as string to match current format
+  time         String   // Keeping as string to match current format
+  staffMember  String   // Staff member name
+  status       String   @default("completed")
+  aiSummary    String?  // AI-generated summary
+  
+  // Follow-up information (stored as JSON)
+  followUpRequired Boolean @default(false)
+  followUpDate     String?
+  followUpOverdue  Boolean @default(false)
+  
+  // Relations
+  student Student @relation(fields: [studentId], references: [id])
+  staff   User    @relation("StaffMember", fields: [staffMemberId], references: [id])
+  staffMemberId Int
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("interactions")
+}
+
+// Staff notes for dashboard insights
+model StaffNote {
+  id        Int      @id @default(autoincrement())
+  author    String
+  content   String
+  timestamp String
+  priority  String   // "high", "medium", "low"
+  
+  // Relations
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("staff_notes")
+}
+
+// Session model for authentication
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// System settings (single row table)
+model SystemSettings {
+  id             Int     @id @default(1)
+  autoBackup     Boolean @default(true)
+  aiSummaries    Boolean @default(true)
+  dataRetention  String  @default("2years")
+  sessionTimeout String  @default("8hours")
+  
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}

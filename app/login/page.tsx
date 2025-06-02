@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Lock, Mail, Building2, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { staffMembers } from "@/lib/data"
+import { login } from "@/lib/api"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -27,20 +28,18 @@ export default function LoginPage() {
     setIsLoading(true)
     setError("")
 
-    // Simulate authentication delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Check credentials
-    const staff = staffMembers.find(
-      (member) => member.email === formData.email && member.password === formData.password,
-    )
-
-    if (staff) {
-      // Store user info in localStorage (in real app, use proper auth)
-      localStorage.setItem("currentUser", JSON.stringify(staff))
+    try {
+      await login(formData.email, formData.password)
+      
+      // Redirect to home page - session is now stored in HTTP-only cookie
       router.push("/")
-    } else {
-      setError("Invalid email or password. Please try again.")
+    } catch (error: unknown) {
+      console.error("Login error:", error)
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError("An error occurred during login. Please try again.")
+      }
     }
 
     setIsLoading(false)
@@ -49,7 +48,7 @@ export default function LoginPage() {
   const handleDemoLogin = (staffMember: (typeof staffMembers)[0]) => {
     setFormData({
       email: staffMember.email,
-      password: staffMember.password,
+      password: "staff123", // All demo accounts use this password
     })
   }
 
@@ -154,7 +153,7 @@ export default function LoginPage() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">{staff.name}</p>
+                    <p className="font-medium text-gray-900">{`${staff.firstName} ${staff.lastName}`}</p>
                     <p className="text-sm text-gray-600">{staff.role}</p>
                   </div>
                   <div className="text-xs text-blue-600 font-medium">Click to login</div>

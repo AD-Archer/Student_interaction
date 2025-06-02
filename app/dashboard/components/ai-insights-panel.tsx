@@ -8,46 +8,19 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Sparkles, TrendingUp, AlertTriangle, Users, MessageSquare, Save, X } from "lucide-react"
-import { aiInsights, recentNotes } from "@/lib/data"
-import { resolveIconComponent } from "@/lib/utils"
 
 interface AiInsightsPanelProps {
 	isOpen: boolean
 	onClose: () => void
+	title?: string
+	notes?: string[]
 }
 
-export function AiInsightsPanel({ isOpen, onClose }: AiInsightsPanelProps) {
+export function AiInsightsPanel({ isOpen, onClose, title, notes }: AiInsightsPanelProps) {
 	const [newNote, setNewNote] = useState("")
-
-	const getSeverityColor = (severity: string) => {
-		switch (severity) {
-			case "positive":
-				return "border-green-200 bg-green-50 text-green-800"
-			case "warning":
-				return "border-orange-200 bg-orange-50 text-orange-800"
-			case "info":
-				return "border-blue-200 bg-blue-50 text-blue-800"
-			default:
-				return "border-gray-200 bg-gray-50 text-gray-800"
-		}
-	}
-
-	const getPriorityColor = (priority: string) => {
-		switch (priority) {
-			case "high":
-				return "bg-red-100 text-red-800"
-			case "medium":
-				return "bg-yellow-100 text-yellow-800"
-			case "low":
-				return "bg-green-100 text-green-800"
-			default:
-				return "bg-gray-100 text-gray-800"
-		}
-	}
 
 	const handleSaveNote = () => {
 		if (newNote.trim()) {
@@ -75,12 +48,31 @@ export function AiInsightsPanel({ isOpen, onClose }: AiInsightsPanelProps) {
 					<div className="flex items-center justify-between">
 						<div className="flex items-center space-x-2">
 							<Sparkles className="h-5 w-5 text-blue-600" />
-							<h2 className="text-lg font-semibold text-gray-900">AI Insights & Notes</h2>
+							<h2 className="text-lg font-semibold text-gray-900">{title || "AI Insights & Notes"}</h2>
 						</div>
 						<Button variant="outline" size="sm" onClick={onClose}>
 							<X className="h-4 w-4" />
 						</Button>
 					</div>
+
+					{/* Interaction Notes */}
+					{notes && notes.length > 0 && (
+						<Card>
+							<CardHeader className="pb-3">
+								<CardTitle className="text-base">Interaction Notes</CardTitle>
+								<CardDescription>Summary of the interaction</CardDescription>
+							</CardHeader>
+							<CardContent className="space-y-2">
+								<ul className="list-disc pl-5">
+									{notes.map((note, index) => (
+										<li key={index} className="text-sm text-gray-700">
+											{note}
+										</li>
+									))}
+								</ul>
+							</CardContent>
+						</Card>
+					)}
 
 					{/* AI Insights */}
 					<Card>
@@ -89,25 +81,33 @@ export function AiInsightsPanel({ isOpen, onClose }: AiInsightsPanelProps) {
 								<Sparkles className="h-4 w-4 text-blue-600" />
 								<span>AI Insights</span>
 							</CardTitle>
-							<CardDescription>Automated analysis of student interactions</CardDescription>
+							<CardDescription>Analysis of interaction patterns and notes</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-3">
-							{aiInsights.map((insight, index) => {
-								// Get the icon component using our utility function
-								const IconComponent = resolveIconComponent(insight.icon, MessageSquare);
-									
-								return (
-									<div key={index} className={`p-3 rounded-lg border ${getSeverityColor(insight.severity)}`}>
-										<div className="flex items-start space-x-2">
-											<IconComponent className="h-4 w-4 mt-0.5 flex-shrink-0" />
-											<div className="flex-1">
-												<h4 className="font-medium text-sm">{insight.title}</h4>
-												<p className="text-xs mt-1 opacity-90">{insight.description}</p>
+							{notes && notes.length > 0 ? (
+								<div>
+									<h4 className="font-medium text-sm mb-2">Interaction Notes Analysis</h4>
+									{notes.map((note, index) => (
+										<div key={index} className="p-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 mb-2">
+											<div className="flex items-start space-x-2">
+												<MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0" />
+												<div className="flex-1">
+													<p className="text-xs">{note}</p>
+												</div>
 											</div>
 										</div>
+									))}
+								</div>
+							) : (
+								<div className="p-3 rounded-lg border border-gray-200 bg-gray-50 text-gray-600">
+									<div className="flex items-start space-x-2">
+										<MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0" />
+										<div className="flex-1">
+											<p className="text-xs">No interaction notes available for analysis</p>
+										</div>
 									</div>
-								);
-							})}
+								</div>
+							)}
 						</CardContent>
 					</Card>
 
@@ -132,27 +132,18 @@ export function AiInsightsPanel({ isOpen, onClose }: AiInsightsPanelProps) {
 						</CardContent>
 					</Card>
 
-					{/* Recent Notes */}
+					{/* Recent Activity */}
 					<Card>
 						<CardHeader className="pb-3">
-							<CardTitle className="text-base">Recent Notes</CardTitle>
+							<CardTitle className="text-base">Recent Activity</CardTitle>
 							<CardDescription>Team notes and observations</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-3">
-							{recentNotes.map((note) => (
-								<div key={note.id} className="p-3 bg-gray-50 rounded-lg border">
-									<div className="flex items-center justify-between mb-2">
-										<span className="text-sm font-medium text-gray-900">{note.author}</span>
-										<div className="flex items-center space-x-2">
-											<Badge variant="outline" className={getPriorityColor(note.priority)}>
-												{note.priority}
-											</Badge>
-											<span className="text-xs text-gray-500">{note.timestamp}</span>
-										</div>
-									</div>
-									<p className="text-sm text-gray-700">{note.content}</p>
-								</div>
-							))}
+							<div className="p-3 bg-gray-50 rounded-lg border text-center">
+								<p className="text-sm text-gray-500">
+									Recent activity feed will be available soon
+								</p>
+							</div>
 						</CardContent>
 					</Card>
 
