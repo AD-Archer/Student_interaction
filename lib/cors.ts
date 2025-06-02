@@ -24,7 +24,8 @@ export function handleOptionsRequest(request: NextRequest) {
 }
 
 // Create a response with CORS headers
-export function createCorsResponse(data: any, options: { status?: number } = {}, request: NextRequest) {
+// I use a generic type T here so this function is type-safe for any response data shape
+export function createCorsResponse<T>(data: T, options: { status?: number } = {}, request: NextRequest) {
   return NextResponse.json(data, { 
     status: options.status || 200, 
     headers: buildCorsHeaders(request) 
