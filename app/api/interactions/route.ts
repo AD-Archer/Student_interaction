@@ -2,6 +2,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+// Define the type for interaction with included relations
+interface InteractionWithRelations {
+  id: number
+  studentId: string
+  studentFirstName: string
+  studentLastName: string
+  program: string
+  type: string
+  reason: string
+  notes: string
+  date: string
+  time: string
+  staffMember: string
+  status: string
+  aiSummary: string | null
+  followUpRequired: boolean
+  followUpDate: string | null
+  followUpOverdue: boolean
+  staffMemberId: number
+  createdAt: Date
+  updatedAt: Date
+  student: {
+    id: string
+    firstName: string
+    lastName: string
+    program: string
+    createdAt: Date
+    updatedAt: Date
+  }
+  staff: {
+    id: number
+    firstName: string
+    lastName: string
+    role: string
+  }
+}
+
 // GET /api/interactions - Fetch all interactions
 export async function GET() {
   try {
@@ -23,7 +60,7 @@ export async function GET() {
     })
 
     // Transform data to match current frontend format
-    const formattedInteractions = interactions.map(interaction => ({
+    const formattedInteractions = interactions.map((interaction: InteractionWithRelations) => ({
       id: interaction.id,
       studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
       studentId: interaction.studentId,
