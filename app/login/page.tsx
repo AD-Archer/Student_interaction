@@ -153,7 +153,7 @@ export default function LoginPage() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">{staff.name}</p>
+                    <p className="font-medium text-gray-900">{`${staff.firstName} ${staff.lastName}`}</p>
                     <p className="text-sm text-gray-600">{staff.role}</p>
                   </div>
                   <div className="text-xs text-blue-600 font-medium">Click to login</div>

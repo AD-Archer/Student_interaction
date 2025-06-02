@@ -95,7 +95,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       
       const interactionData = {
-        studentName: selectedStudent?.name || formData.studentName,
+        studentName: selectedStudent ? `${selectedStudent.firstName} ${selectedStudent.lastName}` : formData.studentName,
         studentId: formData.studentId,
         program: selectedStudent?.program || "",
         type: formData.interactionType,
@@ -103,7 +103,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
         notes: formData.notes,
         date: dateStr,
         time: timeStr,
-        staffMember: user?.name || "Unknown Staff",
+        staffMember: user ? `${user.firstName} ${user.lastName}` : "Unknown Staff",
         staffMemberId: 1, // TODO: Get actual staff ID from user when available
         aiSummary: generateAiSummary(formData),
         followUp: {
@@ -183,7 +183,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
                 onValueChange={(studentId) => {
                   const student = students.find((s) => s.id === studentId);
                   if (student) {
-                    setFormData((prev) => ({ ...prev, studentId: student.id, studentName: student.name }));
+                    setFormData((prev) => ({ ...prev, studentId: student.id, studentName: `${student.firstName} ${student.lastName}` }));
                   }
                 }}
               >
@@ -195,7 +195,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
                     <SelectItem key={student.id} value={student.id}>
                       <div className="flex items-center space-x-2 w-full">
                         <User className="h-4 w-4" />
-                        <span className="flex-1">{student.name}</span>
+                        <span className="flex-1">{`${student.firstName} ${student.lastName}`}</span>
                         <Badge variant="secondary" className="text-xs ml-auto">
                           {student.program}
                         </Badge>

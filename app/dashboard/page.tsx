@@ -85,8 +85,10 @@ export default function Page() {
     const matchesType = selectedType === "all" || interaction.type.toLowerCase().includes(selectedType)
     
     // Filter by staff member
-    const matchesStaff = selectedStaff === "all" || 
-      interaction.staffMember === staff.find(sm => sm.id.toString() === selectedStaff)?.name
+    const matchesStaff = selectedStaff === "all" || (() => {
+      const selectedStaffMember = staff.find(sm => sm.id.toString() === selectedStaff)
+      return selectedStaffMember ? interaction.staffMember === `${selectedStaffMember.firstName} ${selectedStaffMember.lastName}` : false
+    })()
 
     return matchesSearch && matchesStudent && matchesType && matchesStaff
   })
@@ -111,7 +113,7 @@ export default function Page() {
           <div className="px-4 sm:px-6 lg:px-8 space-y-6">
             {/* Hero Section */}
             <HeroSection 
-              userName={activeUser?.name || "User"}
+              userName={activeUser ? `${activeUser.firstName} ${activeUser.lastName}` : "User"}
               overdueCount={overdueCount}
               pendingCount={pendingCount}
               loading={loading}
