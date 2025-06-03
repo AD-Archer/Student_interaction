@@ -284,7 +284,7 @@ export default function StaffManagement() {
 
       {/* Staff Management Modal - Fixed positioning for proper visibility */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-hidden">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 overflow-hidden">
           <div className="h-full w-full overflow-y-auto">
             <div className="min-h-full flex items-center justify-center p-4">
               <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">

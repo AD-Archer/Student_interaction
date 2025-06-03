@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   User,
@@ -34,12 +35,25 @@ const systemIntegrations = systemIntegrationData.map(integration => {
 });
 
 export default function SettingsPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
+  // I get the current tab from URL params, defaulting to 'staff'
+  const currentTab = searchParams?.get('tab') || 'staff'
+  
   const [] = useState({
     emailAlerts: true,
     pushNotifications: false,
     weeklyReports: true,
     overdueReminders: true,
   })
+
+  // I handle tab changes by updating the URL
+  const handleTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams?.toString() || '')
+    params.set('tab', value)
+    router.push(`/settings?${params.toString()}`)
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -73,7 +87,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Settings Tabs */}
-          <Tabs defaultValue="staff" className="space-y-4 sm:space-y-6">
+          <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4 sm:space-y-6">
             <div className="overflow-x-auto">
               <TabsList className="grid w-full grid-cols-3 bg-white shadow-sm min-w-max">
                 <TabsTrigger value="staff" className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base">
