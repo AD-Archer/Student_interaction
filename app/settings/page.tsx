@@ -20,8 +20,7 @@ const systemIntegrations = systemIntegrationData.map(integration => {
   const iconMapping: Record<string, keyof typeof import("lucide-react")> = {
     "Playlab AI": "Sparkles",
     "Email System": "Mail",
-    "Database Backup": "Database",
-    "Analytics Engine": "Activity"
+    "Database Connection": "Database"
   };
   
   // Get the icon name or use a default
@@ -34,8 +33,6 @@ const systemIntegrations = systemIntegrationData.map(integration => {
   };
 });
 
-import { defaultSystemSettings } from "@/lib/data"
-
 export default function SettingsPage() {
   const [] = useState({
     emailAlerts: true,
@@ -43,8 +40,6 @@ export default function SettingsPage() {
     weeklyReports: true,
     overdueReminders: true,
   })
-
-  const [systemSettings, setSystemSettings] = useState(defaultSystemSettings)
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -124,7 +119,7 @@ export default function SettingsPage() {
             {/* System Settings Tab */}
             <TabsContent value="system" className="space-y-4 sm:space-y-6">
               <div className="w-full px-0 lg:px-0">
-                <SystemSettings systemSettings={systemSettings} setSystemSettings={setSystemSettings} />
+                <SystemSettings />
               </div>
             </TabsContent>
 

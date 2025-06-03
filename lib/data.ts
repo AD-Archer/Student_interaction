@@ -403,16 +403,10 @@ export const systemIntegrationData: SystemIntegrationData[] = [
     lastSync: "1 hour ago",
   },
   {
-    name: "Database Backup",
-    description: "Automated daily backups to secure cloud storage",
+    name: "Database Connection",
+    description: "A test to ensure database connectivity",
     status: "active",
     lastSync: "12 hours ago",
-  },
-  {
-    name: "Analytics Engine",
-    description: "Real-time data processing and reporting",
-    status: "connected",
-    lastSync: "Real-time",
   },
 ]
 

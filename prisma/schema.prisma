@@ -41,6 +41,8 @@ model Student {
   id        String @id // Using string for student IDs like "0001"
   firstName String
   lastName  String
+  email     String? // Student email address
+  cohort    Int?    // Cohort number (1, 2, 3, etc.)
   program   String // "foundations", "101", "lightspeed", "liftoff"
   
   // Relations
