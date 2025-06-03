@@ -397,12 +397,6 @@ export const systemIntegrationData: SystemIntegrationData[] = [
     lastSync: "5 minutes ago",
   },
   {
-    name: "Email System",
-    description: "Automated follow-up emails and notifications",
-    status: "connected",
-    lastSync: "1 hour ago",
-  },
-  {
     name: "Database Connection",
     description: "A test to ensure database connectivity",
     status: "active",

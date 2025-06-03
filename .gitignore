@@ -10,6 +10,7 @@
 !.yarn/releases
 !.yarn/versions
 
+internalnotes.txt
 # testing
 /coverage
 

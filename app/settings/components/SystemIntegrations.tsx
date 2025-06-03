@@ -96,7 +96,7 @@ export const SystemIntegrations = ({ systemIntegrations, getStatusColor }: {
         <CardDescription>Test external services and API connections</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6 place-items-center">
           {systemIntegrations.map((integration, index) => (
             <div key={index} className="p-4 sm:p-6 border rounded-xl bg-gray-50">
               <div className="flex items-center justify-between mb-4">

@@ -12,6 +12,7 @@ import {
 import StaffManagement from "./components/StaffManagement"
 import { SystemSettings } from "./components/SystemSettings"
 import { SystemIntegrations } from "./components/SystemIntegrations"
+import { EmailTest } from "./components/EmailTest"
 import { systemIntegrationData } from "@/lib/data"
 import { resolveIconComponent } from "@/lib/utils"
 
@@ -20,7 +21,6 @@ const systemIntegrations = systemIntegrationData.map(integration => {
   // Create an icon mapping for known integrations
   const iconMapping: Record<string, keyof typeof import("lucide-react")> = {
     "Playlab AI": "Sparkles",
-    "Email System": "Mail",
     "Database Connection": "Database"
   };
   
@@ -127,8 +127,9 @@ export default function SettingsPage() {
 
             {/* Integrations Tab */}
             <TabsContent value="integrations" className="space-y-4 sm:space-y-6">
-              <div className="w-full px-0 lg:px-0">
+              <div className="w-full px-0 lg:px-0 space-y-6">
                 <SystemIntegrations systemIntegrations={systemIntegrations} getStatusColor={getStatusColor} />
+                <EmailTest />
               </div>
             </TabsContent>
 
