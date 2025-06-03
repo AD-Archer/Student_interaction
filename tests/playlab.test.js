@@ -54,11 +54,12 @@ async function sendMessage(conversationId, message = 'Hello from test script') {
     throw new Error('Expected SSE stream but got a different response.');
   }
 
-  console.log('✅ Message sent.');
-
   const reader = res.body.getReader();
   const decoder = new TextDecoder('utf-8');
   let assistantReply = ''; // accumulate full assistant message
+
+  // add a blank line before streaming for clarity
+  process.stdout.write('\n');
 
   // Process SSE stream, extracting only meaningful deltas or content
   while (true) {
@@ -91,12 +92,51 @@ async function sendMessage(conversationId, message = 'Hello from test script') {
   return assistantReply;
 }
 
+// Define listMessages to optionally fetch conversation history
+async function listMessages(conversationId) {
+  const res = await fetch(`${BASE_URL}/projects/${PROJECT_ID}/conversations/${conversationId}/messages`, {
+    method: 'GET',
+    headers
+  });
+
+  const contentType = res.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    const responseText = await res.text();
+    console.error('❌ Non-JSON response received:', responseText);
+    throw new Error('Expected JSON response but got non-JSON content.');
+  }
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(`List Messages Failed: ${JSON.stringify(data)}`);
+
+  console.log('✅ Message history:');
+  data.messages.forEach((msg, i) => {
+    console.log(`(${i + 1}) [${msg.source}] ${msg.content}`);
+  });
+}
+
+import readline from 'readline/promises';
+import { stdin, stdout } from 'node:process';
+
+// Interactive CLI main function
 (async () => {
+  const rl = readline.createInterface({ input: stdin, output: stdout });
   try {
     const conversationId = await createConversation();
-    await sendMessage(conversationId, 'Test message from script!');
-    // Skipping message history as requested
+    let continueChat = true;
+    while (continueChat) {
+      const message = await rl.question('Enter your message: ');
+      await sendMessage(conversationId, message);
+      const listAnswer = await rl.question('List message history? (y/n): ');
+      if (listAnswer.trim().toLowerCase() === 'y') {
+        await listMessages(conversationId);
+      }
+      const again = await rl.question('Send another message? (y/n): ');
+      continueChat = again.trim().toLowerCase() === 'y';
+    }
   } catch (err) {
     console.error('❌ Error:', err.message);
+  } finally {
+    rl.close();
   }
 })();
