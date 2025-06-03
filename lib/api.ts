@@ -45,6 +45,29 @@ interface CreateStudentData {
   program: string
 }
 
+interface CreateStaffData {
+  firstName?: string
+  lastName?: string
+  name?: string // Allow either combined name or first/last
+  email: string
+  role?: string
+  permissions?: string[]
+  isAdmin?: boolean
+  password?: string
+}
+
+interface UpdateStaffData {
+  firstName?: string
+  lastName?: string
+  name?: string // Allow either combined name or first/last
+  email?: string
+  role?: string
+  permissions?: string[]
+  isAdmin?: boolean
+  password?: string
+  resetPassword?: boolean
+}
+
 const API_BASE_URL = '/api'
 
 // Auth API functions
@@ -214,6 +237,75 @@ export const staffAPI = {
     
     if (!response.ok) {
       throw new Error('Failed to fetch staff')
+    }
+    
+    return response.json()
+  },
+
+  async create(data: CreateStaffData) {
+    const response = await fetch(`${API_BASE_URL}/staff`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to create staff member')
+    }
+    
+    return response.json()
+  },
+
+  async update(id: string, data: UpdateStaffData) {
+    const response = await fetch(`${API_BASE_URL}/staff/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to update staff member')
+    }
+    
+    return response.json()
+  },
+
+  async delete(id: string) {
+    const response = await fetch(`${API_BASE_URL}/staff/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to delete staff member')
+    }
+    
+    return response.json()
+  },
+
+  async resetPassword(id: string) {
+    return this.update(id, { resetPassword: true })
+  }
+}
+
+// User API functions
+export const userAPI = {
+  async getCurrentUser() {
+    const response = await fetch(`${API_BASE_URL}/user/me`, {
+      credentials: 'include',
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to get current user')
     }
     
     return response.json()

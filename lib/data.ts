@@ -90,15 +90,15 @@ export interface InteractionTypeOption {
 }
 
 export interface StaffMember {
-  id: number // Making this required for settings page
+  id: string // Using string for consistency
   email: string
-  password: string // Required for login page
   firstName: string
   lastName: string
-  role: string
-  status: string // Required for settings page
-  lastLogin: string // Required for settings page
-  permissions: string[] // Required for settings page
+  name: string // Computed field for display
+  role?: string
+  permissions: string[]
+  isAdmin: boolean
+  createdAt?: Date | string | null
 }
 
 export interface SystemIntegration {
@@ -340,40 +340,40 @@ export const recentNotes: StaffNote[] = [
   },
 ]
 
-// Login and Settings page data
+// Login and Settings page data - for fallback/demo purposes
 export const staffMembers: StaffMember[] = [
   {
-    id: 1,
+    id: "1",
     firstName: "Barbara",
     lastName: "Cicalese",
+    name: "Barbara Cicalese",
     email: "barbara@launchpad.org",
-    password: "staff123",
     role: "Senior Counselor",
-    status: "active",
-    lastLogin: "2 hours ago",
-    permissions: ["read", "write", "admin"],
+    permissions: ["read", "write"],
+    isAdmin: true,
+    createdAt: "2024-01-15"
   },
   {
-    id: 2,
+    id: "2",
     firstName: "Tahir",
     lastName: "Lee",
+    name: "Tahir Lee",
     email: "tahir@launchpad.org",
-    password: "staff123",
     role: "Workforce Coordinator",
-    status: "active",
-    lastLogin: "Currently online",
-    permissions: ["read", "write", "admin"],
+    permissions: ["read", "write"],
+    isAdmin: true,
+    createdAt: "2024-02-10"
   },
   {
-    id: 3,
+    id: "3",
     firstName: "Charles",
     lastName: "Mitchell",
+    name: "Charles Mitchell",
     email: "charles@launchpad.org",
-    password: "staff123",
     role: "Program Manager",
-    status: "active",
-    lastLogin: "1 day ago",
     permissions: ["read", "write"],
+    isAdmin: false,
+    createdAt: "2024-03-05"
   },
 ]
 
