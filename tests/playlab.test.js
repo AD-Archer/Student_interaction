@@ -47,66 +47,55 @@ async function sendMessage(conversationId, message = 'Hello from test script') {
   });
 
   const contentType = res.headers.get('content-type');
-  console.log('ℹ️ Content-Type:', contentType); // Log the Content-Type for debugging
-  if (!contentType || !contentType.includes('text/event-stream')) {
-    const responseText = await res.text(); // Log the raw response for debugging
+  console.log('ℹ️ Content-Type:', contentType);
+  if (!contentType || (!contentType.includes('text/event-stream') && !contentType.includes('text/plain'))) {
+    const responseText = await res.text();
     console.error('❌ Unexpected response received:', responseText);
     throw new Error('Expected SSE stream but got a different response.');
   }
 
-  console.log('✅ Message sent. Listening for server-sent events...');
+  console.log('✅ Message sent.');
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder('utf-8');
+  let assistantReply = ''; // accumulate full assistant message
 
+  // Process SSE stream, extracting only meaningful deltas or content
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
-
     const chunk = decoder.decode(value, { stream: true });
-    const events = chunk.split('\n\n'); // SSE events are separated by double newlines
-
-    for (const event of events) {
-      if (!event.trim()) continue;
-
-      const [, eventLine, dataLine] = event.split('\n');
-      const eventType = eventLine?.replace('event: ', '').trim();
-      const data = dataLine?.replace('data: ', '').trim();
-
-      console.log(`📡 Event received [${eventType || 'message'}]:`, data);
+    const lines = chunk.split(/\r?\n/);
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue; // skip other SSE lines
+      const payload = line.replace('data: ', '').trim();
+      if (payload === '' || payload === '[DONE]') continue;
+      try {
+        const parsed = JSON.parse(payload);
+        if (parsed.delta) {
+          process.stdout.write(parsed.delta);
+          assistantReply += parsed.delta;
+        } else if (parsed.content) {
+          process.stdout.write(parsed.content);
+          assistantReply += parsed.content;
+        }
+      } catch {
+        // non-JSON payload, print raw
+        process.stdout.write(payload);
+        assistantReply += payload;
+      }
     }
   }
 
-  console.log('✅ SSE stream ended.');
-}
-
-async function listMessages(conversationId) {
-  const res = await fetch(`${BASE_URL}/projects/${PROJECT_ID}/conversations/${conversationId}/messages`, {
-    method: 'GET',
-    headers
-  });
-
-  const contentType = res.headers.get('content-type');
-  if (!contentType || !contentType.includes('application/json')) {
-    const responseText = await res.text(); // Log the raw response for debugging
-    console.error('❌ Non-JSON response received:', responseText);
-    throw new Error('Expected JSON response but got non-JSON content.');
-  }
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(`List Messages Failed: ${JSON.stringify(data)}`);
-
-  console.log('✅ Message history:');
-  data.messages.forEach((msg, i) => {
-    console.log(`(${i + 1}) [${msg.source}] ${msg.content}`);
-  });
+  console.log('\n✅ Assistant response complete.');
+  return assistantReply;
 }
 
 (async () => {
   try {
     const conversationId = await createConversation();
     await sendMessage(conversationId, 'Test message from script!');
-    await listMessages(conversationId);
+    // Skipping message history as requested
   } catch (err) {
     console.error('❌ Error:', err.message);
   }
