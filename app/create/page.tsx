@@ -14,14 +14,18 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 
+
 export default function CreateInteractionPage() {
+
+
   // I check for an 'id' query parameter to support editing
   const searchParams = useSearchParams()
   const id = searchParams?.get("id")
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* ...existing code... */}
+      {/* Add ToastContainer to render toast notifications */}
+
       <main className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="max-w-2xl mx-auto">
           <Link href="/">

@@ -39,6 +39,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
   const [showAiSummary, setShowAiSummary] = useState(false)
   const [aiSummary, setAiSummary] = useState("")
   const [notesLoading, setNotesLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const today = new Date();
   const twoWeeksFromToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 14)
@@ -150,17 +151,44 @@ export function Form({ interactionId }: { interactionId?: number }) {
 
   // New: AI Summarize/Clean Up Notes
   const handleAiSummarizeNotes = async () => {
-    setNotesLoading(true)
-    // Simulate AI cleanup (could call an API here)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    setFormData((prev) => ({
-      ...prev,
-      notes: prev.notes
-        ? `AI Cleaned: ${prev.notes.trim().replace(/\s+/g, ' ')}.`
-        : "No notes to summarize."
-    }))
-    setNotesLoading(false)
-  }
+    setNotesLoading(true);
+    setAiError(null);
+
+    try {
+      // I wrap the detailed notes with an instruction for summarization and improvement
+      const instruction = 'Please summarize, clean up, and improve readability of the following notes in English. Return the output in two sections labeled "Glows" and "Grows":';
+      const prompt = `${instruction}\n\n${formData.notes}`;
+      const payload = { message: prompt };
+      console.log('Sending notes to AI summarization:', payload);
+
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      console.log('AI API response status:', response.status);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthorized: Please log in to use AI features.');
+        }
+        throw new Error(`AI API returned status ${response.status}`);
+      }
+
+      // New shape: { result: string }
+      const { result } = await response.json();
+      console.log('AI summarization result:', result);
+
+      // replace the notes field with AI cleaned-up text
+      setFormData(prev => ({ ...prev, notes: result }));
+    } catch (error) {
+      console.error('Error summarizing notes:', error);
+      setAiError(error instanceof Error ? error.message : 'An unknown error occurred.');
+    } finally {
+      setNotesLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-8 sm:space-y-10">
@@ -260,8 +288,8 @@ export function Form({ interactionId }: { interactionId?: number }) {
                 placeholder="Detailed notes about the interaction..."
                 value={formData.notes}
                 onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                rows={6}
-                className="border-blue-200 focus:border-blue-400 resize-none"
+                rows={12} // increased height for detailed notes
+                className="border-blue-200 focus:border-blue-400 resize-y" // allow vertical resizing
               />
             </div>
 
@@ -283,6 +311,11 @@ export function Form({ interactionId }: { interactionId?: number }) {
                 )}
               </Button>
             </div>
+            {aiError && (
+              <p className="text-red-500 text-sm mt-2 sm:mt-0 sm:ml-2 break-words">
+                {aiError}
+              </p>
+            )}
           </CardContent>
         </Card>
 
