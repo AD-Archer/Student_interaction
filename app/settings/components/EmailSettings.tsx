@@ -281,8 +281,8 @@ export function EmailSettings() {
                   <Button onClick={addTemplate}>Add Template</Button>
                 </div>
 
-                {settings.templates.map(template => (
-                  <div key={template.id} className="space-y-4 border p-4 rounded-md">
+                {settings.templates.map((template, index) => (
+                  <div key={template.id || `template-${index}`} className="space-y-4 border p-4 rounded-md">
                     <div className="flex items-center justify-between">
                       <h4 className="text-md font-medium">{template.name || "Untitled Template"}</h4>
                       <Button variant="destructive" onClick={() => deleteTemplate(template.id)}>
