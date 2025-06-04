@@ -26,12 +26,22 @@ export default function StaffManagement() {
   const [currentUser, setCurrentUser] = useState<{ id: string; isAdmin: boolean } | null>(null)
   
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     role: "",
     isAdmin: false,
     permissions: ['read', 'write'] as string[]
   })
+
+  const [passwordForm, setPasswordForm] = useState({
+    current: "",
+    new: "",
+    confirm: ""
+  })
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState("")
+  const [passwordSuccess, setPasswordSuccess] = useState("")
 
   // I fetch current user info to check admin status
   useEffect(() => {
@@ -66,7 +76,8 @@ export default function StaffManagement() {
 
   const resetForm = () => {
     setFormData({
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       role: "",
       isAdmin: false,
@@ -84,7 +95,8 @@ export default function StaffManagement() {
 
   const handleEdit = (staff: StaffMember) => {
     setFormData({
-      name: staff.name,
+      firstName: staff.firstName || "",
+      lastName: staff.lastName || "",
       email: staff.email,
       role: staff.role || "",
       isAdmin: staff.isAdmin,
@@ -114,8 +126,8 @@ export default function StaffManagement() {
     e.preventDefault()
     clearMessages()
 
-    if (!formData.name.trim() || !formData.email.trim()) {
-      setError("Name and email are required")
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim()) {
+      setError("First name, last name, and email are required")
       return
     }
 
@@ -129,29 +141,28 @@ export default function StaffManagement() {
 
         const updatedStaff = await staffAPI.update(editingStaff.id, {
           ...editingStaff,
-          name: formData.name,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           email: formData.email,
           role: formData.role,
           isAdmin: formData.isAdmin,
           permissions: formData.permissions
         })
-        
         setStaffMembers(prev => prev.map(s => s.id === editingStaff.id ? updatedStaff : s))
         setSuccess("Staff member updated successfully")
       } else {
         const newStaff = await staffAPI.create({
-          name: formData.name,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           email: formData.email,
           role: formData.role,
           isAdmin: formData.isAdmin,
           permissions: formData.permissions,
           password: "@Changeme2"
         })
-        
         setStaffMembers(prev => [...prev, newStaff])
         setSuccess("Staff member created successfully")
       }
-      
       resetForm()
     } catch (error) {
       console.error('Failed to save staff:', error)
@@ -180,6 +191,39 @@ export default function StaffManagement() {
     }
   }
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError("")
+    setPasswordSuccess("")
+    if (!passwordForm.current || !passwordForm.new || !passwordForm.confirm) {
+      setPasswordError("All password fields are required.")
+      return
+    }
+    if (passwordForm.new !== passwordForm.confirm) {
+      setPasswordError("New passwords do not match.")
+      return
+    }
+    setPasswordLoading(true)
+    try {
+      // I call the userAPI to change the password for the current user
+      await userAPI.changePassword({
+        currentPassword: passwordForm.current,
+        newPassword: passwordForm.new
+      })
+      setPasswordSuccess("Password changed successfully.")
+      setPasswordForm({ current: "", new: "", confirm: "" })
+    } catch (err: unknown) {
+      // I check if the error is an object with a message property
+      if (typeof err === "object" && err !== null && "message" in err && typeof (err as { message: unknown }).message === "string") {
+        setPasswordError((err as { message: string }).message)
+      } else {
+        setPasswordError("Failed to change password.")
+      }
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="w-full">
@@ -194,6 +238,62 @@ export default function StaffManagement() {
 
   return (
     <div className="w-full">
+      {/* Self password change section */}
+      {currentUser && (
+        <Card className="shadow-lg mb-8">
+          <CardHeader>
+            <CardTitle className="text-lg">Change Your Password</CardTitle>
+            <CardDescription>Update your own account password</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
+              {passwordError && (
+                <div className="p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm">{passwordError}</div>
+              )}
+              {passwordSuccess && (
+                <div className="p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm">{passwordSuccess}</div>
+              )}
+              <div>
+                <Label htmlFor="current-password">Current Password</Label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={passwordForm.current}
+                  onChange={e => setPasswordForm(f => ({ ...f, current: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={passwordForm.new}
+                  onChange={e => setPasswordForm(f => ({ ...f, new: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="confirm-password">Confirm New Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={passwordForm.confirm}
+                  onChange={e => setPasswordForm(f => ({ ...f, confirm: e.target.value }))}
+                  required
+                />
+              </div>
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 w-full" disabled={passwordLoading}>
+                {passwordLoading ? "Changing..." : "Change Password"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="shadow-lg">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
@@ -337,24 +437,36 @@ export default function StaffManagement() {
                         <User className="h-5 w-5 text-gray-600" />
                         <h3 className="text-lg font-medium text-gray-900">Basic Information</h3>
                       </div>
-                      
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="name" className="text-sm font-medium text-gray-700 flex items-center space-x-1">
+                          <Label htmlFor="firstName" className="text-sm font-medium text-gray-700 flex items-center space-x-1">
                             <User className="h-4 w-4" />
-                            <span>Full Name</span>
+                            <span>First Name</span>
                           </Label>
                           <Input 
-                            id="name" 
-                            value={formData.name}
-                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                            placeholder="Enter full name" 
+                            id="firstName" 
+                            value={formData.firstName}
+                            onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                            placeholder="Enter first name" 
                             required 
                             className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                           />
                         </div>
-
                         <div className="space-y-2">
+                          <Label htmlFor="lastName" className="text-sm font-medium text-gray-700 flex items-center space-x-1">
+                            <User className="h-4 w-4" />
+                            <span>Last Name</span>
+                          </Label>
+                          <Input 
+                            id="lastName" 
+                            value={formData.lastName}
+                            onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                            placeholder="Enter last name" 
+                            required 
+                            className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
                           <Label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center space-x-1">
                             <Mail className="h-4 w-4" />
                             <span>Email Address</span>
@@ -369,7 +481,6 @@ export default function StaffManagement() {
                             className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                           />
                         </div>
-
                         <div className="space-y-2 md:col-span-2">
                           <Label htmlFor="role" className="text-sm font-medium text-gray-700 flex items-center space-x-1">
                             <Briefcase className="h-4 w-4" />
