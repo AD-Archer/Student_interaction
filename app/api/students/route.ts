@@ -67,12 +67,12 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
     
-    const { id, firstName, lastName, program } = data
+    const { id, firstName, lastName, email, cohort, program } = data
 
     // Validate required fields
-    if (!id || !firstName || !lastName || !program) {
+    if (!id || !firstName || !lastName || !email || !cohort) {
       return NextResponse.json(
-        { error: 'Student ID, first name, last name, and program are required' },
+        { error: 'Student ID, first name, last name, email, and cohort are required' },
         { status: 400 }
       )
     }
@@ -89,13 +89,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create the student
+    // Create the student with foundations as default program
     const student = await db.student.create({
       data: {
         id,
         firstName,
         lastName,
-        program
+        email,
+        cohort: typeof cohort === 'string' ? parseInt(cohort) : cohort,
+        program: program || 'foundations' // Default to foundations for new students
       }
     })
 

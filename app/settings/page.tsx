@@ -17,6 +17,7 @@ import { EmailTest } from "./components/EmailTest"
 import { EmailSettings } from "./components/EmailSettings"
 import { CohortPhaseMappingSettings } from "./components/CohortPhaseMappingSettings"
 import { InteractionFrequencySettings } from "./components/InteractionFrequencySettings"
+import { StudentsSettings } from "./components/StudentsSettings"
 import { systemIntegrationData } from "@/lib/data"
 import { resolveIconComponent } from "@/lib/utils"
 
@@ -93,10 +94,15 @@ export default function SettingsPage() {
           {/* Settings Tabs */}
           <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4 sm:space-y-6">
             <div className="overflow-x-auto">
-              <TabsList className="grid w-full grid-cols-4 bg-white shadow-sm min-w-max">
+              <TabsList className="grid w-full grid-cols-5 bg-white shadow-sm min-w-max">
                 <TabsTrigger value="staff" className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base">
                   <User className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   <span>Staff</span>
+                </TabsTrigger>
+                <TabsTrigger value="students" className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base">
+                  {/* I use the User icon for students for now; swap if you want a different icon */}
+                  <User className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                  <span>Students</span>
                 </TabsTrigger>
                 <TabsTrigger value="system" className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base">
                   <Shield className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
@@ -113,7 +119,6 @@ export default function SettingsPage() {
                   <Globe className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   <span>Integrations</span>
                 </TabsTrigger>
-               
               </TabsList>
             </div>
 
@@ -121,6 +126,13 @@ export default function SettingsPage() {
             <TabsContent value="staff" className="space-y-4 sm:space-y-6">
               <div className="w-full px-0 lg:px-0">
                 <StaffManagement />
+              </div>
+            </TabsContent>
+
+            {/* Students Settings Tab */}
+            <TabsContent value="students" className="space-y-4 sm:space-y-6">
+              <div className="w-full px-0 lg:px-0">
+                <StudentsSettings />
               </div>
             </TabsContent>
 

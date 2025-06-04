@@ -263,6 +263,24 @@ export const studentsAPI = {
     }
     
     return response.json()
+  },
+
+  async update(id: string, data: Partial<CreateStudentData>) {
+    const response = await fetch(`${API_BASE_URL}/students/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include cookies for session
+      body: JSON.stringify(data),
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to update student')
+    }
+    
+    return response.json()
   }
 }
 
