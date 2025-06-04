@@ -191,6 +191,12 @@ export default function StaffManagement() {
     }
   }
 
+  // Helper: I want to enforce strong passwords for user password changes
+  function isStrongPassword(pw: string) {
+    // At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/.test(pw)
+  }
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
     setPasswordError("")
@@ -201,6 +207,10 @@ export default function StaffManagement() {
     }
     if (passwordForm.new !== passwordForm.confirm) {
       setPasswordError("New passwords do not match.")
+      return
+    }
+    if (!isStrongPassword(passwordForm.new)) {
+      setPasswordError("Password must be at least 8 characters and include uppercase, lowercase, number, and special character.")
       return
     }
     setPasswordLoading(true)

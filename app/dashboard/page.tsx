@@ -129,9 +129,15 @@ export default function Page() {
     setShowAiInsights(true);
   }
 
-  // Calculate stats using recalculated overdue
-  const overdueCount = processedInteractions.filter((i) => i.followUp.overdue).length
-  const pendingCount = processedInteractions.filter((i) => i.followUp.required && !i.followUp.overdue).length
+  // Only include interactions for the current user (staff)
+  const userFullName = activeUser ? `${activeUser.firstName} ${activeUser.lastName}` : null;
+  const userInteractions = userFullName
+    ? processedInteractions.filter(i => i.staffMember === userFullName)
+    : [];
+
+  // Calculate stats using recalculated overdue, but only for current user
+  const overdueCount = userInteractions.filter((i) => i.followUp.overdue).length;
+  const pendingCount = userInteractions.filter((i) => i.followUp.required && !i.followUp.overdue).length;
 
   // Archive/unarchive handler for dashboard
   const handleArchive = async (id: string, archive: boolean) => {
@@ -174,7 +180,7 @@ export default function Page() {
 
             {/* Stats Grid */}
             <StatsGrid 
-              totalInteractions={processedInteractions.length}
+              totalInteractions={userInteractions.length}
               pendingCount={pendingCount}
               overdueCount={overdueCount}
               loading={loading}
