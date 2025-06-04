@@ -4,6 +4,11 @@
 // This page displays recent student interactions, stats, and allows filtering,
 // searching, and editing. Interactions are loaded from the database via API
 // endpoints, providing real-time data persistence and consistency.
+//
+// NOTE: We recalculate the overdue status for each interaction on the fly
+// based on the current date and the follow-up date, to ensure the UI is always
+// accurate regardless of backend data. This affects stats and all components
+// that display overdue status.
 // -----------------------------------------------------------------------------
 
 "use client"
@@ -20,6 +25,34 @@ import {
 } from "./components"
 
 import { Interaction, Student, StaffMember } from "@/lib/data"
+
+// Helper to recalculate overdue status based on followUp.date
+const withCalculatedOverdue = (interaction: Interaction): Interaction => {
+  // If no follow-up required, just return as is
+  if (!interaction.followUp?.required || !interaction.followUp?.date) {
+    return {
+      ...interaction,
+      followUp: {
+        ...interaction.followUp,
+        overdue: false,
+      },
+    }
+  }
+  // Compare follow-up date to today (ignore time)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const followUpDate = new Date(interaction.followUp.date)
+  followUpDate.setHours(0, 0, 0, 0)
+  // If follow-up date is before today, it's overdue
+  const overdue = followUpDate < today
+  return {
+    ...interaction,
+    followUp: {
+      ...interaction.followUp,
+      overdue,
+    },
+  }
+}
 
 export default function Page() {
   const { user: activeUser } = useAuth();
@@ -60,7 +93,10 @@ export default function Page() {
     loadData()
   }, [])
 
-  const filteredInteractions = interactions
+  // Always recalculate overdue status for all interactions
+  const processedInteractions = interactions.map(withCalculatedOverdue)
+
+  const filteredInteractions = processedInteractions
     .filter((interaction) => {
       const searchTermLower = searchTerm.toLowerCase();
 
@@ -87,9 +123,9 @@ export default function Page() {
     setShowAiInsights(true);
   }
 
-  // Calculate stats
-  const overdueCount = interactions.filter((i) => i.followUp.overdue).length
-  const pendingCount = interactions.filter((i) => i.followUp.required && !i.followUp.overdue).length
+  // Calculate stats using recalculated overdue
+  const overdueCount = processedInteractions.filter((i) => i.followUp.overdue).length
+  const pendingCount = processedInteractions.filter((i) => i.followUp.required && !i.followUp.overdue).length
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 relative flex">
@@ -110,7 +146,7 @@ export default function Page() {
 
             {/* Stats Grid */}
             <StatsGrid 
-              totalInteractions={interactions.length}
+              totalInteractions={processedInteractions.length}
               pendingCount={pendingCount}
               overdueCount={overdueCount}
               loading={loading}

@@ -1,9 +1,11 @@
+// This file defines the InteractionCard component, which displays a summary of a student interaction, including follow-up status and timing. It is used in the dashboard to provide a quick overview of each interaction and allows actions like editing or viewing insights. The follow-up section now always shows the follow-up date and the number of days until or since that date, for better clarity.
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, Clock, User, Eye, Edit, Mail } from "lucide-react"
+import { format, formatDistanceToNow } from "date-fns"
 
 interface Interaction {
   id: string
@@ -58,6 +60,17 @@ export function InteractionCard({ interaction, onViewInsights }: InteractionCard
       liftoff: "bg-orange-100 text-orange-700 border-orange-200",
     }
     return colors[program] || "bg-gray-100 text-gray-700 border-gray-200"
+  }
+
+  // Helper to format follow-up date and relative time
+  const getFollowUpInfo = (dateStr: string) => {
+    if (!dateStr) return { formatted: "N/A", relative: "" }
+    const date = new Date(dateStr)
+    // Format as e.g. "Jun 10, 2025"
+    const formatted = format(date, "MMM d, yyyy")
+    // Show relative time (e.g. "in 3 days" or "2 days ago")
+    const relative = formatDistanceToNow(date, { addSuffix: true })
+    return { formatted, relative }
   }
 
   return (
@@ -141,20 +154,26 @@ export function InteractionCard({ interaction, onViewInsights }: InteractionCard
             {/* Follow-up Status */}
             {interaction.followUp.required && (
               <div
-                className={`flex items-center space-x-2 p-2 rounded-lg ${
+                className={`flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 p-2 rounded-lg ${
                   interaction.followUp.overdue
                     ? "bg-red-100 text-red-700"
                     : "bg-yellow-100 text-yellow-700"
                 }`}
               >
-                {interaction.followUp.overdue ? (
-                  <AlertCircle className="h-4 w-4" />
-                ) : (
-                  <Clock className="h-4 w-4" />
-                )}
-                <span className="text-sm font-medium">
-                  Follow-up: {interaction.followUp.date}
-                  {interaction.followUp.overdue && " (Overdue)"}
+                <div className="flex items-center space-x-2">
+                  {interaction.followUp.overdue ? (
+                    <AlertCircle className="h-4 w-4" />
+                  ) : (
+                    <Clock className="h-4 w-4" />
+                  )}
+                  <span className="text-sm font-medium">
+                    {/* I want to always show the follow-up date and relative time */}
+                    Follow-up: {getFollowUpInfo(interaction.followUp.date).formatted}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-700 pl-6 sm:pl-0 sm:ml-2">
+                  {/* I want to show how long until/since the follow-up date, e.g. 'in 3 days' or '2 days ago' */}
+                  {getFollowUpInfo(interaction.followUp.date).relative}
                 </span>
               </div>
             )}

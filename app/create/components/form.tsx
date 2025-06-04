@@ -76,6 +76,11 @@ export function Form({ interactionId }: { interactionId?: number }) {
       type: formData.interactionType, // ensure correct mapping
       staffMember: user ? `${user.firstName} ${user.lastName}` : "", // required
       staffMemberId: user ? (user as unknown as { id: number }).id : null, // type-safe workaround for TS
+      followUp: {
+        required: followUpStudent || followUpStaff,
+        date: formData.followUpDate || null,
+        overdue: false // let backend calculate if needed
+      }
     }
     console.log('Submitting payload to /api/interactions:', payload)
     try {
