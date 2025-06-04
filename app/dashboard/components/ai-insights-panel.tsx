@@ -33,7 +33,27 @@ interface Interaction {
 export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdown }: AiInsightsPanelProps) {
 	const [generatedInsight, setGeneratedInsight] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
-	const [weeklyReport, setWeeklyReport] = useState<string | null>(null); // State to store the weekly report
+	const [weeklyReport, setWeeklyReport] = useState<string | null>(null) // State to store the weekly report
+
+	// I process AI responses to ensure proper markdown spacing and readability
+	const enhanceMarkdownSpacing = (text: string): string => {
+		return text
+			// Ensure double line breaks after headings
+			.replace(/^(#{1,6}.*?)$/gm, '$1\n\n')
+			// Ensure double line breaks before headings (except at start)
+			.replace(/(?<!^)\n(#{1,6})/gm, '\n\n$1')
+			// Add extra spacing around horizontal rules
+			.replace(/\n---\n/g, '\n\n---\n\n')
+			// Ensure proper spacing after list items
+			.replace(/^(\s*[-*+]\s+.*?)$/gm, '$1\n')
+			// Add spacing between different list sections
+			.replace(/(\n\s*[-*+].*?)\n(\s*[-*+])/gm, '$1\n\n$2')
+			// Ensure paragraphs have proper spacing
+			.replace(/\n([A-Z][^#\n-*+]*:)/g, '\n\n$1')
+			// Clean up excessive whitespace but preserve intentional spacing
+			.replace(/\n{4,}/g, '\n\n\n')
+			.trim()
+	}
 
 	const generateInsight = async () => {
 		try {
@@ -64,7 +84,7 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ 
-					message: `Please provide insights and analysis for the following student interaction data:\n\n${formattedNotes}`
+					message: `Please provide detailed insights and analysis for the following student interaction data. Format your response in well-structured markdown with clear headings, bullet points, and adequate spacing between sections:\n\n${formattedNotes}\n\nPlease organize your response with:\n- ## Key Insights\n- ## Patterns and Trends\n- ## Recommendations\n- ## Action Items\n\nUse proper markdown formatting with double line breaks between sections for better readability.`
 				})
 			})
 
@@ -73,7 +93,7 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 			}
 
 			const { result } = await response.json()
-			setGeneratedInsight(result)
+			setGeneratedInsight(enhanceMarkdownSpacing(result))
 		} catch (error) {
 			console.error("Error generating AI insight:", error)
 		} finally {
@@ -121,7 +141,7 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ 
-					message: `Please generate a weekly summary and insights for the following student interaction data from the past week:\n\n${formattedReport}`
+					message: `Please generate a comprehensive weekly summary and insights for the following student interaction data from the past week. Format your response in well-structured markdown with clear headings and adequate spacing:\n\n${formattedReport}\n\nPlease organize your response with:\n- ## Weekly Summary\n- ## Key Trends\n- ## Category Analysis\n- ## Recommendations\n- ## Follow-up Actions\n\nUse proper markdown formatting with double line breaks between sections and bullet points for lists. Ensure good visual spacing for readability.`
 				})
 			})
 
@@ -130,7 +150,7 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 			}
 
 			const { result } = await response.json()
-			setWeeklyReport(result)
+			setWeeklyReport(enhanceMarkdownSpacing(result))
 		} catch (error) {
 			console.error("Error generating weekly report:", error)
 		} finally {
@@ -152,7 +172,7 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 
 			{/* Panel content */}
 			<div className="relative h-full w-full max-w-5xl bg-white border border-gray-200 shadow-xl overflow-y-auto pointer-events-auto">
-				<div className="p-6 space-y-6">
+				<div className="p-4 space-y-4">
 					{/* Header */}
 					<div className="flex items-center justify-between">
 						<div className="flex items-center space-x-2">
@@ -167,12 +187,27 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 					{/* Markdown Insights */}
 					{insightsMarkdown && (
 						<Card>
-							<CardHeader className="pb-3">
+							<CardHeader className="pb-2">
 								<CardTitle className="text-base">AI Insights</CardTitle>
 								<CardDescription>Insights for all interactions for the current staff</CardDescription>
 							</CardHeader>
-							<CardContent className="prose prose-sm max-w-none">
-								<ReactMarkdown>{insightsMarkdown}</ReactMarkdown>
+							<CardContent 
+								className="prose prose-sm max-w-none text-sm"
+								style={{ whiteSpace: 'pre-wrap', lineHeight: '1.2' }}
+							>
+								<div className="space-y-0">
+									<ReactMarkdown 
+										components={{
+											h2: ({ children }) => <h2 className="text-base font-semibold mt-0.5 mb-0.5 border-b border-gray-200 pb-0.5">{children}</h2>,
+											h3: ({ children }) => <h3 className="text-sm font-medium mt-0.5 mb-0">{children}</h3>,
+											ul: ({ children }) => <ul className="space-y-0 mb-0.5 pl-3">{children}</ul>,
+											li: ({ children }) => <li className="leading-snug text-sm mb-0">{children}</li>,
+											p: ({ children }) => <p className="mb-0.5 leading-snug text-sm">{children}</p>
+										}}
+									>
+										{insightsMarkdown}
+									</ReactMarkdown>
+								</div>
 							</CardContent>
 						</Card>
 					)}
@@ -180,11 +215,11 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 					{/* Interaction Notes */}
 					{notes && notes.length > 0 && (
 						<Card>
-							<CardHeader className="pb-3">
+							<CardHeader className="pb-2">
 								<CardTitle className="text-base">Interaction Notes</CardTitle>
 								<CardDescription>Summary of the interaction</CardDescription>
 							</CardHeader>
-							<CardContent className="space-y-2">
+							<CardContent className="space-y-1">
 								<ul className="list-disc pl-5">
 									{notes.map((note, index) => (
 										<li key={index} className="text-sm text-gray-700">
@@ -198,10 +233,10 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 
 					{/* Quick Actions */}
 					<Card>
-						<CardHeader className="pb-3">
+						<CardHeader className="pb-2">
 							<CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
 						</CardHeader>
-						<CardContent className="space-y-3">
+						<CardContent className="space-y-2">
 							<Button
 								onClick={generateInsight}
 								size="sm"
@@ -226,26 +261,56 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 					{/* Display Weekly Report or AI Insight */}
 					{weeklyReport ? (
 						<Card className="bg-green-50 border-green-400">
-							<CardHeader className="pb-3">
+							<CardHeader className="pb-2">
 								<CardTitle className="text-base font-semibold text-green-700">Weekly Report</CardTitle>
 								<CardDescription className="text-sm text-green-600">
 									Summary of interactions from the past week
 								</CardDescription>
 							</CardHeader>
-							<CardContent className="prose prose-sm max-w-none text-green-800">
-								<ReactMarkdown>{weeklyReport}</ReactMarkdown>
+							<CardContent 
+								className="prose prose-sm max-w-none text-green-800 text-sm"
+								style={{ whiteSpace: 'pre-wrap', lineHeight: '1.2' }}
+							>
+								<div className="space-y-0">
+									<ReactMarkdown 
+										components={{
+											h2: ({ children }) => <h2 className="text-base font-semibold mt-0.5 mb-0.5 border-b border-green-200 pb-0.5 text-green-700">{children}</h2>,
+											h3: ({ children }) => <h3 className="text-sm font-medium mt-0.5 mb-0 text-green-700">{children}</h3>,
+											ul: ({ children }) => <ul className="space-y-0 mb-0.5 pl-3">{children}</ul>,
+											li: ({ children }) => <li className="leading-snug mb-0 text-green-800">{children}</li>,
+											p: ({ children }) => <p className="mb-0.5 leading-snug text-green-800">{children}</p>
+										}}
+									>
+										{weeklyReport}
+									</ReactMarkdown>
+								</div>
 							</CardContent>
 						</Card>
 					) : generatedInsight ? (
 						<Card className="bg-blue-50 border-blue-400">
-							<CardHeader className="pb-3">
+							<CardHeader className="pb-2">
 								<CardTitle className="text-base font-semibold text-blue-700">Generated AI Insight</CardTitle>
 								<CardDescription className="text-sm text-blue-600">
 									Summary of recent interactions
 								</CardDescription>
 							</CardHeader>
-							<CardContent className="prose prose-sm max-w-none text-blue-800">
-								<ReactMarkdown>{generatedInsight}</ReactMarkdown>
+							<CardContent 
+								className="prose prose-sm max-w-none text-blue-800 text-sm"
+								style={{ whiteSpace: 'pre-wrap', lineHeight: '1.2' }}
+							>
+								<div className="space-y-0">
+									<ReactMarkdown 
+										components={{
+											h2: ({ children }) => <h2 className="text-base font-semibold mt-0.5 mb-0.5 border-b border-blue-200 pb-0.5 text-blue-700">{children}</h2>,
+											h3: ({ children }) => <h3 className="text-sm font-medium mt-0.5 mb-0 text-blue-700">{children}</h3>,
+											ul: ({ children }) => <ul className="space-y-0 mb-0.5 pl-3">{children}</ul>,
+											li: ({ children }) => <li className="leading-snug mb-0 text-blue-800">{children}</li>,
+											p: ({ children }) => <p className="mb-0.5 leading-snug text-blue-800">{children}</p>
+										}}
+									>
+										{generatedInsight}
+									</ReactMarkdown>
+								</div>
 							</CardContent>
 						</Card>
 					) : null}
