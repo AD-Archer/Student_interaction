@@ -20,7 +20,7 @@
 
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import { StudentSelectionCard } from "./StudentSelectionCard"
 import { InteractionDetailsCard } from "./InteractionDetailsCard"
@@ -34,16 +34,16 @@ import { useAuth } from "@/components/auth-wrapper"
 
 export function Form({ interactionId }: { interactionId?: number }) {
   const router = useRouter()
-  const { user } = useAuth() // I get the current staff user for required fields
+  const { user } = useAuth()
+
+  // Restore two booleans for follow-up recipients
+  const [followUpStudent, setFollowUpStudent] = useState(false)
+  const [followUpStaff, setFollowUpStaff] = useState(false)
 
   // I manage all form state and updates
   const {
     formData,
     updateFormData,
-    followUpStudent,
-    setFollowUpStudent,
-    followUpStaff,
-    setFollowUpStaff,
   } = useFormData({ interactionId })
 
   // I handle AI summary and notes cleanup
@@ -57,7 +57,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
   } = useAIFunctionality()
 
   // I handle email sending logic
-  const { } = useEmailFunctionality()
+  const { sendTestEmailWithNotes } = useEmailFunctionality()
 
   // I handle the form submission and orchestrate saving the interaction
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -68,21 +68,32 @@ export function Form({ interactionId }: { interactionId?: number }) {
       reason: formData.reason,
       notes: formData.notes,
     })
-    // Debug: log the user object to determine staffMemberId property
-    console.log('Current user object:', user)
     // Build the payload with all required fields for the API
     const payload = {
       ...formData,
-      type: formData.interactionType, // ensure correct mapping
-      staffMember: user ? `${user.firstName} ${user.lastName}` : "", // required
-      staffMemberId: user ? (user as unknown as { id: number }).id : null, // type-safe workaround for TS
+      type: formData.interactionType,
+      staffMember: user ? `${user.firstName} ${user.lastName}` : "",
+      staffMemberId: user ? (user as unknown as { id: number }).id : null,
       followUp: {
         required: followUpStudent || followUpStaff,
+        student: followUpStudent,
+        staff: followUpStaff,
         date: formData.followUpDate || null,
-        overdue: false // let backend calculate if needed
+        overdue: false,
+        studentEmail: followUpStudent ? formData.studentEmail : null,
+        staffEmail: followUpStaff ? formData.staffEmail : null
       }
     }
-    console.log('Submitting payload to /api/interactions:', payload)
+    // Determine if follow-up should be sent now
+    let shouldSendNow = false
+    if (payload.followUp.required && payload.followUp.date) {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const followUpDate = new Date(payload.followUp.date)
+      followUpDate.setHours(0, 0, 0, 0)
+      shouldSendNow = followUpDate <= today
+    }
+    // Save the interaction
     try {
       const response = await fetch("/api/interactions", {
         method: "POST",
@@ -92,6 +103,15 @@ export function Form({ interactionId }: { interactionId?: number }) {
       if (!response.ok) {
         console.error("Failed to save interaction:", await response.text())
         return
+      }
+      // Only send follow-up emails if the date is today or in the past
+      if (shouldSendNow) {
+        if (followUpStudent && formData.studentEmail) {
+          await sendTestEmailWithNotes(formData.studentEmail, 'student', formData)
+        }
+        if (followUpStaff && formData.staffEmail) {
+          await sendTestEmailWithNotes(formData.staffEmail, 'staff', formData)
+        }
       }
     } catch (err) {
       console.error("Error saving interaction:", err)

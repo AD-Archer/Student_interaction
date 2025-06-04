@@ -70,10 +70,15 @@ model Interaction {
   status       String   @default("completed")
   aiSummary    String?  // AI-generated summary
   
-  // Follow-up information (stored as JSON)
-  followUpRequired Boolean @default(false)
-  followUpDate     String?
-  followUpOverdue  Boolean @default(false)
+  // Follow-up information
+  followUpRequired      Boolean @default(false)
+  followUpDate          String?
+  followUpOverdue       Boolean @default(false)
+  followUpSent          Boolean @default(false) // True if follow-up email has been sent
+  followUpStudent       Boolean @default(false) // True if follow-up should be sent to student
+  followUpStaff         Boolean @default(false) // True if follow-up should be sent to staff
+  followUpStudentEmail  String? // Student email for follow-up
+  followUpStaffEmail    String? // Staff email for follow-up
 
   // Archiving support
   isArchived      Boolean @default(false)

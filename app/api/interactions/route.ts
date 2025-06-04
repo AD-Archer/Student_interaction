@@ -44,6 +44,8 @@ export async function GET(request: NextRequest) {
         followUpRequired: true,
         followUpDate: true,
         followUpOverdue: true,
+        followUpStudentEmail: true, // I need this for followUp.studentEmail
+        followUpStaffEmail: true,   // I need this for followUp.staffEmail
         staffMemberId: true,
         createdAt: true,
         updatedAt: true,
@@ -90,7 +92,9 @@ export async function GET(request: NextRequest) {
       followUp: {
         required: interaction.followUpRequired,
         date: interaction.followUpDate,
-        overdue: interaction.followUpOverdue
+        overdue: interaction.followUpOverdue,
+        studentEmail: interaction.followUpStudentEmail,
+        staffEmail: interaction.followUpStaffEmail
       }
     }))
 
@@ -156,6 +160,8 @@ export async function POST(request: NextRequest) {
         followUpRequired: followUp?.required || false,
         followUpDate: followUp?.date || null,
         followUpOverdue: followUp?.overdue || false,
+        followUpStudentEmail: followUp?.studentEmail || null,
+        followUpStaffEmail: followUp?.staffEmail || null,
         isArchived: false // always start unarchived
       },
       select: {

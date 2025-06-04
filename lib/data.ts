@@ -72,6 +72,11 @@ export interface Interaction {
     required: boolean
     date?: string
     overdue?: boolean
+    sent?: boolean // Track if follow-up email has been sent
+    student?: boolean // Track if follow-up should be sent to student
+    staff?: boolean // Track if follow-up should be sent to staff
+    studentEmail?: string // Student email for follow-up
+    staffEmail?: string // Staff email for follow-up
   }
   aiSummary: string
   isArchived?: boolean // I add this to support archiving interactions
@@ -196,7 +201,7 @@ export const interactions: Interaction[] = [
     time: "10:30 AM",
     staffMember: "Tahir Lee",
     status: "completed",
-    followUp: { required: true, date: "2024-12-20", overdue: false },
+    followUp: { required: true, date: "2024-12-20", overdue: false, sent: false },
     aiSummary:
       "Student received coaching on interview preparation with focus on confidence building and professional presentation.",
   },
@@ -213,7 +218,7 @@ export const interactions: Interaction[] = [
     time: "2:15 PM",
     staffMember: "Barbara Cicalese",
     status: "completed",
-    followUp: { required: true, date: "2024-12-18", overdue: false },
+    followUp: { required: true, date: "2024-12-18", overdue: false, sent: false },
     aiSummary:
       "Academic planning session focused on course selection and identifying support needs for upcoming semester.",
   },
@@ -230,7 +235,7 @@ export const interactions: Interaction[] = [
     time: "11:00 AM",
     staffMember: "Charles Mitchell",
     status: "completed",
-    followUp: { required: false },
+    followUp: { required: false, sent: false },
     aiSummary:
       "Career exploration session covering technology industry opportunities and portfolio development strategies.",
   },
@@ -247,7 +252,7 @@ export const interactions: Interaction[] = [
     time: "9:45 AM",
     staffMember: "Tahir Lee",
     status: "completed",
-    followUp: { required: true, date: "2024-12-15", overdue: true },
+    followUp: { required: true, date: "2024-12-15", overdue: true, sent: false },
     aiSummary:
       "Performance improvement plan established to address attendance issues with specific action items and timeline.",
   },
