@@ -3,6 +3,10 @@
  * Analytics dashboard page that displays real-time data from the Prisma database.
  * Shows comprehensive student interaction metrics, follow-up statistics, program breakdowns,
  * and actionable insights for staff members. All data is fetched from the analytics API endpoint.
+ *
+ * Note: All data-fetching hooks are memoized to avoid unnecessary re-renders and to satisfy
+ * React hook dependency rules. This prevents stale closures and ensures the dashboard always
+ * reflects the latest filter state. If you add new fetchers, memoize them with useCallback.
  */
 
 "use client"
@@ -10,7 +14,7 @@
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Filter, Download, AlertCircle, Clock, Users, TrendingUp, BarChart3 } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Loader } from "@/components/ui/loader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -72,18 +76,50 @@ export default function AnalyticsPage() {
   const [studentsNeedingInteraction, setStudentsNeedingInteraction] = useState<StudentRecord[]>([])
   const [followUpRecords, setFollowUpRecords] = useState<FollowUpRecord[]>([])
 
+  // Memoize fetchers to avoid stale closures and satisfy exhaustive-deps
+  const fetchStudentsNeedingInteraction = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        cohort: selectedCohort,
+        needsInteraction: 'true'
+      })
+      const response = await fetch(`/api/students?${params}`)
+      if (response.ok) {
+        const students = await response.json()
+        setStudentsNeedingInteraction(students)
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error)
+    }
+  }, [selectedCohort])
+
+  const fetchFollowUpRecords = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        cohort: selectedCohort,
+        followUpRequired: 'true'
+      })
+      const response = await fetch(`/api/interactions?${params}`)
+      if (response.ok) {
+        const interactions = await response.json()
+        setFollowUpRecords(interactions)
+      }
+    } catch (error) {
+      console.error('Error fetching follow-ups:', error)
+    }
+  }, [selectedCohort])
+
   // Fetch analytics data from API
-  const fetchAnalyticsData = async () => {
+  // I use useCallback to ensure stable reference for useEffect dependencies
+  const fetchAnalyticsData = useCallback(async () => {
     try {
       setIsLoading(true)
       const params = new URLSearchParams({
         cohort: selectedCohort,
         dateRange: dateRange
       })
-      
       const response = await fetch(`/api/analytics?${params}`)
       if (!response.ok) throw new Error('Failed to fetch analytics')
-      
       const data = await response.json()
       setAnalyticsData(data)
       
@@ -98,68 +134,39 @@ export default function AnalyticsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [selectedCohort, dateRange, fetchStudentsNeedingInteraction, fetchFollowUpRecords])
 
-  // Fetch students who need interactions
-  const fetchStudentsNeedingInteraction = async () => {
-    try {
-      const params = new URLSearchParams({
-        cohort: selectedCohort,
-        needsInteraction: 'true'
-      })
-      const response = await fetch(`/api/students?${params}`)
-      if (response.ok) {
-        const students = await response.json()
-        setStudentsNeedingInteraction(students)
-      }
-    } catch (error) {
-      console.error('Error fetching students:', error)
-    }
-  }
+  useEffect(() => {
+    fetchAnalyticsData()
+  }, [fetchAnalyticsData])
 
-  // Fetch follow-up records
-  const fetchFollowUpRecords = async () => {
-    try {
-      const params = new URLSearchParams({
-        cohort: selectedCohort,
-        followUpRequired: 'true'
-      })
-      const response = await fetch(`/api/interactions?${params}`)
-      if (response.ok) {
-        const interactions = await response.json()
-        setFollowUpRecords(interactions)
-      }
-    } catch (error) {
-      console.error('Error fetching follow-ups:', error)
-    }
-  }
-
-  // Filter functions
-  const getRequiredFollowUps = () => {
-    return followUpRecords.filter(record => !record.isOverdue)
-  }
-
-  const getOverdueFollowUps = () => {
-    return followUpRecords.filter(record => record.isOverdue)
-  }
-
-  const filteredStudents = studentsNeedingInteraction.filter(student => {
+  // Filtered students for the search box
+  const filteredStudents: StudentRecord[] = studentsNeedingInteraction.filter((student: StudentRecord) => {
     const query = searchQuery.toLowerCase()
     const studentName = `${student.firstName} ${student.lastName}`.toLowerCase()
     return studentName.includes(query) || student.id.includes(query)
   })
 
-  // Export functionality
-  const handleExport = () => {
+  // Get required follow-ups (not overdue)
+  const getRequiredFollowUps = (): FollowUpRecord[] => {
+    return followUpRecords.filter((record: FollowUpRecord) => !record.isOverdue)
+  }
+
+  // Get overdue follow-ups
+  const getOverdueFollowUps = (): FollowUpRecord[] => {
+    return followUpRecords.filter((record: FollowUpRecord) => record.isOverdue)
+  }
+
+  // Export analytics data as JSON
+  const handleExport = (): void => {
     if (!analyticsData) return
-    
+    // I include only the most relevant data for export
     const exportData = {
       overview: analyticsData.overview,
       breakdown: analyticsData.breakdown,
       exportDate: new Date().toISOString(),
       filters: analyticsData.filters
     }
-    
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
       type: 'application/json'
     })
@@ -170,10 +177,6 @@ export default function AnalyticsPage() {
     a.click()
     URL.revokeObjectURL(url)
   }
-
-  useEffect(() => {
-    fetchAnalyticsData()
-  }, [selectedCohort, dateRange])
 
   if (isLoading || !analyticsData) {
     return (

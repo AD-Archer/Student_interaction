@@ -3,6 +3,8 @@
  * Renders the configurable interaction frequency settings for different student programs.
  * Allows administrators to set how often students in each program need to be contacted,
  * plus priority escalation and follow-up rules. This is part of the system settings.
+ *
+ * The cohort-to-phase mapping is now managed in its own card/component.
  */
 
 import { useState, useEffect } from "react"

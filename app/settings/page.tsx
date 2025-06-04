@@ -15,6 +15,8 @@ import { SystemSettings } from "./components/SystemSettings"
 import { SystemIntegrations } from "./components/SystemIntegrations"
 import { EmailTest } from "./components/EmailTest"
 import { EmailSettings } from "./components/EmailSettings"
+import { CohortPhaseMappingSettings } from "./components/CohortPhaseMappingSettings"
+import { InteractionFrequencySettings } from "./components/InteractionFrequencySettings"
 import { systemIntegrationData } from "@/lib/data"
 import { resolveIconComponent } from "@/lib/utils"
 
@@ -124,7 +126,9 @@ export default function SettingsPage() {
 
             {/* System Settings Tab */}
             <TabsContent value="system" className="space-y-4 sm:space-y-6">
-              <div className="w-full px-0 lg:px-0">
+              <div className="w-full px-0 lg:px-0 space-y-6">
+                <CohortPhaseMappingSettings />
+                <InteractionFrequencySettings />
                 <SystemSettings />
               </div>
             </TabsContent>

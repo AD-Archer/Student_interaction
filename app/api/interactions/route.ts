@@ -1,4 +1,15 @@
-// API route for student interactions CRUD operations
+/**
+ * API route for student interactions CRUD operations
+ *
+ * This GET handler now uses the cohort-to-phase mapping from system settings (cohortPhaseMap)
+ * to determine the correct interaction frequency for each student based on their cohort's current phase.
+ * It marks interactions as overdue if the last interaction date exceeds the required interval for that phase.
+ *
+ * If you update cohort-phase mapping or frequency settings, this logic will always reflect the latest values.
+ *
+ * Note: Uses type assertions for systemSettings fields to work around Prisma type limitations. Make sure your DB and schema are up to date.
+ */
+
 // This file handles GET (fetch all) and POST (create) for student interactions.
 // It ensures the archive state (isArchived) is always included in responses, so the frontend can display and update archive status.
 // PATCH for archiving is handled in /api/interactions/[id]/route.ts. If you add new fields to the Interaction model, update the queries and response formatting here.
@@ -30,21 +41,54 @@ export async function GET(request: NextRequest) {
     const followUpRequired = searchParams.get('followUpRequired')
 
     // Build where clause for filtering
-    const where: Record<string, any> = {}
-    
+    const where: Partial<{
+      student: { cohort: number }
+      followUpRequired: boolean
+      followUpSent: boolean
+      isArchived: boolean
+    }> = {}
     if (cohort && cohort !== 'all') {
-      where.student = {
-        cohort: parseInt(cohort)
-      }
+      where.student = { cohort: parseInt(cohort) }
     }
-
     if (followUpRequired === 'true') {
       where.followUpRequired = true
       where.followUpSent = false
       where.isArchived = false
     }
 
-    // I include isArchived so the frontend can show archive state
+    // Fetch system settings for cohort-phase mapping and interaction frequencies
+    // I cast to unknown first, then to the expected object shape to avoid Prisma type errors
+    const systemSettings = await db.systemSettings.findFirst({
+      orderBy: { updatedAt: 'desc' }
+    }) as unknown as {
+      cohortPhaseMap?: Record<string, string>
+      foundationsInteractionDays?: number
+      liftoffInteractionDays?: number
+      lightspeedInteractionDays?: number
+      program101InteractionDays?: number
+      defaultInteractionDays?: number
+      [key: string]: unknown
+    }
+    // I expect cohortPhaseMap to be a JSON object like { "1": "liftoff", "2": "101", "3": "foundations" }
+    const cohortPhaseMap: Record<string, string> = systemSettings?.cohortPhaseMap || {}
+
+    // Helper to get phase for a cohort
+    const getPhaseForCohort = (cohortNum: number | null): string => {
+      if (!cohortNum) return 'default'
+      return cohortPhaseMap?.[cohortNum.toString()] || 'default'
+    }
+    // Helper to get frequency for a phase
+    const getFrequencyForPhase = (phase: string): number => {
+      switch (phase) {
+        case 'foundations': return systemSettings?.foundationsInteractionDays || 14
+        case 'liftoff': return systemSettings?.liftoffInteractionDays || 21
+        case 'lightspeed': return systemSettings?.lightspeedInteractionDays || 7
+        case '101': return systemSettings?.program101InteractionDays || 30
+        default: return systemSettings?.defaultInteractionDays || 30
+      }
+    }
+
+    // Fetch all interactions with student info
     const interactions = await db.interaction.findMany({
       where,
       select: {
@@ -64,12 +108,12 @@ export async function GET(request: NextRequest) {
         followUpRequired: true,
         followUpDate: true,
         followUpOverdue: true,
-        followUpStudentEmail: true, // I need this for followUp.studentEmail
-        followUpStaffEmail: true,   // I need this for followUp.staffEmail
+        followUpStudentEmail: true,
+        followUpStaffEmail: true,
         staffMemberId: true,
         createdAt: true,
         updatedAt: true,
-        isArchived: true, // ensure this is always present
+        isArchived: true,
         student: {
           select: {
             id: true,
@@ -90,24 +134,31 @@ export async function GET(request: NextRequest) {
           }
         }
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' }
     })
 
-    // Transform data to match current frontend format, including isArchived
+    // For each interaction, determine if it's overdue based on cohort-phase mapping and frequency
+    const today = new Date()
     const formattedInteractions = interactions.map((interaction) => {
-      // Check if follow-up is overdue
-      const today = new Date().toISOString().split('T')[0]
-      const isOverdue = interaction.followUpDate && interaction.followUpDate < today
-
+      const cohortNum = interaction.student?.cohort || null
+      const phase = getPhaseForCohort(cohortNum)
+      const frequency = getFrequencyForPhase(phase)
+      // Parse last interaction date (assume YYYY-MM-DD or similar)
+      const lastDate = interaction.date
+      let daysSince = null
+      if (lastDate) {
+        const last = new Date(lastDate)
+        daysSince = Math.floor((today.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
+      }
+      // Mark as overdue if daysSince exceeds frequency
+      const isOverdue = daysSince !== null && daysSince > frequency
       return {
         id: interaction.id,
         studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
         studentFirstName: interaction.studentFirstName,
         studentLastName: interaction.studentLastName,
         studentId: interaction.studentId,
-        cohort: interaction.student?.cohort || null,
+        cohort: cohortNum,
         program: interaction.program,
         type: interaction.type,
         reason: interaction.reason,
@@ -117,9 +168,12 @@ export async function GET(request: NextRequest) {
         staffMember: interaction.staffMember,
         status: interaction.status,
         aiSummary: interaction.aiSummary,
-        isArchived: interaction.isArchived, // I add this so the UI can see archive state
+        isArchived: interaction.isArchived,
         followUpDate: interaction.followUpDate,
-        isOverdue: isOverdue,
+        isOverdue,
+        daysSinceLastInteraction: daysSince,
+        phase,
+        frequency,
         followUp: {
           required: interaction.followUpRequired,
           date: interaction.followUpDate,

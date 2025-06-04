@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Download, Upload, FileText, Users, Activity, AlertCircle, CheckCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { InteractionFrequencySettings } from "./InteractionFrequencySettings"
 
 interface ImportResult {
   success: boolean
@@ -117,9 +116,6 @@ export const SystemSettings = () => {
 
   return (
     <div className="w-full space-y-6">
-      {/* Interaction Frequency Settings */}
-      <InteractionFrequencySettings />
-      
       {/* Data Import Section */}
       <Card className="shadow-lg">
         <CardHeader>
