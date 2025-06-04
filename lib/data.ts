@@ -255,10 +255,10 @@ export const interactions: Interaction[] = [
 
 export const students: Student[] = [
   { id: "all", firstName: "All", lastName: "Students" },
-  { id: "0001", firstName: "Micheal", lastName: "Newman" },
-  { id: "0002", firstName: "Amira", lastName: "Johnson" },
-  { id: "0003", firstName: "Koleona", lastName: "Smith" },
-  { id: "0004", firstName: "Zaire", lastName: "Williams" },
+  { id: "0001", firstName: "Micheal", lastName: "Newman", email: "michael.newman@example.com" },
+  { id: "0002", firstName: "Amira", lastName: "Johnson", email: "amira.johnson@example.com" },
+  { id: "0003", firstName: "Koleona", lastName: "Smith", email: "koleona.smith@example.com" },
+  { id: "0004", firstName: "Zaire", lastName: "Williams", email: "zaire.williams@example.com" },
 ]
 
 export const interactionTypeOptions: InteractionTypeOption[] = [

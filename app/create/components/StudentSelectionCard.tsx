@@ -2,6 +2,10 @@
  * StudentSelectionCard component handles student and interaction type selection.
  * This is the first section of the form where users select a student from the dropdown
  * and choose the type of interaction they had with that student.
+ * 
+ * Updates:
+ * - Added console logging for debugging student email selection
+ * - Improved handling of student email to ensure it's properly set
  */
 
 import React from "react"
@@ -21,6 +25,9 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
   const handleStudentChange = (studentId: string) => {
     const student = students.find((s) => s.id === studentId)
     if (student) {
+      // Log for debugging email issues
+      console.log(`Selected student: ${student.firstName} ${student.lastName}, Email: ${student.email || 'No email available'}`)
+      
       onFormDataChange({
         studentId: student.id,
         studentName: `${student.firstName} ${student.lastName}`,
