@@ -37,6 +37,21 @@ export async function PUT(req: Request) {
   try {
     const body = await req.json();
 
+    // Validate templates field
+    if (body.templates) {
+      if (!Array.isArray(body.templates)) {
+        return NextResponse.json({ error: "Templates must be an array" }, { status: 400 });
+      }
+
+      for (const template of body.templates) {
+        if (!template.name || !template.subject || !template.body) {
+          return NextResponse.json({
+            error: "Each template must have 'name', 'subject', and 'body' fields",
+          }, { status: 400 });
+        }
+      }
+    }
+
     const updatedSettings = await prisma.systemSettings.update({
       where: { id: 1 },
       data: {

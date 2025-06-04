@@ -139,15 +139,100 @@ async function main() {
   console.log('Creating system settings...')
   await prisma.systemSettings.upsert({
     where: { id: 1 },
-    update: {},
+    update: {
+      autoBackup: true,
+      aiSummaries: true,
+      dataRetention: "2years",
+      sessionTimeout: "8hours",
+      fromName: "Launchpad Student Services",
+      fromEmail: "noreply.lp.studentform@gmail.com",
+      bccAdmin: false,
+      adminEmail: "admin@launchpadphilly.org",
+      templates: [
+        {
+          id: "student-followup",
+          name: "Student Follow-up",
+          subject: "Follow-up: {{interactionType}} Session",
+          body: `Hi {{studentName}},
+
+I hope you're doing well! This is a follow-up from our {{interactionType}} session on {{sessionDate}}.
+
+**Session Summary:**
+{{notes}}
+
+**Next Steps:**
+We have scheduled a follow-up for {{followUpDate}}. Please let me know if you have any questions or if you need to reschedule.
+
+Best regards,
+{{staffName}}
+{{staffEmail}}`,
+          variables: ["studentName", "interactionType", "sessionDate", "notes", "followUpDate", "staffName", "staffEmail"]
+        }
+      ]
+    },
     create: {
       id: 1,
       autoBackup: true,
       aiSummaries: true,
       dataRetention: "2years",
-      sessionTimeout: "8hours"
+      sessionTimeout: "8hours",
+      fromName: "Launchpad Student Services",
+      fromEmail: "noreply.lp.studentform@gmail.com",
+      bccAdmin: false,
+      adminEmail: "admin@launchpadphilly.org",
+      templates: [
+        {
+          id: "student-followup",
+          name: "Student Follow-up",
+          subject: "Follow-up: {{interactionType}} Session",
+          body: `Hi {{studentName}},
+
+I hope you're doing well! This is a follow-up from our {{interactionType}} session on {{sessionDate}}.
+
+**Session Summary:**
+{{notes}}
+
+**Next Steps:**
+We have scheduled a follow-up for {{followUpDate}}. Please let me know if you have any questions or if you need to reschedule.
+
+Best regards,
+{{staffName}}
+{{staffEmail}}`,
+          variables: ["studentName", "interactionType", "sessionDate", "notes", "followUpDate", "staffName", "staffEmail"]
+        }
+      ]
     }
   })
+
+  // Add default email templates
+  console.log('Adding default email templates...');
+  const defaultTemplates = [
+    {
+      name: "student-followup",
+      subject: "Follow-up with {{studentName}}",
+      body: "Hello {{studentName}},\n\nWe wanted to follow up on your recent session. Please let us know if you have any questions.\n\nBest regards,\nLaunchpad Team",
+    },
+    {
+      name: "welcome-email",
+      subject: "Welcome to Launchpad, {{studentName}}!",
+      body: "Hi {{studentName}},\n\nWelcome to the Launchpad program! We're excited to have you on board.\n\nBest,\nThe Launchpad Team",
+    },
+  ];
+
+  await prisma.systemSettings.upsert({
+    where: { id: 1 },
+    update: {
+      templates: defaultTemplates,
+    },
+    create: {
+      id: 1,
+      autoBackup: true,
+      aiSummaries: true,
+      dataRetention: "2years",
+      sessionTimeout: "8hours",
+      templates: defaultTemplates,
+    },
+  });
 
   console.log('Database seed completed successfully!')
 }

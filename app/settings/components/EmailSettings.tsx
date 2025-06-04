@@ -14,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Mail, Settings, TestTube } from "lucide-react"
 
@@ -64,14 +63,25 @@ export function EmailSettings() {
   // Save email settings to the database
   const saveSettings = async (updatedSettings: EmailSettings) => {
     try {
+      // Validate templates before sending to the API
+      if (updatedSettings.templates) {
+        for (const template of updatedSettings.templates) {
+          if (!template.name || !template.subject || !template.body) {
+            throw new Error("Each template must have 'name', 'subject', and 'body' fields")
+          }
+        }
+      }
+
       const response = await fetch("/api/settings/email", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedSettings),
       })
 
+      // Enhanced error handling
       if (!response.ok) {
-        throw new Error("Failed to save email settings")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to save email settings")
       }
 
       setSettings(updatedSettings)
@@ -169,6 +179,31 @@ export function EmailSettings() {
     }
   }
 
+  const addTemplate = () => {
+    const newTemplate = {
+      id: `template-${Date.now()}`,
+      name: "New Template",
+      subject: "Default Subject",
+      body: "Default Body",
+      variables: []
+    };
+    const updatedSettings = {
+      ...settings,
+      templates: [...settings.templates, newTemplate]
+    };
+    setSettings(updatedSettings);
+    saveSettings(updatedSettings);
+  };
+
+  const deleteTemplate = (templateId: string) => {
+    const updatedSettings = {
+      ...settings,
+      templates: settings.templates.filter(template => template.id !== templateId)
+    };
+    setSettings(updatedSettings);
+    saveSettings(updatedSettings);
+  };
+
   const currentTemplate = settings.templates.find(t => t.id === selectedTemplate)
 
   return (
@@ -243,68 +278,47 @@ export function EmailSettings() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium">Email Templates</h3>
-                  <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {settings.templates.map(template => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Button onClick={addTemplate}>Add Template</Button>
                 </div>
 
-                {currentTemplate && (
-                  <div className="space-y-4">
+                {settings.templates.map(template => (
+                  <div key={template.id} className="space-y-4 border p-4 rounded-md">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-md font-medium">{template.name || "Untitled Template"}</h4>
+                      <Button variant="destructive" onClick={() => deleteTemplate(template.id)}>
+                        Delete
+                      </Button>
+                    </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="templateName">Template Name</Label>
+                      <Label htmlFor={`template-name-${template.id}`}>Template Name</Label>
                       <Input
-                        id="templateName"
-                        value={currentTemplate.name}
-                        onChange={(e) => handleTemplateChange(selectedTemplate, 'name', e.target.value)}
+                        id={`template-name-${template.id}`}
+                        value={template.name}
+                        onChange={(e) => handleTemplateChange(template.id, "name", e.target.value)}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="templateSubject">Email Subject</Label>
+                      <Label htmlFor={`template-subject-${template.id}`}>Email Subject</Label>
                       <Input
-                        id="templateSubject"
-                        value={currentTemplate.subject}
-                        onChange={(e) => handleTemplateChange(selectedTemplate, 'subject', e.target.value)}
-                        placeholder="Subject with {{variables}}"
+                        id={`template-subject-${template.id}`}
+                        value={template.subject}
+                        onChange={(e) => handleTemplateChange(template.id, "subject", e.target.value)}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="templateBody">Email Body</Label>
+                      <Label htmlFor={`template-body-${template.id}`}>Email Body</Label>
                       <Textarea
-                        id="templateBody"
-                        value={currentTemplate.body}
-                        onChange={(e) => handleTemplateChange(selectedTemplate, 'body', e.target.value)}
-                        rows={12}
-                        placeholder="Email body with {{variables}}"
-                        className="font-mono text-sm"
+                        id={`template-body-${template.id}`}
+                        value={template.body}
+                        onChange={(e) => handleTemplateChange(template.id, "body", e.target.value)}
+                        rows={6}
                       />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Available Variables</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {currentTemplate.variables.map(variable => (
-                          <Badge key={variable} variant="secondary">
-                            {`{{${variable}}}`}
-                          </Badge>
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        Use these variables in your subject and body. They will be replaced with actual values when emails are sent.
-                      </p>
                     </div>
                   </div>
-                )}
+                ))}
               </div>
             </TabsContent>
 
