@@ -9,7 +9,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { interactionsAPI, studentsAPI, staffAPI, interactionTypesAPI } from "@/lib/api"
+import { interactionsAPI, studentsAPI, staffAPI } from "@/lib/api"
 import { useAuth } from "@/components/auth-wrapper"
 import { 
   HeroSection, 
@@ -18,19 +18,17 @@ import {
   InteractionsList, 
   AiInsightsPanel 
 } from "./components"
-import { Interaction, Student, StaffMember, InteractionTypeOption } from "@/lib/data"
+import { Interaction, Student, StaffMember } from "@/lib/data"
 
 export default function Page() {
   const { user: activeUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedStudent, setSelectedStudent] = useState("all")
-  const [selectedType, setSelectedType] = useState("all")
-  const [selectedStaff, setSelectedStaff] = useState("all")
+  const [selectedCohort, setSelectedCohort] = useState("all");
+  const [sortOrder, setSortOrder] = useState("mostRecent"); // Options: "mostRecent", "oldest"
   const [showAiInsights, setShowAiInsights] = useState(false)
   const [interactions, setInteractions] = useState<Interaction[]>([])
-  const [students, setStudents] = useState<Student[]>([])
-  const [staff, setStaff] = useState<StaffMember[]>([])
-  const [interactionTypes, setInteractionTypes] = useState<InteractionTypeOption[]>([])
+  const [, setStudents] = useState<Student[]>([])
+  const [, setStaff] = useState<StaffMember[]>([])
   const [loading, setLoading] = useState(true)
   const [aiPanelData, setAiPanelData] = useState<{ title: string; notes: string[] }>({ title: "", notes: [] });
 
@@ -41,17 +39,15 @@ export default function Page() {
         setLoading(true)
         
         // Fetch all data in parallel
-        const [interactionsData, studentsData, staffData, typesData] = await Promise.all([
+        const [interactionsData, studentsData, staffData] = await Promise.all([
           interactionsAPI.getAll(),
           studentsAPI.getAll(),
-          staffAPI.getAll(),
-          interactionTypesAPI.getAll()
+          staffAPI.getAll()
         ])
         
         setInteractions(interactionsData)
         setStudents(studentsData)
         setStaff(staffData)
-        setInteractionTypes(typesData)
       } catch (error) {
         console.error('Error loading data:', error)
         // TODO: Show error message to user
@@ -63,35 +59,27 @@ export default function Page() {
     loadData()
   }, [])
 
-  const filteredInteractions = interactions.filter((interaction) => {
-    // Enhanced search functionality to search by first name, last name, or ID
-    const searchTermLower = searchTerm.toLowerCase()
-    
-    const matchesSearch =
-      // Student name search (first or last name)
-      interaction.studentName.toLowerCase().includes(searchTermLower) ||
-      // Student ID search
-      interaction.studentId.includes(searchTermLower) ||
-      // Content search
-      interaction.reason.toLowerCase().includes(searchTermLower) ||
-      interaction.notes.toLowerCase().includes(searchTermLower) ||
-      // Staff member search (first or last name)
-      interaction.staffMember.toLowerCase().includes(searchTermLower)
-      
-    // Filter by selected student
-    const matchesStudent = selectedStudent === "all" || interaction.studentId === selectedStudent
-    
-    // Filter by selected interaction type
-    const matchesType = selectedType === "all" || interaction.type.toLowerCase().includes(selectedType)
-    
-    // Filter by staff member
-    const matchesStaff = selectedStaff === "all" || (() => {
-      const selectedStaffMember = staff.find(sm => sm.id.toString() === selectedStaff)
-      return selectedStaffMember ? interaction.staffMember === `${selectedStaffMember.firstName} ${selectedStaffMember.lastName}` : false
-    })()
+  const filteredInteractions = interactions
+    .filter((interaction) => {
+      const searchTermLower = searchTerm.toLowerCase();
 
-    return matchesSearch && matchesStudent && matchesType && matchesStaff
-  })
+      const matchesSearch =
+        interaction.studentName.toLowerCase().includes(searchTermLower) ||
+        interaction.reason.toLowerCase().includes(searchTermLower) ||
+        interaction.notes.toLowerCase().includes(searchTermLower);
+
+      const matchesCohort =
+        selectedCohort === "all" || interaction.program.toLowerCase() === selectedCohort.toLowerCase();
+
+      return matchesSearch && matchesCohort;
+    })
+    .sort((a, b) => {
+      if (sortOrder === "mostRecent") {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      } else {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+    });
 
   const handleViewInsights = (title: string, notes: string[]) => {
     setAiPanelData({ title, notes });
@@ -131,16 +119,11 @@ export default function Page() {
             <SearchAndFilters 
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
-              selectedStudent={selectedStudent}
-              setSelectedStudent={setSelectedStudent}
-              selectedType={selectedType}
-              setSelectedType={setSelectedType}
-              selectedStaff={selectedStaff}
-              setSelectedStaff={setSelectedStaff}
+              selectedCohort={selectedCohort}
+              setSelectedCohort={setSelectedCohort}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
               filteredCount={filteredInteractions.length}
-              students={students}
-              interactionTypes={interactionTypes}
-              staff={staff}
             />
 
             {/* Interactions List */}

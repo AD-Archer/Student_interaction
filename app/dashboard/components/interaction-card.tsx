@@ -87,9 +87,6 @@ export function InteractionCard({ interaction, onViewInsights }: InteractionCard
                 <Badge className={getTypeColor(interaction.type)}>
                   {interaction.type}
                 </Badge>
-                <span className="text-xs text-gray-500">
-                  ID: {interaction.studentId}
-                </span>
               </div>
             </div>
             <Button
@@ -116,6 +113,15 @@ export function InteractionCard({ interaction, onViewInsights }: InteractionCard
               </p>
               <p className="text-sm text-gray-600 bg-red-50 p-2 rounded border border-red-200">
                 {interaction.reason}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-1">
+                Description:
+              </p>
+              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
+                {interaction.notes}
               </p>
             </div>
 
@@ -184,3 +190,9 @@ export function InteractionCard({ interaction, onViewInsights }: InteractionCard
     </Card>
   )
 }
+
+/**
+ * InteractionCard component
+ * Displays a brief summary of an interaction, including key details like student name, staff member, and interaction type.
+ * This component is used in the InteractionsList to provide a concise overview of each interaction.
+ */

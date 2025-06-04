@@ -364,7 +364,7 @@ Student Services System`;
           <hr className="my-2 border-gray-200" />
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="reason">Additional Reasons for Interaction (optional)</Label>
+                <Label htmlFor="reason">Brief Reason for Interaction</Label>
               <Input
                 id="reason"
                 placeholder="Brief reason for this interaction"
