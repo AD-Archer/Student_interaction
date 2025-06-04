@@ -47,6 +47,7 @@
     "prisma": "^6.8.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
     "recharts": "^2.15.3",
     "tailwind-merge": "^3.3.0"
   },

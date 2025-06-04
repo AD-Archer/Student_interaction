@@ -16,8 +16,9 @@ import {
   StatsGrid, 
   SearchAndFilters, 
   InteractionsList, 
-  AiInsightsPanel 
+  AiInsightsPanel
 } from "./components"
+
 import { Interaction, Student, StaffMember } from "@/lib/data"
 
 export default function Page() {

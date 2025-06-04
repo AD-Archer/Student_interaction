@@ -9,7 +9,7 @@ import { LucideUser } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/components/auth-wrapper"
 
-export function Header() {
+export function Header({ }: { toggleAiInsights: () => void }) {
   const pathname = usePathname()
   const { user, logout } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -61,8 +61,10 @@ export function Header() {
             </div>
           </div>
 
-          {/* Mobile Actions */}
+          {/* Actions */}
           <div className="flex items-center space-x-2 md:space-x-4">
+            {/* AI Insights Panel Button */}
+           
 
             {/* User Menu - Desktop */}
             {user && (

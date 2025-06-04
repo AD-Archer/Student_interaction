@@ -18,6 +18,11 @@ export function GlobalLayout({ children }: GlobalLayoutProps) {
   const pathname = usePathname()
   const showHeader = pathname !== "/login" && pathname !== "/info"
 
+  // Function to toggle AI Insights visibility
+  const toggleAiInsights = () => {
+    console.log("Toggling AI Insights");
+  };
+
   useEffect(() => {
     console.log("GlobalLayout rendering children for:", pathname);
   }, [pathname]);
@@ -26,7 +31,7 @@ export function GlobalLayout({ children }: GlobalLayoutProps) {
 
   return (
     <>
-      {showHeader && <Header />}
+      {showHeader && <Header toggleAiInsights={toggleAiInsights} />}
       {children}
     </>
   )

@@ -192,7 +192,45 @@ export const interactionsAPI = {
     }
     
     return response.json()
-  }
+  },
+
+  /**
+   * Fetch interactions for a specific staff member.
+   * @param staffMemberId - The ID of the staff member.
+   * @returns A promise resolving to the list of interactions.
+   */
+  async getByStaffMember(staffMemberId: number) {
+    const response = await fetch(`${API_BASE_URL}/interactions?staffMemberId=${staffMemberId}`, {
+      credentials: 'include', // Include cookies for session
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch interactions for the staff member');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Fetch interactions within a specific date range.
+   * @param startDate - The start date of the range.
+   * @param endDate - The end date of the range.
+   * @returns A promise resolving to the list of interactions.
+   */
+  async getByDateRange(startDate: Date, endDate: Date) {
+    const response = await fetch(
+      `${API_BASE_URL}/interactions?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+      {
+        credentials: 'include', // Include cookies for session
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch interactions for the specified date range');
+    }
+
+    return response.json();
+  },
 }
 
 // Students API functions
