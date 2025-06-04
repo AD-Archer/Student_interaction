@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CalendarDays, User, Send, Sparkles, ArrowLeft, CheckCircle } from "lucide-react"
+import { CalendarDays, User, Send, Sparkles, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { FormData, formInteractionTypes as interactionTypes, formStudents as students } from "@/lib/data"
 import { interactionsAPI } from "@/lib/api"
@@ -28,11 +28,13 @@ export function Form({ interactionId }: { interactionId?: number }) {
   const [formData, setFormData] = useState<FormData>({
     studentName: "",
     studentId: "",
+    studentEmail: "",
     interactionType: "",
     reason: "",
     notes: "",
     followUpEmail: false,
     followUpDate: "",
+    staffEmail: user?.email ?? "",
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -116,23 +118,46 @@ export function Form({ interactionId }: { interactionId?: number }) {
 
       let saved
       if (interactionId !== undefined) {
-        // Update existing
         saved = await interactionsAPI.update(interactionId, interactionData)
       } else {
-        // Create new
         saved = await interactionsAPI.create(interactionData)
       }
 
-      if (saved && saved.aiSummary) {
-        setAiSummary(saved.aiSummary)
-        setShowAiSummary(true)
+      if (saved) {
+        // call AI to generate real summary of the saved interaction
+        setNotesLoading(true)
+        const instruction = 'Please provide a concise English summary of this student interaction in plain text:'
+        const payload = {
+          message: `${instruction}\n\nStudent: ${interactionData.studentName}\nType: ${interactionData.type}\nReason: ${interactionData.reason}\nNotes: ${interactionData.notes}`
+        }
+        const aiResponse = await fetch('/api/ai', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        })
+        if (aiResponse.ok) {
+          const { result } = await aiResponse.json()
+          setAiSummary(result)
+          setShowAiSummary(true)
+        }
+        setNotesLoading(false)
+        // send follow-up emails if date matches today
+        const todayStr = dateStr
+        if (interactionData.followUp.required && interactionData.followUp.date === todayStr) {
+          const recipients = [] as string[]
+          if (formData.studentEmail) recipients.push(formData.studentEmail)
+          if (formData.staffEmail) recipients.push(formData.staffEmail)
+          // send email to each recipient
+          await Promise.all(
+            recipients.map(email =>
+              fetch('/api/email/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+              })
+            )
+          )
+          console.log('Follow-up emails sent to:', recipients)
+        }
       }
-
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
-        router.push("/")
-      }, 2000)
-
     } catch (error) {
       console.error('Error saving interaction:', error)
       // TODO: Show error message to user
@@ -156,7 +181,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
 
     try {
       // I wrap the detailed notes with an instruction for summarization and improvement
-      const instruction = 'Please summarize, clean up, and improve readability of the following notes in English. Return the output in two sections labeled "Glows" and "Grows":';
+      const instruction = 'Please summarize, clean up, and improve readability of the following notes in English. Return the output in two sections labeled "Glows" and "Grows" in plain text:';
       const prompt = `${instruction}\n\n${formData.notes}`;
       const payload = { message: prompt };
       console.log('Sending notes to AI summarization:', payload);
@@ -190,6 +215,74 @@ export function Form({ interactionId }: { interactionId?: number }) {
     }
   };
 
+  // New: Send test email with notes and follow-up information
+  const sendTestEmailWithNotes = async (email: string, recipientType: 'student' | 'staff') => {
+    try {
+      const selectedStudent = students.find(s => s.id === formData.studentId);
+      const studentName = selectedStudent ? `${selectedStudent.firstName} ${selectedStudent.lastName}` : formData.studentName;
+      const staffName = user ? `${user.firstName} ${user.lastName}` : "Staff Member";
+      
+      let emailSubject = "";
+      let emailBody = "";
+
+      if (recipientType === 'student') {
+        emailSubject = `Follow-up: ${formData.interactionType || 'Interaction'} Session`;
+        emailBody = `Hi ${studentName.split(' ')[0]},
+
+I hope you're doing well! This is a follow-up from our ${formData.interactionType || 'interaction'} session${formData.reason ? ` regarding ${formData.reason}` : ''}.
+
+**Session Summary:**
+${formData.notes || 'No notes available yet.'}
+
+**Next Steps:**
+${formData.followUpDate ? `We have scheduled a follow-up for ${new Date(formData.followUpDate).toLocaleDateString()}. Please let me know if you have any questions or if you need to reschedule.` : 'We will be in touch soon regarding next steps.'}
+
+Best regards,
+${staffName}
+${user?.email || ''}`;
+      } else {
+        emailSubject = `Follow-up Reminder: ${studentName}`;
+        emailBody = `Hi ${staffName},
+
+This is a reminder about your scheduled follow-up with ${studentName}${formData.followUpDate ? ` on ${new Date(formData.followUpDate).toLocaleDateString()}` : ''}.
+
+**Original Session Details:**
+- Type: ${formData.interactionType || 'Not specified'}
+- Student: ${studentName}
+${formData.reason ? `- Reason: ${formData.reason}` : ''}
+
+**Session Notes:**
+${formData.notes || 'No notes available yet.'}
+
+Please reach out to the student to confirm the follow-up appointment.
+
+Best regards,
+Student Services System`;
+      }
+
+      const response = await fetch('/api/email/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: email,
+          subject: emailSubject,
+          body: emailBody,
+          from: "Launchpad Student Services <noreply@launchpadphilly.org>",
+          replyTo: user?.email || "support@launchpadphilly.org"
+        })
+      });
+
+      if (response.ok) {
+        alert(`Test email sent successfully to ${email}`);
+      } else {
+        alert(`Failed to send test email to ${email}`);
+      }
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      alert('Error sending test email');
+    }
+  };
+
   return (
     <div className="space-y-8 sm:space-y-10">
       <form onSubmit={handleSubmit} className="space-y-8 sm:space-y-10">
@@ -211,7 +304,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
                 onValueChange={(studentId) => {
                   const student = students.find((s) => s.id === studentId);
                   if (student) {
-                    setFormData((prev) => ({ ...prev, studentId: student.id, studentName: `${student.firstName} ${student.lastName}` }));
+                    setFormData((prev) => ({ ...prev, studentId: student.id, studentName: `${student.firstName} ${student.lastName}`, studentEmail: student.email ?? "" }));
                   }
                 }}
               >
@@ -271,13 +364,13 @@ export function Form({ interactionId }: { interactionId?: number }) {
           <hr className="my-2 border-gray-200" />
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="reason">Reason for Interaction</Label>
+              <Label htmlFor="reason">Additional Reasons for Interaction (optional)</Label>
               <Input
                 id="reason"
                 placeholder="Brief reason for this interaction"
                 value={formData.reason}
                 onChange={(e) => setFormData((prev) => ({ ...prev, reason: e.target.value }))}
-                className="border-red-200 focus:border-red-400"
+                className="border-gray-200 focus:border-gray-400"
               />
             </div>
 
@@ -351,15 +444,77 @@ export function Form({ interactionId }: { interactionId?: number }) {
                 </Label>
               </div>
             </div>
+            
             {(followUpStudent || followUpStaff) && (
-              <div className="space-y-2">
-                <Label htmlFor="followUpDate">Follow-up Date</Label>
-                <Input
-                  id="followUpDate"
-                  type="date"
-                  value={formData.followUpDate}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, followUpDate: e.target.value }))}
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="followUpDate">Follow-up Date</Label>
+                  <Input
+                    id="followUpDate"
+                    type="date"
+                    value={formData.followUpDate}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, followUpDate: e.target.value }))}
+                  />
+                </div>
+
+                {/* Email Recipients Display */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Email Recipients</Label>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                    {followUpStudent && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm font-medium">Student:</span>
+                          <span className="text-sm text-gray-700">
+                            {formData.studentEmail || "No email address available"}
+                          </span>
+                        </div>
+                        {formData.studentEmail && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => sendTestEmailWithNotes(formData.studentEmail!, 'student')}
+                          >
+                            <Send className="h-3 w-3 mr-1" />
+                            Test Email
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    
+                    {followUpStaff && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-medium">Staff:</span>
+                          <Input
+                            placeholder="Staff email"
+                            value={formData.staffEmail}
+                            onChange={(e) => setFormData(prev => ({ ...prev, staffEmail: e.target.value }))}
+                            className="flex-1 max-w-xs text-sm"
+                          />
+                        </div>
+                        {formData.staffEmail && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => sendTestEmailWithNotes(formData.staffEmail!, 'staff')}
+                          >
+                            <Send className="h-3 w-3 mr-1" />
+                            Test Email
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-xs text-gray-600">
+                    Test emails will include the current notes and follow-up date information.
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>
@@ -408,10 +563,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
               </div>
             </div>
             <div className="mt-4 text-center">
-              <div className="flex items-center justify-center space-x-2 text-green-600 font-medium">
-                <CheckCircle className="h-5 w-5" />
-                <span>Interaction saved successfully! Redirecting to dashboard...</span>
-              </div>
+              <Button variant="outline" onClick={() => router.push('/')}>Go to Dashboard</Button>
             </div>
           </CardContent>
         </Card>

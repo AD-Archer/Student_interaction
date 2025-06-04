@@ -122,8 +122,17 @@ model SystemSettings {
   aiSummaries    Boolean @default(true)
   dataRetention  String  @default("2years")
   sessionTimeout String  @default("8hours")
-  
-  updatedAt DateTime @updatedAt
+
+  // Email settings
+  fromName       String  @default("Launchpad Student Services")
+  fromEmail      String  @default("noreply.lp.studentform@gmail.com")
+  bccAdmin       Boolean @default(false)
+  adminEmail     String  @default("admin@launchpadphilly.org")
+
+  // Email templates stored as JSON
+  templates      Json?
+
+  updatedAt      DateTime @updatedAt
 
   @@map("system_settings")
 }

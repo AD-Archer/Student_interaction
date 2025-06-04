@@ -7,12 +7,14 @@ import {
   User,
   Shield,
   Globe,
+  Mail,
   SettingsIcon,
 } from "lucide-react"
 import StaffManagement from "./components/StaffManagement"
 import { SystemSettings } from "./components/SystemSettings"
 import { SystemIntegrations } from "./components/SystemIntegrations"
 import { EmailTest } from "./components/EmailTest"
+import { EmailSettings } from "./components/EmailSettings"
 import { systemIntegrationData } from "@/lib/data"
 import { resolveIconComponent } from "@/lib/utils"
 
@@ -89,7 +91,7 @@ export default function SettingsPage() {
           {/* Settings Tabs */}
           <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4 sm:space-y-6">
             <div className="overflow-x-auto">
-              <TabsList className="grid w-full grid-cols-3 bg-white shadow-sm min-w-max">
+              <TabsList className="grid w-full grid-cols-4 bg-white shadow-sm min-w-max">
                 <TabsTrigger value="staff" className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base">
                   <User className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   <span>Staff</span>
@@ -98,7 +100,10 @@ export default function SettingsPage() {
                   <Shield className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   <span>System</span>
                 </TabsTrigger>
-                
+                <TabsTrigger value="email" className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base">
+                  <Mail className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                  <span>Email</span>
+                </TabsTrigger>
                 <TabsTrigger
                   value="integrations"
                   className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base"
@@ -124,6 +129,12 @@ export default function SettingsPage() {
               </div>
             </TabsContent>
 
+            {/* Email Settings Tab */}
+            <TabsContent value="email" className="space-y-4 sm:space-y-6">
+              <div className="w-full px-0 lg:px-0">
+                <EmailSettings />
+              </div>
+            </TabsContent>
 
             {/* Integrations Tab */}
             <TabsContent value="integrations" className="space-y-4 sm:space-y-6">

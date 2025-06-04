@@ -82,6 +82,7 @@ export interface Student {
   lastName: string
   program?: string // Adding program for form component
   staff?: string // Adding staff to associate students with staff members
+  email?: string // student's email for follow-up
 }
 
 export interface InteractionTypeOption {
@@ -137,11 +138,13 @@ export interface SystemSettingsState {
 export interface FormData {
   studentName: string
   studentId: string
+  studentEmail?: string // email for sending follow-up
   interactionType: string
   reason: string
   notes: string
   followUpEmail: boolean
   followUpDate: string
+  staffEmail?: string // override staff email for follow-up
 }
 
 // Data exports
@@ -266,21 +269,14 @@ export const interactionTypeOptions: InteractionTypeOption[] = [
   { value: "behavioral", label: "Behavioral Intervention" },
 ]
 
-// Form page data (from components/form.tsx)
-export const formInteractionTypes: InteractionTypeOption[] = [
+// formStudents is already exported above, so I am removing this duplicate export to avoid redeclaration errors.
+export const formInteractionTypes = [
   { value: "coaching", label: "Coaching | Job Readiness" },
   { value: "pip", label: "Performance Improvement Plan" },
   { value: "career", label: "Career Counseling" },
   { value: "academic", label: "Academic Support" },
   { value: "behavioral", label: "Behavioral Intervention" },
   { value: "other", label: "Other" },
-]
-
-export const formStudents: Student[] = [
-  { id: "0001", firstName: "Micheal", lastName: "Newman", program: "foundations" },
-  { id: "0002", firstName: "Amira", lastName: "Johnson", program: "101" },
-  { id: "0003", firstName: "Koleona", lastName: "Smith", program: "lightspeed" },
-  { id: "0004", firstName: "Zaire", lastName: "Williams", program: "liftoff" },
 ]
 
 // Dashboard AI insights and notes
@@ -527,3 +523,8 @@ export async function deleteInteraction(id: number): Promise<void> {
     throw error
   }
 }
+
+// Alias for form usage: allows other modules to import formStudents for clarity
+export const formStudents = students;
+
+
