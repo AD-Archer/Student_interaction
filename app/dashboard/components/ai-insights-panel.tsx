@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Sparkles, TrendingUp, X } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import { interactionsAPI } from "@/lib/api" 
+import Image from "next/image"
 
 interface AiInsightsPanelProps {
 	isOpen: boolean
@@ -175,38 +176,76 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 				<div className="p-4 space-y-4">
 					{/* Header */}
 					<div className="flex items-center justify-between">
-						<div className="flex items-center space-x-2">
-							<Sparkles className="h-5 w-5 text-blue-600" />
-							<h2 className="text-lg font-semibold text-gray-900">{title || "AI Insights"}</h2>
+						<div className="flex items-center space-x-4">
+							<Image
+								src="/images/logos/lp_logo_transparent.png"
+								alt="Launchpad"
+								width={48}
+								height={48}
+								className="h-12 w-12 object-contain"
+							/>
+							<Sparkles className="h-6 w-6 text-blue-600" />
+							<h2 className="text-xl font-semibold text-gray-900">{title || "AI Insights"}</h2>
 						</div>
 						<Button variant="outline" size="sm" onClick={onClose}>
 							<X className="h-4 w-4" />
 						</Button>
 					</div>
 
-					{/* Markdown Insights */}
+					{/* Student Notes */}
 					{insightsMarkdown && (
-						<Card>
-							<CardHeader className="pb-2">
-								<CardTitle className="text-base">AI Insights</CardTitle>
-								<CardDescription>Insights for all interactions for the current staff</CardDescription>
+						<Card className="border border-gray-300 shadow-sm bg-gradient-to-br from-white to-gray-50">
+							<CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0 border-b border-gray-100">
+								<div className="flex items-center gap-4">
+									<Image
+										src="/images/logos/lp_logo_transparent.png"
+										alt="Launchpad"
+										width={48}
+										height={48}
+										className="h-12 w-12 object-contain flex-shrink-0"
+									/>
+									<div>
+										<CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+											Student Notes
+										</CardTitle>
+										<CardDescription className="text-sm text-gray-600">
+											Interaction summary and observations
+										</CardDescription>
+									</div>
+								</div>
+								<Button
+									onClick={() => {
+										setLoading(true)
+										// I'll generate AI insights from the raw student notes
+										const notesAsMessage = `Please analyze these student notes and provide insights:\n\n${insightsMarkdown}`
+										fetch('/api/ai', {
+											method: 'POST',
+											headers: { 'Content-Type': 'application/json' },
+											body: JSON.stringify({ message: notesAsMessage })
+										})
+										.then(res => res.json())
+										.then(({ result }) => {
+											setGeneratedInsight(enhanceMarkdownSpacing(result))
+											setWeeklyReport(null) // Clear weekly report
+										})
+										.catch(console.error)
+										.finally(() => setLoading(false))
+									}}
+									size="sm"
+									variant="outline"
+									className="flex items-center gap-1 border-blue-200 hover:border-blue-300 hover:bg-blue-50"
+									disabled={loading}
+								>
+									<Sparkles className="h-3 w-3 text-blue-600" />
+									{loading ? "Analyzing..." : "AI Analyze"}
+								</Button>
 							</CardHeader>
-							<CardContent 
-								className="prose prose-sm max-w-none text-sm"
-								style={{ whiteSpace: 'pre-wrap', lineHeight: '1.2' }}
-							>
-								<div className="space-y-0">
-									<ReactMarkdown 
-										components={{
-											h2: ({ children }) => <h2 className="text-base font-semibold mt-0.5 mb-0.5 border-b border-gray-200 pb-0.5">{children}</h2>,
-											h3: ({ children }) => <h3 className="text-sm font-medium mt-0.5 mb-0">{children}</h3>,
-											ul: ({ children }) => <ul className="space-y-0 mb-0.5 pl-3">{children}</ul>,
-											li: ({ children }) => <li className="leading-snug text-sm mb-0">{children}</li>,
-											p: ({ children }) => <p className="mb-0.5 leading-snug text-sm">{children}</p>
-										}}
-									>
-										{insightsMarkdown}
-									</ReactMarkdown>
+							<CardContent className="pt-4">
+								<div 
+									className="text-sm text-gray-700 leading-relaxed bg-white rounded-md p-3 border border-gray-100"
+									style={{ whiteSpace: 'pre-wrap', lineHeight: '1.5' }}
+								>
+									{insightsMarkdown}
 								</div>
 							</CardContent>
 						</Card>
@@ -219,14 +258,14 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 								<CardTitle className="text-base">Interaction Notes</CardTitle>
 								<CardDescription>Summary of the interaction</CardDescription>
 							</CardHeader>
-							<CardContent className="space-y-1">
-								<ul className="list-disc pl-5">
+							<CardContent className="space-y-2">
+								<div className="space-y-2">
 									{notes.map((note, index) => (
-										<li key={index} className="text-sm text-gray-700">
+										<div key={index} className="text-sm text-gray-700 leading-relaxed">
 											{note}
-										</li>
+										</div>
 									))}
-								</ul>
+								</div>
 							</CardContent>
 						</Card>
 					)}
