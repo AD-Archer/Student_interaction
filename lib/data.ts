@@ -74,6 +74,7 @@ export interface Interaction {
     overdue?: boolean
   }
   aiSummary: string
+  isArchived?: boolean // I add this to support archiving interactions
 }
 
 export interface Student {

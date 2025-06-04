@@ -14,7 +14,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { interactionsAPI, studentsAPI, staffAPI } from "@/lib/api"
+import { interactionsAPI, staffAPI } from "@/lib/api"
 import { useAuth } from "@/components/auth-wrapper"
 import { 
   HeroSection, 
@@ -24,7 +24,7 @@ import {
   AiInsightsPanel
 } from "./components"
 
-import { Interaction, Student, StaffMember } from "@/lib/data"
+import { Interaction, StaffMember } from "@/lib/data"
 
 // Helper to recalculate overdue status based on followUp.date
 const withCalculatedOverdue = (interaction: Interaction): Interaction => {
@@ -61,10 +61,11 @@ export default function Page() {
   const [sortOrder, setSortOrder] = useState("mostRecent"); // Options: "mostRecent", "oldest"
   const [showAiInsights, setShowAiInsights] = useState(false)
   const [interactions, setInteractions] = useState<Interaction[]>([])
-  const [, setStudents] = useState<Student[]>([])
-  const [, setStaff] = useState<StaffMember[]>([])
+  const [staff, setStaff] = useState<StaffMember[]>([])
   const [loading, setLoading] = useState(true)
   const [aiPanelData, setAiPanelData] = useState<{ title: string; notes: string[] }>({ title: "", notes: [] });
+  const [showArchived, setShowArchived] = useState(false)
+  const [selectedStaff, setSelectedStaff] = useState("all")
 
   // Load all data from API
   useEffect(() => {
@@ -73,14 +74,12 @@ export default function Page() {
         setLoading(true)
         
         // Fetch all data in parallel
-        const [interactionsData, studentsData, staffData] = await Promise.all([
+        const [interactionsData, staffData] = await Promise.all([
           interactionsAPI.getAll(),
-          studentsAPI.getAll(),
           staffAPI.getAll()
         ])
         
         setInteractions(interactionsData)
-        setStudents(studentsData)
         setStaff(staffData)
       } catch (error) {
         console.error('Error loading data:', error)
@@ -96,6 +95,9 @@ export default function Page() {
   // Always recalculate overdue status for all interactions
   const processedInteractions = interactions.map(withCalculatedOverdue)
 
+  // Build staff options for filter dropdown
+  const staffOptions = staff.map((s) => ({ id: s.id, name: s.name }))
+
   const filteredInteractions = processedInteractions
     .filter((interaction) => {
       const searchTermLower = searchTerm.toLowerCase();
@@ -108,7 +110,11 @@ export default function Page() {
       const matchesCohort =
         selectedCohort === "all" || interaction.program.toLowerCase() === selectedCohort.toLowerCase();
 
-      return matchesSearch && matchesCohort;
+      const matchesArchived = showArchived ? interaction.isArchived : !interaction.isArchived;
+
+      const matchesStaff = selectedStaff === "all" || interaction.staffMember === staff.find(s => s.id === selectedStaff)?.name;
+
+      return matchesSearch && matchesCohort && matchesArchived && matchesStaff;
     })
     .sort((a, b) => {
       if (sortOrder === "mostRecent") {
@@ -126,6 +132,28 @@ export default function Page() {
   // Calculate stats using recalculated overdue
   const overdueCount = processedInteractions.filter((i) => i.followUp.overdue).length
   const pendingCount = processedInteractions.filter((i) => i.followUp.required && !i.followUp.overdue).length
+
+  // Archive/unarchive handler for dashboard
+  const handleArchive = async (id: string, archive: boolean) => {
+    try {
+      // Always send id as a number for the API
+      const res = await fetch(`/api/interactions/${Number(id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isArchived: archive }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        alert(err.error || 'Failed to archive interaction')
+        return
+      }
+      // Refresh data after archiving
+      const updated = await interactionsAPI.getAll()
+      setInteractions(updated)
+    } catch {
+      alert('Failed to archive interaction')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 relative flex">
@@ -161,6 +189,11 @@ export default function Page() {
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}
               filteredCount={filteredInteractions.length}
+              showArchived={showArchived}
+              setShowArchived={setShowArchived}
+              staffOptions={staffOptions}
+              selectedStaff={selectedStaff}
+              setSelectedStaff={setSelectedStaff}
             />
 
             {/* Interactions List */}
@@ -174,10 +207,12 @@ export default function Page() {
                     overdue: Boolean(i.followUp.overdue),
                     date: i.followUp.date ?? "",
                   },
+                  isArchived: i.isArchived ?? false,
                 }))}
                 showAiInsights={showAiInsights}
                 setShowAiInsights={setShowAiInsights}
                 onViewInsights={handleViewInsights}
+                onArchive={handleArchive}
               />
               
               {/* Sidebar for AI Insights, absolutely positioned */}

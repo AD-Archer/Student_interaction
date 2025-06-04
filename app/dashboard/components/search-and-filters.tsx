@@ -8,6 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Filter, ChevronRight } from "lucide-react"
 
+interface StaffOption {
+  id: string
+  name: string
+}
+
 interface SearchAndFiltersProps {
   searchTerm: string
   setSearchTerm: (term: string) => void
@@ -16,6 +21,11 @@ interface SearchAndFiltersProps {
   sortOrder: string
   setSortOrder: (order: string) => void
   filteredCount: number
+  showArchived: boolean
+  setShowArchived: (show: boolean) => void
+  staffOptions: StaffOption[]
+  selectedStaff: string
+  setSelectedStaff: (staffId: string) => void
 }
 
 export function SearchAndFilters({
@@ -25,7 +35,12 @@ export function SearchAndFilters({
   setSelectedCohort,
   sortOrder,
   setSortOrder,
-  filteredCount
+  filteredCount,
+  showArchived,
+  setShowArchived,
+  staffOptions,
+  selectedStaff,
+  setSelectedStaff
 }: SearchAndFiltersProps) {
   const [showFilters, setShowFilters] = useState(false)
 
@@ -55,9 +70,7 @@ export function SearchAndFilters({
               <Filter className="h-4 w-4" />
               <span>Filters</span>
               <ChevronRight
-                className={`h-4 w-4 transition-transform ${
-                  showFilters ? "rotate-90" : ""
-                }`}
+                className={`h-4 w-4 transition-transform ${showFilters ? "rotate-90" : ""}`}
               />
             </Button>
             <Badge variant="outline" className="text-gray-600">
@@ -67,7 +80,7 @@ export function SearchAndFilters({
 
           {/* Collapsible Filters */}
           {showFilters && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
               <Input
                 placeholder="Enter Cohort"
                 value={selectedCohort}
@@ -87,6 +100,32 @@ export function SearchAndFilters({
                   <SelectItem value="oldest">Oldest</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Staff filter */}
+              <Select
+                value={selectedStaff}
+                onValueChange={setSelectedStaff}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by Staff" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Staff</SelectItem>
+                  {staffOptions.map((staff) => (
+                    <SelectItem key={staff.id} value={staff.id}>{staff.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Archived filter */}
+              <Button
+                type="button"
+                variant={showArchived ? "default" : "outline"}
+                className="w-48"
+                onClick={() => setShowArchived(!showArchived)}
+              >
+                {showArchived ? "Showing Archived" : "Hiding Archived"}
+              </Button>
             </div>
           )}
         </div>

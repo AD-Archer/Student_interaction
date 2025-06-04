@@ -185,6 +185,42 @@ export async function PUT(
   }
 }
 
+// PATCH /api/interactions/[id] - Archive/unarchive interaction
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: idParam } = await context.params
+    const id = parseInt(idParam)
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: 'Invalid interaction ID' },
+        { status: 400 }
+      )
+    }
+    const data = await request.json()
+    // Only allow updating isArchived
+    if (typeof data.isArchived !== 'boolean') {
+      return NextResponse.json(
+        { error: 'isArchived must be a boolean' },
+        { status: 400 }
+      )
+    }
+    const interaction = await db.interaction.update({
+      where: { id },
+      data: { isArchived: data.isArchived },
+    })
+    return NextResponse.json({ success: true, isArchived: interaction.isArchived })
+  } catch (error) {
+    console.error('Error archiving interaction:', error)
+    return NextResponse.json(
+      { error: 'Failed to archive interaction' },
+      { status: 500 }
+    )
+  }
+}
+
 // DELETE /api/interactions/[id] - Delete interaction
 export async function DELETE(
   request: NextRequest,

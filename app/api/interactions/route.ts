@@ -1,4 +1,7 @@
 // API route for student interactions CRUD operations
+// This file handles GET (fetch all) and POST (create) for student interactions.
+// It ensures the archive state (isArchived) is always included in responses, so the frontend can display and update archive status.
+// PATCH for archiving is handled in /api/interactions/[id]/route.ts. If you add new fields to the Interaction model, update the queries and response formatting here.
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
@@ -18,49 +21,43 @@ export async function OPTIONS(request: NextRequest) {
   return NextResponse.json(null, { status: 204, headers: buildCorsHeaders(request) })
 }
 
-// Define the type for interaction with included relations
-interface InteractionWithRelations {
-  id: number
-  studentId: string
-  studentFirstName: string
-  studentLastName: string
-  program: string
-  type: string
-  reason: string
-  notes: string
-  date: string
-  time: string
-  staffMember: string
-  status: string
-  aiSummary: string | null
-  followUpRequired: boolean
-  followUpDate: string | null
-  followUpOverdue: boolean
-  staffMemberId: number
-  createdAt: Date
-  updatedAt: Date
-  student: {
-    id: string
-    firstName: string
-    lastName: string
-    program: string
-    createdAt: Date
-    updatedAt: Date
-  }
-  staff: {
-    id: number
-    firstName: string
-    lastName: string
-    role: string
-  }
-}
 
 // GET /api/interactions - Fetch all interactions
 export async function GET(request: NextRequest) {
   try {
+    // I include isArchived so the frontend can show archive state
     const interactions = await db.interaction.findMany({
-      include: {
-        student: true,
+      select: {
+        id: true,
+        studentId: true,
+        studentFirstName: true,
+        studentLastName: true,
+        program: true,
+        type: true,
+        reason: true,
+        notes: true,
+        date: true,
+        time: true,
+        staffMember: true,
+        status: true,
+        aiSummary: true,
+        followUpRequired: true,
+        followUpDate: true,
+        followUpOverdue: true,
+        staffMemberId: true,
+        createdAt: true,
+        updatedAt: true,
+        isArchived: true, // ensure this is always present
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            program: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        },
         staff: {
           select: {
             id: true,
@@ -75,8 +72,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Transform data to match current frontend format
-    const formattedInteractions = interactions.map((interaction: InteractionWithRelations) => ({
+    // Transform data to match current frontend format, including isArchived
+    const formattedInteractions = interactions.map((interaction) => ({
       id: interaction.id,
       studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
       studentId: interaction.studentId,
@@ -89,6 +86,7 @@ export async function GET(request: NextRequest) {
       staffMember: interaction.staffMember,
       status: interaction.status,
       aiSummary: interaction.aiSummary,
+      isArchived: interaction.isArchived, // I add this so the UI can see archive state
       followUp: {
         required: interaction.followUpRequired,
         date: interaction.followUpDate,
@@ -139,7 +137,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create the interaction
+    // Create the interaction, explicitly set isArchived to false by default
     const interaction = await db.interaction.create({
       data: {
         studentFirstName,
@@ -157,10 +155,40 @@ export async function POST(request: NextRequest) {
         aiSummary: aiSummary || null,
         followUpRequired: followUp?.required || false,
         followUpDate: followUp?.date || null,
-        followUpOverdue: followUp?.overdue || false
+        followUpOverdue: followUp?.overdue || false,
+        isArchived: false // always start unarchived
       },
-      include: {
-        student: true,
+      select: {
+        id: true,
+        studentId: true,
+        studentFirstName: true,
+        studentLastName: true,
+        program: true,
+        type: true,
+        reason: true,
+        notes: true,
+        date: true,
+        time: true,
+        staffMember: true,
+        status: true,
+        aiSummary: true,
+        followUpRequired: true,
+        followUpDate: true,
+        followUpOverdue: true,
+        staffMemberId: true,
+        createdAt: true,
+        updatedAt: true,
+        isArchived: true, // ensure this is always present
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            program: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        },
         staff: {
           select: {
             id: true,
@@ -172,7 +200,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Transform response to match frontend format
+    // Transform response to match frontend format, including isArchived
     const formattedInteraction = {
       id: interaction.id,
       studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
@@ -186,6 +214,7 @@ export async function POST(request: NextRequest) {
       staffMember: interaction.staffMember,
       status: interaction.status,
       aiSummary: interaction.aiSummary,
+      isArchived: interaction.isArchived, // I add this so the UI can see archive state
       followUp: {
         required: interaction.followUpRequired,
         date: interaction.followUpDate,
@@ -203,3 +232,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+// PATCH /api/interactions/:id - Archive or unarchive an interaction
+// Removed: This endpoint is not needed. Use /api/interactions/[id] for PATCH requests.

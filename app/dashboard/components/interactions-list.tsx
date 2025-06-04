@@ -1,3 +1,9 @@
+// -----------------------------------------------------------------------------
+// interactions-list.tsx
+// This component renders a list of InteractionCard components for the dashboard.
+// It now supports archiving/unarchiving cards by calling the onArchive prop.
+// -----------------------------------------------------------------------------
+
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
@@ -22,6 +28,7 @@ interface Interaction {
     overdue: boolean
     date: string
   }
+  isArchived?: boolean
 }
 
 interface InteractionsListProps {
@@ -29,13 +36,15 @@ interface InteractionsListProps {
   showAiInsights: boolean
   setShowAiInsights: (show: boolean) => void
   onViewInsights: (title: string, notes: string[]) => void
+  onArchive?: (id: string, archive: boolean) => Promise<void>
 }
 
 export function InteractionsList({ 
   interactions, 
   showAiInsights, 
   setShowAiInsights, 
-  onViewInsights 
+  onViewInsights,
+  onArchive
 }: InteractionsListProps) {
   return (
     <div className="space-y-4">
@@ -58,6 +67,7 @@ export function InteractionsList({
           key={interaction.id} 
           interaction={interaction} 
           onViewInsights={onViewInsights}
+          onArchive={onArchive}
         />
       ))}
 

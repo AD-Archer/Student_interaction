@@ -74,6 +74,9 @@ model Interaction {
   followUpRequired Boolean @default(false)
   followUpDate     String?
   followUpOverdue  Boolean @default(false)
+
+  // Archiving support
+  isArchived      Boolean @default(false)
   
   // Relations
   student Student @relation(fields: [studentId], references: [id])

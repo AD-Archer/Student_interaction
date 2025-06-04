@@ -1,11 +1,19 @@
-// This file defines the InteractionCard component, which displays a summary of a student interaction, including follow-up status and timing. It is used in the dashboard to provide a quick overview of each interaction and allows actions like editing or viewing insights. The follow-up section now always shows the follow-up date and the number of days until or since that date, for better clarity.
+// -----------------------------------------------------------------------------
+// interaction-card.tsx
+// This component displays a summary card for a student interaction, including
+// follow-up status, staff, and action buttons. Now includes Archive/Unarchive
+// support. Used in the dashboard InteractionsList. Only the original staff
+// creator is shown and cannot be changed after creation.
+// -----------------------------------------------------------------------------
+
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { AlertCircle, Clock, User, Eye, Edit, Mail } from "lucide-react"
+import { AlertCircle, Clock, User, Eye, Edit, Mail, ArchiveRestore, Archive } from "lucide-react"
 import { format, formatDistanceToNow } from "date-fns"
+import { useState } from "react"
 
 interface Interaction {
   id: string
@@ -23,14 +31,18 @@ interface Interaction {
     overdue: boolean
     date: string
   }
+  isArchived?: boolean
 }
 
 interface InteractionCardProps {
   interaction: Interaction
   onViewInsights: (title: string, notes: string[]) => void
+  onArchive?: (id: string, archive: boolean) => Promise<void>
 }
 
-export function InteractionCard({ interaction, onViewInsights }: InteractionCardProps) {
+export function InteractionCard({ interaction, onViewInsights, onArchive }: InteractionCardProps) {
+  const [archiving, setArchiving] = useState(false)
+
   const getStatusColor = (interaction: Interaction) => {
     if (interaction.followUp.required && interaction.followUp.overdue) {
       return "border-l-4 border-l-red-500 bg-red-50"
@@ -66,16 +78,22 @@ export function InteractionCard({ interaction, onViewInsights }: InteractionCard
   const getFollowUpInfo = (dateStr: string) => {
     if (!dateStr) return { formatted: "N/A", relative: "" }
     const date = new Date(dateStr)
-    // Format as e.g. "Jun 10, 2025"
     const formatted = format(date, "MMM d, yyyy")
-    // Show relative time (e.g. "in 3 days" or "2 days ago")
     const relative = formatDistanceToNow(date, { addSuffix: true })
     return { formatted, relative }
   }
 
+  // Archive/unarchive handler
+  const handleArchive = async () => {
+    if (!onArchive) return
+    setArchiving(true)
+    await onArchive(interaction.id, !interaction.isArchived)
+    setArchiving(false)
+  }
+
   return (
     <Card
-      className={`hover:shadow-lg transition-all duration-200 ${getStatusColor(interaction)}`}
+      className={`hover:shadow-lg transition-all duration-200 ${getStatusColor(interaction)} ${interaction.isArchived ? 'opacity-60' : ''}`}
     >
       <CardContent className="p-4 sm:p-6">
         <div className="space-y-4">
@@ -167,12 +185,10 @@ export function InteractionCard({ interaction, onViewInsights }: InteractionCard
                     <Clock className="h-4 w-4" />
                   )}
                   <span className="text-sm font-medium">
-                    {/* I want to always show the follow-up date and relative time */}
                     Follow-up: {getFollowUpInfo(interaction.followUp.date).formatted}
                   </span>
                 </div>
                 <span className="text-xs text-gray-700 pl-6 sm:pl-0 sm:ml-2">
-                  {/* I want to show how long until/since the follow-up date, e.g. 'in 3 days' or '2 days ago' */}
                   {getFollowUpInfo(interaction.followUp.date).relative}
                 </span>
               </div>
@@ -185,9 +201,9 @@ export function InteractionCard({ interaction, onViewInsights }: InteractionCard
                 size="sm"
                 className="flex-1"
                 onClick={() => {
-                  // Navigate to /create with the interaction ID as a query parameter
                   window.location.href = `/create?id=${interaction.id}`;
                 }}
+                disabled={interaction.isArchived}
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
@@ -197,9 +213,29 @@ export function InteractionCard({ interaction, onViewInsights }: InteractionCard
                   variant="outline"
                   size="sm"
                   className="flex-1 text-blue-600 hover:bg-blue-50"
+                  disabled={interaction.isArchived}
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Follow-up
+                </Button>
+              )}
+              {onArchive && (
+                <Button
+                  variant={interaction.isArchived ? "default" : "destructive"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={handleArchive}
+                  disabled={archiving}
+                >
+                  {interaction.isArchived ? (
+                    <>
+                      <ArchiveRestore className="h-4 w-4 mr-2" /> Unarchive
+                    </>
+                  ) : (
+                    <>
+                      <Archive className="h-4 w-4 mr-2" /> Archive
+                    </>
+                  )}
                 </Button>
               )}
             </div>
