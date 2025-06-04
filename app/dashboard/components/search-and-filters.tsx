@@ -82,9 +82,18 @@ export function SearchAndFilters({
           {showFilters && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
               <Input
-                placeholder="Enter Cohort"
+                type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                min={1}
+                step={1}
+                placeholder="Enter Cohort #"
                 value={selectedCohort}
-                onChange={(e) => setSelectedCohort(e.target.value)}
+                onChange={(e) => {
+                  // Only allow numbers, no leading zeros
+                  const val = e.target.value.replace(/[^0-9]/g, '').replace(/^0+/, '')
+                  setSelectedCohort(val)
+                }}
                 className="w-48 border-gray-300 focus:border-blue-500"
               />
 

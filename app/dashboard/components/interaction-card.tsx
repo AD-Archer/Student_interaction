@@ -11,7 +11,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { AlertCircle, Clock, User, Eye, Edit, Mail, ArchiveRestore, Archive } from "lucide-react"
+import { AlertCircle, Clock, User, Eye, Edit, Mail, ArchiveRestore, Archive, AlertTriangle } from "lucide-react"
 import { format, formatDistanceToNow } from "date-fns"
 import { useState } from "react"
 
@@ -42,6 +42,7 @@ interface InteractionCardProps {
 
 export function InteractionCard({ interaction, onViewInsights, onArchive }: InteractionCardProps) {
   const [archiving, setArchiving] = useState(false)
+  const [showConfirm, setShowConfirm] = useState<null | "archive" | "unarchive">(null)
 
   const getStatusColor = (interaction: Interaction) => {
     if (interaction.followUp.required && interaction.followUp.overdue) {
@@ -83,17 +84,31 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
     return { formatted, relative }
   }
 
-  // Archive/unarchive handler
+  // Archive/unarchive handler with confirmation
   const handleArchive = async () => {
+    setShowConfirm(null)
     if (!onArchive) return
     setArchiving(true)
     await onArchive(interaction.id, !interaction.isArchived)
     setArchiving(false)
   }
 
+  // Card color for archived state
+  const archivedCardColor = interaction.isArchived
+    ? "bg-gray-100 border-gray-300"
+    : getStatusColor(interaction)
+
+  // Unarchive button color
+  const unarchiveButtonClass = interaction.isArchived
+    ? "bg-black text-white hover:bg-gray-900 border-black"
+    : ""
+
+  // Remove excessive fading for archived
+  const archivedOpacity = interaction.isArchived ? "opacity-100" : ""
+
   return (
     <Card
-      className={`hover:shadow-lg transition-all duration-200 ${getStatusColor(interaction)} ${interaction.isArchived ? 'opacity-60' : ''}`}
+      className={`hover:shadow-lg transition-all duration-200 ${archivedCardColor} ${archivedOpacity}`}
     >
       <CardContent className="p-4 sm:p-6">
         <div className="space-y-4">
@@ -201,7 +216,7 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
                 size="sm"
                 className="flex-1"
                 onClick={() => {
-                  window.location.href = `/create?id=${interaction.id}`;
+                  window.location.href = `/create?id=${interaction.id}`
                 }}
                 disabled={interaction.isArchived}
               >
@@ -223,8 +238,8 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
                 <Button
                   variant={interaction.isArchived ? "default" : "destructive"}
                   size="sm"
-                  className="flex-1"
-                  onClick={handleArchive}
+                  className={`flex-1 ${unarchiveButtonClass}`}
+                  onClick={() => setShowConfirm(interaction.isArchived ? "unarchive" : "archive")}
                   disabled={archiving}
                 >
                   {interaction.isArchived ? (
@@ -240,6 +255,32 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
               )}
             </div>
           </div>
+          {/* Confirmation Alert */}
+          {showConfirm && (
+            <div className="mt-4 p-3 rounded border border-pink-300 bg-pink-100 flex items-center space-x-3">
+              <AlertTriangle className="h-5 w-5 text-pink-600" />
+              <span className="flex-1 text-pink-900">
+                {showConfirm === "archive"
+                  ? "Are you sure you want to archive this interaction?"
+                  : "Are you sure you want to unarchive this interaction?"}
+              </span>
+              <Button
+                size="sm"
+                className="bg-pink-600 text-white hover:bg-pink-700 border-pink-600 mr-2"
+                onClick={handleArchive}
+                disabled={archiving}
+              >
+                Yes
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowConfirm(null)}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
