@@ -13,7 +13,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, Clock, User, Eye, Edit, Mail, ArchiveRestore, Archive, AlertTriangle } from "lucide-react"
 import { format, formatDistanceToNow } from "date-fns"
+import { useEmailFunctionality } from "@/app/create/hooks/useEmailFunctionality"
 import { useState } from "react"
+import { students, staffMembers } from "@/lib/data"
 
 interface Interaction {
   id: string
@@ -32,6 +34,8 @@ interface Interaction {
     date: string
   }
   isArchived?: boolean
+  studentEmail?: string // add for email functionality
+  staffEmail?: string   // add for email functionality
 }
 
 interface InteractionCardProps {
@@ -43,6 +47,9 @@ interface InteractionCardProps {
 export function InteractionCard({ interaction, onViewInsights, onArchive }: InteractionCardProps) {
   const [archiving, setArchiving] = useState(false)
   const [showConfirm, setShowConfirm] = useState<null | "archive" | "unarchive">(null)
+  const [showEmailDialog, setShowEmailDialog] = useState(false)
+  const [emailFeedback, setEmailFeedback] = useState<string | null>(null)
+  const { sendTestEmailWithNotes } = useEmailFunctionality()
 
   const getStatusColor = (interaction: Interaction) => {
     if (interaction.followUp.required && interaction.followUp.overdue) {
@@ -91,6 +98,51 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
     setArchiving(true)
     await onArchive(interaction.id, !interaction.isArchived)
     setArchiving(false)
+  }
+
+  // Handler for sending follow-up email to student or staff
+  const handleFollowUpSend = async (target: 'student' | 'staff') => {
+    setShowEmailDialog(false)
+    setEmailFeedback(null)
+    const student = students.find(s => s.id === interaction.studentId)
+    const staff = staffMembers.find(s => s.name === interaction.staffMember)
+    const studentEmail = student?.email
+    const staffEmail = staff?.email
+    try {
+      if (target === 'student' && studentEmail) {
+        await sendTestEmailWithNotes(studentEmail, 'student', {
+          studentId: interaction.studentId,
+          studentName: interaction.studentName,
+          interactionType: interaction.type,
+          reason: interaction.reason,
+          notes: interaction.notes,
+          followUpDate: interaction.followUp?.date,
+          staffEmail,
+          studentEmail,
+          followUpEmail: true,
+        })
+        setEmailFeedback('Follow-up email sent to student!')
+        return
+      }
+      if (target === 'staff' && staffEmail) {
+        await sendTestEmailWithNotes(staffEmail, 'staff', {
+          studentId: interaction.studentId,
+          studentName: interaction.studentName,
+          interactionType: interaction.type,
+          reason: interaction.reason,
+          notes: interaction.notes,
+          followUpDate: interaction.followUp?.date,
+          staffEmail,
+          studentEmail,
+          followUpEmail: true,
+        })
+        setEmailFeedback('Follow-up email sent to staff!')
+        return
+      }
+      setEmailFeedback('No email address available for selected recipient.')
+    } catch {
+      setEmailFeedback('Failed to send follow-up email.')
+    }
   }
 
   // Card color for archived state
@@ -229,6 +281,7 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
                   size="sm"
                   className="flex-1 text-blue-600 hover:bg-blue-50"
                   disabled={interaction.isArchived}
+                  onClick={() => setShowEmailDialog(true)}
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Follow-up
@@ -279,6 +332,29 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
               >
                 Cancel
               </Button>
+            </div>
+          )}
+          {/* Email dialog for follow-up */}
+          {showEmailDialog && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+              <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+                <div className="mb-4 font-semibold text-lg">Send Follow-up Email</div>
+                <div className="mb-4 text-sm text-gray-700">Who do you want to send the follow-up email to?</div>
+                <div className="flex gap-2 mb-2">
+                  <Button size="sm" onClick={() => handleFollowUpSend('student')} disabled={!students.find(s => s.id === interaction.studentId)?.email}>
+                    Student
+                  </Button>
+                  <Button size="sm" onClick={() => handleFollowUpSend('staff')} disabled={!staffMembers.find(s => s.name === interaction.staffMember)?.email}>
+                    Staff
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setShowEmailDialog(false)}>
+                    Cancel
+                  </Button>
+                </div>
+                {emailFeedback && (
+                  <div className={`text-sm mt-2 ${emailFeedback.includes('sent') ? 'text-green-600' : 'text-red-600'}`}>{emailFeedback}</div>
+                )}
+              </div>
             </div>
           )}
         </div>

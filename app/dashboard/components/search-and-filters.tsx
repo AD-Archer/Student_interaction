@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -44,6 +44,36 @@ export function SearchAndFilters({
 }: SearchAndFiltersProps) {
   const [showFilters, setShowFilters] = useState(false)
 
+  // Load filters from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("dashboardFilters")
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (parsed.searchTerm !== undefined) setSearchTerm(parsed.searchTerm)
+        if (parsed.selectedCohort !== undefined) setSelectedCohort(parsed.selectedCohort)
+        if (parsed.sortOrder !== undefined) setSortOrder(parsed.sortOrder)
+        if (parsed.showArchived !== undefined) setShowArchived(parsed.showArchived)
+        if (parsed.selectedStaff !== undefined) setSelectedStaff(parsed.selectedStaff)
+      } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Save filters to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(
+      "dashboardFilters",
+      JSON.stringify({
+        searchTerm,
+        selectedCohort,
+        sortOrder,
+        showArchived,
+        selectedStaff
+      })
+    )
+  }, [searchTerm, selectedCohort, sortOrder, showArchived, selectedStaff])
+
   return (
     <Card className="shadow-lg">
       <CardContent className="p-4 sm:p-6">
@@ -81,21 +111,24 @@ export function SearchAndFilters({
           {/* Collapsible Filters */}
           {showFilters && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
-              <Input
-                type="number"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                min={1}
-                step={1}
-                placeholder="Enter Cohort #"
-                value={selectedCohort}
-                onChange={(e) => {
-                  // Only allow numbers, no leading zeros
-                  const val = e.target.value.replace(/[^0-9]/g, '').replace(/^0+/, '')
-                  setSelectedCohort(val)
-                }}
-                className="w-48 border-gray-300 focus:border-blue-500"
-              />
+              <div className="flex flex-col gap-1 w-48">
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  min={1}
+                  step={1}
+                  placeholder="Enter Cohort # (leave blank for all)"
+                  value={selectedCohort}
+                  onChange={(e) => {
+                    // Only allow numbers, no leading zeros
+                    const val = e.target.value.replace(/[^0-9]/g, '').replace(/^0+/, '')
+                    setSelectedCohort(val)
+                  }}
+                  className="border-gray-300 focus:border-blue-500"
+                />
+                <span className="text-xs text-gray-500 pl-1">Leave blank to show all cohorts</span>
+              </div>
 
               <Select
                 value={sortOrder}

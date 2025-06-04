@@ -81,6 +81,9 @@ Student Services System`
     }
   }
 
+  // Show a dialog to pick which type of email to send (student or staff)
+  // This is now handled in FollowUpCard, so this hook just sends the email
+
   const sendFollowUpEmails = async (formData: FormData, followUpStudent: boolean, followUpStaff: boolean) => {
     // send follow-up emails if date matches today
     const today = new Date()
@@ -105,8 +108,11 @@ Student Services System`
     }
   }
 
+  // Optionally, you could add a sendRealFollowUpEmail function here for real (not test) emails
+
   return {
     sendTestEmailWithNotes,
     sendFollowUpEmails,
+    // sendRealFollowUpEmail, // implement if needed
   }
 }

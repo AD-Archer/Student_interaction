@@ -57,7 +57,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
   } = useAIFunctionality()
 
   // I handle email sending logic
-  const { sendTestEmailWithNotes } = useEmailFunctionality()
+  const { } = useEmailFunctionality()
 
   // I handle the form submission and orchestrate saving the interaction
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -100,11 +100,6 @@ export function Form({ interactionId }: { interactionId?: number }) {
     router.push("/")
   }
 
-  // I wrap sendTestEmailWithNotes to match FollowUpCard's expected signature
-  const handleSendTestEmail = (email: string, recipientType: 'student' | 'staff') => {
-    void sendTestEmailWithNotes(email, recipientType, formData)
-  }
-
   // I wrap handleAiSummarizeNotes to match InteractionDetailsCard's expected signature
   const handleAiSummarizeNotesWrapper = () => {
     void handleAiSummarizeNotes(formData, updateFormData)
@@ -136,7 +131,6 @@ export function Form({ interactionId }: { interactionId?: number }) {
           followUpStaff={followUpStaff}
           onFollowUpStudentChange={setFollowUpStudent}
           onFollowUpStaffChange={setFollowUpStaff}
-          onSendTestEmail={handleSendTestEmail}
         />
 
         {/* Submit/cancel actions */}
