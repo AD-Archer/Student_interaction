@@ -181,7 +181,7 @@ export function EmailSettings() {
 
   const addTemplate = () => {
     const newTemplate = {
-      id: `template-${Date.now()}`,
+      id: `template-${Date.now()}`, // Use a timestamp to ensure unique IDs
       name: "New Template",
       subject: "Default Subject",
       body: "Default Body",
@@ -332,10 +332,10 @@ export function EmailSettings() {
                     </SelectTrigger>
                     <SelectContent>
                       {settings.templates.map(template => (
-                        <SelectItem key={template.id} value={template.id}>
-                          {template.name}
-                        </SelectItem>
-                      ))}
+                         <SelectItem key={template.id} value={template.id}>
+                           {template.name}
+                         </SelectItem>
+                       ))}
                     </SelectContent>
                   </Select>
                 </div>

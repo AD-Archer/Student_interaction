@@ -155,7 +155,7 @@ async function main() {
           subject: "Follow-up: {{interactionType}} Session",
           body: `Hi {{studentName}},
 
-I hope you're doing well! This is a follow-up from our {{interactionType}} session on {{sessionDate}}.
+I hope you're doing well! This is a follow-up from our {{interactionType}} session.
 
 **Session Summary:**
 {{notes}}
@@ -166,7 +166,29 @@ We have scheduled a follow-up for {{followUpDate}}. Please let me know if you ha
 Best regards,
 {{staffName}}
 {{staffEmail}}`,
-          variables: ["studentName", "interactionType", "sessionDate", "notes", "followUpDate", "staffName", "staffEmail"]
+          variables: ["studentName", "interactionType", "notes", "followUpDate", "staffName", "staffEmail"]
+        },
+        {
+          id: "staff-followup",
+          name: "Staff Follow-up Reminder",
+          subject: "Follow-up Reminder: {{studentName}}",
+          body: `Hi {{staffName}},
+
+This is a reminder about your scheduled follow-up with {{studentName}} on {{followUpDate}}.
+
+**Original Session Details:**
+- Type: {{interactionType}}
+- Student: {{studentName}}
+- Reason: {{reason}}
+
+**Session Notes:**
+{{notes}}
+
+Please reach out to the student to confirm the follow-up appointment.
+
+Best regards,
+Student Services System`,
+          variables: ["studentName", "interactionType", "reason", "notes", "followUpDate", "staffName"]
         }
       ]
     },
@@ -187,7 +209,7 @@ Best regards,
           subject: "Follow-up: {{interactionType}} Session",
           body: `Hi {{studentName}},
 
-I hope you're doing well! This is a follow-up from our {{interactionType}} session on {{sessionDate}}.
+I hope you're doing well! This is a follow-up from our {{interactionType}} session.
 
 **Session Summary:**
 {{notes}}
@@ -198,41 +220,33 @@ We have scheduled a follow-up for {{followUpDate}}. Please let me know if you ha
 Best regards,
 {{staffName}}
 {{staffEmail}}`,
-          variables: ["studentName", "interactionType", "sessionDate", "notes", "followUpDate", "staffName", "staffEmail"]
+          variables: ["studentName", "interactionType", "notes", "followUpDate", "staffName", "staffEmail"]
+        },
+        {
+          id: "staff-followup",
+          name: "Staff Follow-up Reminder",
+          subject: "Follow-up Reminder: {{studentName}}",
+          body: `Hi {{staffName}},
+
+This is a reminder about your scheduled follow-up with {{studentName}} on {{followUpDate}}.
+
+**Original Session Details:**
+- Type: {{interactionType}}
+- Student: {{studentName}}
+- Reason: {{reason}}
+
+**Session Notes:**
+{{notes}}
+
+Please reach out to the student to confirm the follow-up appointment.
+
+Best regards,
+Student Services System`,
+          variables: ["studentName", "interactionType", "reason", "notes", "followUpDate", "staffName"]
         }
       ]
     }
   })
-
-  // Add default email templates
-  console.log('Adding default email templates...');
-  const defaultTemplates = [
-    {
-      name: "student-followup",
-      subject: "Follow-up with {{studentName}}",
-      body: "Hello {{studentName}},\n\nWe wanted to follow up on your recent session. Please let us know if you have any questions.\n\nBest regards,\nLaunchpad Team",
-    },
-    {
-      name: "welcome-email",
-      subject: "Welcome to Launchpad, {{studentName}}!",
-      body: "Hi {{studentName}},\n\nWelcome to the Launchpad program! We're excited to have you on board.\n\nBest,\nThe Launchpad Team",
-    },
-  ];
-
-  await prisma.systemSettings.upsert({
-    where: { id: 1 },
-    update: {
-      templates: defaultTemplates,
-    },
-    create: {
-      id: 1,
-      autoBackup: true,
-      aiSummaries: true,
-      dataRetention: "2years",
-      sessionTimeout: "8hours",
-      templates: defaultTemplates,
-    },
-  });
 
   console.log('Database seed completed successfully!')
 }
