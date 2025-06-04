@@ -29,11 +29,12 @@ export async function OPTIONS(request: NextRequest) {
 // GET /api/students/[id] - Get specific student
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const student = await db.student.findUnique({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     if (!student) {
@@ -57,8 +58,9 @@ export async function GET(
 // PUT /api/students/[id] - Update student
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const data = await request.json()
     const { firstName, lastName, email, cohort, program } = data
@@ -73,7 +75,7 @@ export async function PUT(
 
     // Check if student exists
     const existingStudent = await db.student.findUnique({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     if (!existingStudent) {
@@ -85,7 +87,7 @@ export async function PUT(
 
     // Update the student
     const student = await db.student.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         firstName,
         lastName,
@@ -109,12 +111,13 @@ export async function PUT(
 // DELETE /api/students/[id] - Delete student (optional, for future use)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     // Check if student exists
     const existingStudent = await db.student.findUnique({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     if (!existingStudent) {
@@ -126,7 +129,7 @@ export async function DELETE(
 
     // Delete the student
     await db.student.delete({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     return NextResponse.json(
