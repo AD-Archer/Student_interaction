@@ -6,12 +6,12 @@
  * This is only used on the /settings page and is not global.
  */
 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, Plus, RotateCcw, Shield, X, User, Mail, Briefcase, Settings } from "lucide-react"
+import { Edit, Trash2, Plus, RotateCcw, Shield, X, User, Users, Mail, Briefcase, Settings } from "lucide-react"
 import React, { useState, useEffect } from "react"
 import { StaffMember } from "@/lib/data"
 import { staffAPI, userAPI } from "@/lib/api"
@@ -236,10 +236,21 @@ export default function StaffManagement() {
 
   if (loading) {
     return (
-      <div className="w-full">
-        <Card className="shadow-lg">
-          <CardContent className="p-6">
-            <div className="text-center">Loading staff members...</div>
+      <div className="w-full space-y-8 p-4">{/* I let content expand to full width for better desktop usage */}
+        <Card className="shadow-lg border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardContent className="p-12">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                <Users className="h-8 w-8 text-blue-600 animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900">Loading Staff Members</h3>
+                <p className="text-gray-600">Please wait while we fetch the team data...</p>
+              </div>
+              <div className="flex justify-center">
+                <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -247,83 +258,33 @@ export default function StaffManagement() {
   }
 
   return (
-    <div className="w-full">
-      {/* Self password change section */}
-      {currentUser && (
-        <Card className="shadow-lg mb-8">
-          <CardHeader>
-            <CardTitle className="text-lg">Change Your Password</CardTitle>
-            <CardDescription>Update your own account password</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
-              {passwordError && (
-                <div className="p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm">{passwordError}</div>
-              )}
-              {passwordSuccess && (
-                <div className="p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm">{passwordSuccess}</div>
-              )}
-              <div>
-                <Label htmlFor="current-password">Current Password</Label>
-                <Input
-                  id="current-password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={passwordForm.current}
-                  onChange={e => setPasswordForm(f => ({ ...f, current: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={passwordForm.new}
-                  onChange={e => setPasswordForm(f => ({ ...f, new: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={passwordForm.confirm}
-                  onChange={e => setPasswordForm(f => ({ ...f, confirm: e.target.value }))}
-                  required
-                />
-              </div>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 w-full" disabled={passwordLoading}>
-                {passwordLoading ? "Changing..." : "Change Password"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card className="shadow-lg">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-3 sm:space-y-0">
+    <div className="w-full space-y-6 sm:space-y-8 p-2 sm:p-4">{/* I adjust spacing and padding for mobile */}
+      <Card className="shadow-lg border border-gray-200">
+        <CardContent className="p-4 sm:p-6">{/* I reduce padding on mobile */}
+          {/* Header Section */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0 mb-6 pb-6 border-b border-gray-200">
             <div>
-              <CardTitle className="text-lg sm:text-xl">Staff Management</CardTitle>
-              <CardDescription>Manage team members and their access permissions</CardDescription>
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-3 mb-2">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <span>Staff Management</span>
+              </h2>
+              <p className="text-gray-600">
+                Manage team members and their access permissions
+              </p>
             </div>
             <Button 
               onClick={() => {
                 setShowForm(true)
                 clearMessages()
               }}
-              className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+              className="bg-blue-600 text-white hover:bg-blue-700 font-semibold w-full sm:w-auto shadow-lg"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add New Staff
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded">
               {error}
@@ -336,61 +297,237 @@ export default function StaffManagement() {
             </div>
           )}
           
-          <div className="space-y-4">
-            {staffMembers.map((staff) => (
-              <div
-                key={staff.id}
-                className="flex flex-col lg:flex-row lg:items-center justify-between p-4 sm:p-6 border rounded-xl bg-gray-50 space-y-4 lg:space-y-0 transition-all hover:shadow-md"
-              >
-                <div className="flex-1 space-y-2 lg:space-y-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0">
-                    <h3 className="text-lg font-semibold text-gray-900">{staff.name}</h3>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {staff.isAdmin && (
-                        <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-300">
-                          Admin
-                        </Badge>
-                      )}
+          <div className="space-y-6">
+            {staffMembers.length === 0 ? (
+              <div className="text-center py-16 space-y-4">
+                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                  <Users className="h-10 w-10 text-gray-400" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-gray-900">No Staff Members Yet</h3>
+                  <p className="text-gray-600 max-w-md mx-auto">
+                    Get started by adding your first team member. They&apos;ll be able to access the system based on the permissions you set.
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => {
+                    setShowForm(true)
+                    clearMessages()
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 font-semibold"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Your First Staff Member
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:gap-4">
+                {staffMembers.map((staff) => (
+                  <div
+                    key={staff.id}
+                    className="group relative bg-white border border-gray-200 rounded-xl p-4 sm:p-6 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 hover:border-blue-300 transition-all duration-300 hover:shadow-md"
+                  >
+                    {/* Mobile-First Layout */}
+                    <div className="space-y-4">
+                      {/* Header Section - Avatar, Name, and Badges */}
+                      <div className="flex items-start space-x-3 sm:space-x-4">
+                        <div className="flex-shrink-0">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-lg shadow-lg">
+                            {staff.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          </div>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          {/* Name and Badges - Stack on mobile, row on larger screens */}
+                          <div className="space-y-2 sm:space-y-1">
+                            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 leading-tight">{staff.name}</h3>
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                              {staff.isAdmin && (
+                                <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-300 font-medium shadow-sm text-xs">
+                                  <Shield className="h-3 w-3 mr-1" />
+                                  Admin
+                                </Badge>
+                              )}
+                              {staff.role && (
+                                <Badge variant="outline" className="text-gray-700 border-gray-300 bg-gray-50 text-xs">
+                                  <Briefcase className="h-3 w-3 mr-1" />
+                                  {staff.role}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Contact Information */}
+                      <div className="space-y-2 text-sm pl-15 sm:pl-18">{/* I align with the text content */}
+                        <div className="flex items-center text-gray-600">
+                          <Mail className="h-4 w-4 mr-3 text-gray-400 flex-shrink-0" />
+                          <span className="truncate text-sm">{staff.email}</span>
+                        </div>
+                        <div className="flex items-start text-gray-500">
+                          <Shield className="h-4 w-4 mr-3 text-gray-400 flex-shrink-0 mt-0.5" />
+                          <div className="text-xs">
+                            <span className="text-gray-500">Permissions: </span>
+                            <span className="font-medium text-gray-600">{staff.permissions.join(', ')}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Action Buttons - Full width on mobile, compact on larger screens */}
+                      <div className="pt-3 sm:pt-2 border-t border-gray-100">
+                        <div className="flex flex-col xs:flex-row gap-2 sm:gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 xs:flex-none xs:min-w-[100px] border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-colors shadow-sm text-sm py-2"
+                            onClick={() => handleEdit(staff)}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 xs:flex-none xs:min-w-[130px] border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-colors shadow-sm text-sm py-2"
+                            onClick={() => handlePasswordReset(staff)}
+                          >
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                            <span className="hidden xs:inline">Reset Password</span>
+                            <span className="xs:hidden">Reset</span>
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <p className="flex items-center">
-                      <Mail className="h-4 w-4 mr-2" />
-                      {staff.email}
-                    </p>
-                    {staff.role && (
-                      <p className="flex items-center">
-                        <Briefcase className="h-4 w-4 mr-2" />
-                        {staff.role}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1 sm:flex-none"
-                      onClick={() => handleEdit(staff)}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 sm:flex-none text-orange-600 hover:text-orange-700"
-                      onClick={() => handlePasswordReset(staff)}
-                    >
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Reset Password
-                    </Button>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
+            )
+            }
           </div>
         </CardContent>
       </Card>
+
+      {/* Self Password Change Section */}
+      {currentUser && (
+        <Card className="shadow-lg border border-gray-200">
+          <CardContent className="p-4 sm:p-8">{/* I reduce padding on mobile for better fit */}
+            {/* Header Section */}
+            <div className="text-center mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-gray-200">
+              <div className="flex justify-center mb-3 sm:mb-4">
+                <div className="p-2 sm:p-3 bg-green-100 rounded-lg">
+                  <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
+                </div>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">Change Your Password</h2>
+              <p className="text-gray-600 text-sm sm:text-base">Update your own account password securely</p>
+            </div>
+            
+            <div className="w-full max-w-xs sm:max-w-md mx-auto">{/* I make the form fit better on mobile */}
+              <form onSubmit={handlePasswordChange} className="space-y-4 sm:space-y-6">
+                {passwordError && (
+                  <div className="p-3 sm:p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg flex items-center space-x-2 text-xs sm:text-sm">
+                    <X className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    <span>{passwordError}</span>
+                  </div>
+                )}
+                {passwordSuccess && (
+                  <div className="p-3 sm:p-4 bg-green-100 border border-green-300 text-green-700 rounded-lg flex items-center space-x-2 text-xs sm:text-sm">
+                    <Shield className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    <span>{passwordSuccess}</span>
+                  </div>
+                )}
+                
+                <div className="space-y-3 sm:space-y-4">
+                  <div>
+                    <Label htmlFor="current-password" className="text-xs sm:text-sm font-medium text-gray-700 flex items-center space-x-2">
+                      <Shield className="h-4 w-4" />
+                      <span>Current Password</span>
+                    </Label>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={passwordForm.current}
+                      onChange={e => setPasswordForm(f => ({ ...f, current: e.target.value }))}
+                      className="mt-1 border-gray-300 focus:border-green-500 focus:ring-green-500 text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2"
+                      placeholder="Enter your current password"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="new-password" className="text-xs sm:text-sm font-medium text-gray-700 flex items-center space-x-2">
+                      <Shield className="h-4 w-4" />
+                      <span>New Password</span>
+                    </Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      autoComplete="new-password"
+                      value={passwordForm.new}
+                      onChange={e => setPasswordForm(f => ({ ...f, new: e.target.value }))}
+                      className="mt-1 border-gray-300 focus:border-green-500 focus:ring-green-500 text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2"
+                      placeholder="Enter your new password"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="confirm-password" className="text-xs sm:text-sm font-medium text-gray-700 flex items-center space-x-2">
+                      <Shield className="h-4 w-4" />
+                      <span>Confirm New Password</span>
+                    </Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      autoComplete="new-password"
+                      value={passwordForm.confirm}
+                      onChange={e => setPasswordForm(f => ({ ...f, confirm: e.target.value }))}
+                      className="mt-1 border-gray-300 focus:border-green-500 focus:ring-green-500 text-xs sm:text-sm px-2 py-2 sm:px-3 sm:py-2"
+                      placeholder="Confirm your new password"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 rounded-lg p-3 sm:p-4 border border-blue-200 text-xs sm:text-sm">
+                  <div className="flex items-start space-x-2">
+                    <Shield className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-blue-800">
+                      <p className="font-medium mb-1">Password Requirements</p>
+                      <ul className="space-y-1">
+                        <li>• At least 8 characters long</li>
+                        <li>• Include uppercase and lowercase letters</li>
+                        <li>• Include at least one number</li>
+                        <li>• Include at least one special character</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="bg-green-600 hover:bg-green-700 w-full font-semibold py-2 sm:py-3 shadow-lg text-xs sm:text-base" 
+                  disabled={passwordLoading}
+                >
+                  {passwordLoading ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Changing Password...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center space-x-2">
+                      <Shield className="h-4 w-4" />
+                      <span>Change Password</span>
+                    </div>
+                  )}
+                </Button>
+              </form>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Staff Management Modal - Fixed positioning for proper visibility */}
       {showForm && (

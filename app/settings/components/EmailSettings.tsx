@@ -220,10 +220,10 @@ export function EmailSettings() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="general">General Settings</TabsTrigger>
-              <TabsTrigger value="templates">Email Templates</TabsTrigger>
-              <TabsTrigger value="testing">Testing</TabsTrigger>
+            <TabsList className="flex w-full gap-1 overflow-x-auto rounded-md bg-muted p-1 min-w-0">
+              <TabsTrigger value="general" className="flex-1 min-w-0 truncate">General Settings</TabsTrigger>
+              <TabsTrigger value="templates" className="flex-1 min-w-0 truncate">Email Templates</TabsTrigger>
+              <TabsTrigger value="testing" className="flex-1 min-w-0 truncate">Testing</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general" className="space-y-4">

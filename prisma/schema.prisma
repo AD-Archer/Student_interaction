@@ -140,6 +140,21 @@ model SystemSettings {
   // Email templates stored as JSON
   templates      Json?
 
+  // Student interaction frequency settings
+  defaultInteractionDays    Int     @default(30) // Default days before student needs interaction
+  foundationsInteractionDays Int    @default(14) // Days for foundations program students
+  liftoffInteractionDays    Int     @default(21) // Days for liftoff program students
+  lightspeedInteractionDays Int     @default(7)  // Days for lightspeed program students
+  program101InteractionDays Int     @default(30) // Days for 101 program students
+  
+  // Priority escalation settings
+  enablePriorityEscalation  Boolean @default(true)
+  priorityEscalationDays    Int     @default(7)  // Additional days before marking as high priority
+  
+  // Follow-up settings
+  autoFollowUpEnabled       Boolean @default(true)
+  followUpGracePeriodDays   Int     @default(3)  // Grace period before marking follow-ups as overdue
+
   updatedAt      DateTime @updatedAt
 
   @@map("system_settings")

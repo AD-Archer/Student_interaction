@@ -1,110 +1,187 @@
-// -----------------------------------------------------------------------------
-// page.tsx
-// This is the main page for the /analytics route. It focuses on tracking important
-// student interaction data like students needing interactions, required follow-ups,
-// and program-specific metrics. The page allows filtering by program type (Foundations, 
-// 101, and Liftoff) and provides actionable insights for staff members.
-// -----------------------------------------------------------------------------
+// filepath: /Users/archer/projects/node/Launchpad_Student_Form/app/analytics/page.tsx
+/**
+ * Analytics dashboard page that displays real-time data from the Prisma database.
+ * Shows comprehensive student interaction metrics, follow-up statistics, program breakdowns,
+ * and actionable insights for staff members. All data is fetched from the analytics API endpoint.
+ */
 
 "use client"
 
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Filter, Download, AlertCircle, Clock, Users } from "lucide-react"
+import { Filter, Download, AlertCircle, Clock, Users, TrendingUp, BarChart3 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Loader } from "@/components/ui/loader"
-import { interactions, formStudents } from "@/lib/data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { InsightsOverview } from "./components/insights-overview"
 import { Input } from "@/components/ui/input"
 
-// Identify students needing follow-up
-const getFollowUpRequiredInteractions = () => {
-  return interactions.filter(interaction => 
-    interaction.followUp.required && 
-    !interaction.followUp.overdue
-  )
+// Types for analytics data
+interface AnalyticsData {
+  overview: {
+    totalStudents: number
+    totalInteractions: number
+    studentsNeedingInteraction: number
+    followUpsRequired: number
+    overdueFollowUps: number
+    recentInteractions: number
+  }
+  breakdown: {
+    studentsByCohort: Array<{ cohort: string | number; _count: { id: number } }>
+    interactionTypes: Array<{ type: string; count: number; percentage: number }>
+    staffPerformance: Array<{ staffMember: string; interactions: number }>
+  }
+  trends: Array<{ month: string; interactions: number; followUps: number }>
+  filters: {
+    cohort: string
+    dateRange: number
+  }
 }
 
-// Identify overdue follow-ups
-const getOverdueFollowUps = () => {
-  return interactions.filter(interaction => 
-    interaction.followUp.required && 
-    interaction.followUp.overdue
-  )
+interface StudentRecord {
+  id: string
+  firstName: string
+  lastName: string
+  cohort: number | null
+  program: string
+  email?: string
+  lastInteraction?: string
+  daysSinceLastInteraction?: number
+}
+
+interface FollowUpRecord {
+  id: number
+  studentFirstName: string
+  studentLastName: string
+  studentId: string
+  cohort: number | null
+  program: string
+  type: string
+  staffMember: string
+  followUpDate: string
+  notes: string
+  isOverdue: boolean
 }
 
 export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedProgram, setSelectedProgram] = useState("all")
+  const [selectedCohort, setSelectedCohort] = useState("all")
+  const [dateRange, setDateRange] = useState("30")
   const [searchQuery, setSearchQuery] = useState("")
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
+  const [studentsNeedingInteraction, setStudentsNeedingInteraction] = useState<StudentRecord[]>([])
+  const [followUpRecords, setFollowUpRecords] = useState<FollowUpRecord[]>([])
 
-  // Stats derived from data
-  const [stats, setStats] = useState({
-    totalStudents: 0,
-    needInteraction: 0,
-    followUpsRequired: 0,
-    followUpsOverdue: 0
-  })
-
-  const enrichedStudents = formStudents.map(student => {
-    const interaction = interactions.find(interaction => interaction.studentId === student.id)
-    return {
-      ...student,
-      staff: interaction ? interaction.staffMember : "N/A"
-    }
-  })
-
-  const filteredStudents = enrichedStudents.filter(student => {
-    const query = searchQuery.toLowerCase()
-    // I need to safely handle cases where student names might be undefined and combine first/last names
-    const studentName = `${student.firstName || ''} ${student.lastName || ''}`.toLowerCase().trim()
-    const studentId = student.id?.toString() || ''
-    
-    return (
-      studentName.includes(query) ||
-      studentId.includes(query)
-    )
-  })
-
-  // Calculate metrics based on selected program
-  useEffect(() => {
-    // Get follow-up metrics
-    const followUpsRequired = getFollowUpRequiredInteractions().length
-    const followUpsOverdue = getOverdueFollowUps().length
-    
-    // In a real app, you'd calculate students needing interaction
-    // For now we'll just use a percentage of the total student count
-    const totalStudentCount = formStudents.filter(student => 
-      selectedProgram === "all" ? true : student.program === selectedProgram
-    ).length
-    
-    // Simulate some students needing interaction (in real app this would be from DB)
-    const studentsNeedingInteraction = Math.floor(totalStudentCount * 0.3)
-    
-    setStats({
-      totalStudents: totalStudentCount,
-      needInteraction: studentsNeedingInteraction,
-      followUpsRequired: followUpsRequired,
-      followUpsOverdue: followUpsOverdue
-    })
-  }, [selectedProgram])
-
-  useEffect(() => {
-    // Simulate data fetching
-    const fetchData = async () => {
+  // Fetch analytics data from API
+  const fetchAnalyticsData = async () => {
+    try {
       setIsLoading(true)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const params = new URLSearchParams({
+        cohort: selectedCohort,
+        dateRange: dateRange
+      })
+      
+      const response = await fetch(`/api/analytics?${params}`)
+      if (!response.ok) throw new Error('Failed to fetch analytics')
+      
+      const data = await response.json()
+      setAnalyticsData(data)
+      
+      // Fetch detailed student and follow-up data
+      await Promise.all([
+        fetchStudentsNeedingInteraction(),
+        fetchFollowUpRecords()
+      ])
+      
+    } catch (error) {
+      console.error('Error fetching analytics:', error)
+    } finally {
       setIsLoading(false)
     }
-    fetchData()
-  }, [])
+  }
 
-  if (isLoading) {
+  // Fetch students who need interactions
+  const fetchStudentsNeedingInteraction = async () => {
+    try {
+      const params = new URLSearchParams({
+        cohort: selectedCohort,
+        needsInteraction: 'true'
+      })
+      const response = await fetch(`/api/students?${params}`)
+      if (response.ok) {
+        const students = await response.json()
+        setStudentsNeedingInteraction(students)
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error)
+    }
+  }
+
+  // Fetch follow-up records
+  const fetchFollowUpRecords = async () => {
+    try {
+      const params = new URLSearchParams({
+        cohort: selectedCohort,
+        followUpRequired: 'true'
+      })
+      const response = await fetch(`/api/interactions?${params}`)
+      if (response.ok) {
+        const interactions = await response.json()
+        setFollowUpRecords(interactions)
+      }
+    } catch (error) {
+      console.error('Error fetching follow-ups:', error)
+    }
+  }
+
+  // Filter functions
+  const getRequiredFollowUps = () => {
+    return followUpRecords.filter(record => !record.isOverdue)
+  }
+
+  const getOverdueFollowUps = () => {
+    return followUpRecords.filter(record => record.isOverdue)
+  }
+
+  const filteredStudents = studentsNeedingInteraction.filter(student => {
+    const query = searchQuery.toLowerCase()
+    const studentName = `${student.firstName} ${student.lastName}`.toLowerCase()
+    return studentName.includes(query) || student.id.includes(query)
+  })
+
+  // Export functionality
+  const handleExport = () => {
+    if (!analyticsData) return
+    
+    const exportData = {
+      overview: analyticsData.overview,
+      breakdown: analyticsData.breakdown,
+      exportDate: new Date().toISOString(),
+      filters: analyticsData.filters
+    }
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: 'application/json'
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `analytics-cohort-${selectedCohort}-${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  useEffect(() => {
+    fetchAnalyticsData()
+  }, [selectedCohort, dateRange])
+
+  if (isLoading || !analyticsData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
-        <Loader />
+        <div className="text-center">
+          <Loader />
+          <p className="mt-4 text-gray-600">Loading analytics data...</p>
+        </div>
       </div>
     )
   }
@@ -117,42 +194,52 @@ export default function AnalyticsPage() {
           <div className="space-y-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Student Interaction Analytics
+                Student Analytics Dashboard
               </h1>
               <p className="text-gray-600 mt-2">
-                Track and manage important student interactions and follow-ups
+                Real-time insights from student interactions and follow-up tracking
               </p>
             </div>
             
-            {/* Program Filter and Search */}
+            {/* Filters and Controls */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
                 <Input
-                  placeholder="Search by name, staff, or ID"
+                  placeholder="Search students by name or ID"
+                  value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full"
                 />
               </div>
-              <Select 
-                defaultValue="all" 
-                onValueChange={(value) => setSelectedProgram(value)}
-              >
+              <Select value={selectedCohort} onValueChange={setSelectedCohort}>
                 <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Program" />
+                  <SelectValue placeholder="Cohort" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Programs</SelectItem>
-                  <SelectItem value="foundations">Foundations</SelectItem>
-                  <SelectItem value="101">101</SelectItem>
-                  <SelectItem value="liftoff">Liftoff</SelectItem>
+                  <SelectItem value="all">All Cohorts</SelectItem>
+                  <SelectItem value="1">Cohort 1</SelectItem>
+                  <SelectItem value="2">Cohort 2</SelectItem>
+                  <SelectItem value="3">Cohort 3</SelectItem>
+                  <SelectItem value="4">Cohort 4</SelectItem>
+                  <SelectItem value="5">Cohort 5</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger className="w-full sm:w-32">
+                  <SelectValue placeholder="Range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">7 days</SelectItem>
+                  <SelectItem value="30">30 days</SelectItem>
+                  <SelectItem value="90">90 days</SelectItem>
                 </SelectContent>
               </Select>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1 sm:flex-none">
                   <Filter className="h-4 w-4 mr-2" />
-                  More Filters
+                  Filters
                 </Button>
-                <Button className="flex-1 sm:flex-none">
+                <Button onClick={handleExport} className="flex-1 sm:flex-none">
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
@@ -160,9 +247,9 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Key Metrics */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-            {/* Students Needing Interaction */}
+          {/* Key Metrics Dashboard */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-6">
+            {/* Total Students */}
             <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
               <CardContent className="p-3 sm:p-6">
                 <div className="text-center lg:text-left">
@@ -171,11 +258,27 @@ export default function AnalyticsPage() {
                       <Users className="h-4 w-4 lg:h-6 lg:w-6 text-blue-700" />
                     </div>
                   </div>
-                  <p className="text-xs sm:text-sm font-medium text-blue-600">Need Interaction</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900">{stats.needInteraction}</p>
-                  <div className="flex items-center justify-center lg:justify-start mt-1 sm:mt-2">
-                    <span className="text-xs sm:text-sm text-blue-600">of {stats.totalStudents} students</span>
+                  <p className="text-xs sm:text-sm font-medium text-blue-600">Total Students</p>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900">
+                    {analyticsData.overview.totalStudents}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Students Needing Interaction */}
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+              <CardContent className="p-3 sm:p-6">
+                <div className="text-center lg:text-left">
+                  <div className="flex items-center justify-center lg:justify-start mb-2">
+                    <div className="bg-orange-200 p-2 rounded-full">
+                      <AlertCircle className="h-4 w-4 lg:h-6 lg:w-6 text-orange-700" />
+                    </div>
                   </div>
+                  <p className="text-xs sm:text-sm font-medium text-orange-600">Need Interaction</p>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-900">
+                    {analyticsData.overview.studentsNeedingInteraction}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -190,10 +293,9 @@ export default function AnalyticsPage() {
                     </div>
                   </div>
                   <p className="text-xs sm:text-sm font-medium text-amber-600">Follow-ups Needed</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-amber-900">{stats.followUpsRequired}</p>
-                  <div className="flex items-center justify-center lg:justify-start mt-1 sm:mt-2">
-                    <span className="text-xs sm:text-sm text-amber-600">scheduled follow-ups</span>
-                  </div>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-amber-900">
+                    {analyticsData.overview.followUpsRequired}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -208,36 +310,107 @@ export default function AnalyticsPage() {
                     </div>
                   </div>
                   <p className="text-xs sm:text-sm font-medium text-red-600">Overdue</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-900">{stats.followUpsOverdue}</p>
-                  <div className="flex items-center justify-center lg:justify-start mt-1 sm:mt-2">
-                    <span className="text-xs sm:text-sm text-red-600">require immediate action</span>
-                  </div>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-900">
+                    {analyticsData.overview.overdueFollowUps}
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Program Statistics */}
+            {/* Total Interactions */}
             <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
               <CardContent className="p-3 sm:p-6">
                 <div className="text-center lg:text-left">
                   <div className="flex items-center justify-center lg:justify-start mb-2">
                     <div className="bg-green-200 p-2 rounded-full">
-                      <Users className="h-4 w-4 lg:h-6 lg:w-6 text-green-700" />
+                      <BarChart3 className="h-4 w-4 lg:h-6 lg:w-6 text-green-700" />
                     </div>
                   </div>
-                  <p className="text-xs sm:text-sm font-medium text-green-600">
-                    {selectedProgram === "all" ? "All Programs" : selectedProgram}
+                  <p className="text-xs sm:text-sm font-medium text-green-600">Total Interactions</p>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-900">
+                    {analyticsData.overview.totalInteractions}
                   </p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-900">{stats.totalStudents}</p>
-                  <div className="flex items-center justify-center lg:justify-start mt-1 sm:mt-2">
-                    <span className="text-xs sm:text-sm text-green-600">total students</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Interactions */}
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+              <CardContent className="p-3 sm:p-6">
+                <div className="text-center lg:text-left">
+                  <div className="flex items-center justify-center lg:justify-start mb-2">
+                    <div className="bg-purple-200 p-2 rounded-full">
+                      <TrendingUp className="h-4 w-4 lg:h-6 lg:w-6 text-purple-700" />
+                    </div>
                   </div>
+                  <p className="text-xs sm:text-sm font-medium text-purple-600">Recent ({dateRange}d)</p>
+                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-900">
+                    {analyticsData.overview.recentInteractions}
+                  </p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Student Lists */}
+          {/* Breakdown Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Cohort Breakdown */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Students by Cohort</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {analyticsData.breakdown.studentsByCohort.map((cohortData, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <span className="font-medium">
+                        {cohortData.cohort === 'Unassigned' ? 'Unassigned' : `Cohort ${cohortData.cohort}`}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ 
+                              width: `${(cohortData._count.id / analyticsData.overview.totalStudents) * 100}%` 
+                            }}
+                          />
+                        </div>
+                        <span className="font-bold">{cohortData._count.id}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Interaction Types */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Interaction Types</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {analyticsData.breakdown.interactionTypes.slice(0, 5).map((type, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <span className="font-medium">{type.type}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-green-600 h-2 rounded-full" 
+                            style={{ width: `${type.percentage}%` }}
+                          />
+                        </div>
+                        <span className="font-bold">{type.count}</span>
+                        <span className="text-sm text-gray-500">({type.percentage}%)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Student Action Lists */}
           <Tabs defaultValue="needInteraction" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="needInteraction">Need Interaction</TabsTrigger>
@@ -245,155 +418,189 @@ export default function AnalyticsPage() {
               <TabsTrigger value="overdue">Overdue</TabsTrigger>
             </TabsList>
             
-            {/* Need Interaction Tab */}
+            {/* Students Needing Interaction */}
             <TabsContent value="needInteraction">
               <Card>
                 <CardHeader>
                   <CardTitle>Students Needing Interaction</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  {stats.needInteraction > 0 ? (
+                <CardContent>
+                  {filteredStudents.length > 0 ? (
                     <div className="border rounded-md divide-y">
-                      {filteredStudents
-                        .filter(student => 
-                          selectedProgram === "all" ? true : student.program === selectedProgram
-                        )
-                        .slice(0, stats.needInteraction)
-                        .map((student, index) => (
-                          <div key={index} className="p-4 flex justify-between items-center">
-                            <div>
-                              <p className="font-medium">{`${student.firstName || ''} ${student.lastName || ''}`.trim()}</p>
-                              <p className="text-sm text-gray-500">
-                                ID: {student.id} • Program: {student.program}
+                      {filteredStudents.map((student, index) => (
+                        <div key={index} className="p-4 flex justify-between items-center">
+                          <div>
+                            <p className="font-medium">{student.firstName} {student.lastName}</p>
+                            <p className="text-sm text-gray-500">
+                              ID: {student.id} • Cohort: {student.cohort || 'Unassigned'} • Program: {student.program}
+                            </p>
+                            {student.daysSinceLastInteraction && (
+                              <p className="text-sm text-red-500">
+                                {student.daysSinceLastInteraction} days since last interaction
                               </p>
-                              <p className="text-sm text-gray-500">
-                                Staff: {student.staff}
-                              </p>
-                            </div>
-                            <Button variant="outline" size="sm">
-                              Schedule
-                            </Button>
+                            )}
                           </div>
-                        ))}
+                          <Button variant="outline" size="sm">
+                            Schedule
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <p className="text-center py-8 text-gray-500">No students currently need interaction in this program.</p>
+                    <p className="text-center py-8 text-gray-500">
+                      No students currently need interaction in this cohort.
+                    </p>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
             
-            {/* Follow-ups Tab */}
+            {/* Required Follow-ups */}
             <TabsContent value="followUps">
               <Card>
                 <CardHeader>
                   <CardTitle>Required Follow-ups</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  {getFollowUpRequiredInteractions()
-                    .filter(interaction => selectedProgram === "all" ? true : interaction.program === selectedProgram)
-                    .length > 0 ? (
+                <CardContent>
+                  {getRequiredFollowUps().length > 0 ? (
                     <div className="border rounded-md divide-y">
-                      {getFollowUpRequiredInteractions()
-                        .filter(interaction => selectedProgram === "all" ? true : interaction.program === selectedProgram)
-                        .map((interaction, index) => (
-                          <div key={index} className="p-4">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-medium">{interaction.studentName}</p>
-                                <p className="text-sm text-gray-500">
-                                  ID: {interaction.studentId} • Program: {interaction.program}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  Staff: {interaction.staffMember}
-                                </p>
-                              </div>
-                              <Button variant="outline" size="sm">
-                                Complete
-                              </Button>
-                            </div>
-                            <div className="mt-2">
-                              <p className="text-sm">
-                                <span className="font-medium">Follow-up:</span> {interaction.followUp.date}
+                      {getRequiredFollowUps().map((record, index) => (
+                        <div key={index} className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{record.studentFirstName} {record.studentLastName}</p>
+                              <p className="text-sm text-gray-500">
+                                ID: {record.studentId} • Cohort: {record.cohort || 'Unassigned'} • Program: {record.program}
                               </p>
-                              <p className="text-sm">
-                                <span className="font-medium">Type:</span> {interaction.type}
-                              </p>
-                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                                {interaction.notes}
+                              <p className="text-sm text-gray-500">
+                                Staff: {record.staffMember}
                               </p>
                             </div>
+                            <Button variant="outline" size="sm">
+                              Complete
+                            </Button>
                           </div>
-                        ))}
+                          <div className="mt-2">
+                            <p className="text-sm">
+                              <span className="font-medium">Follow-up:</span> {record.followUpDate}
+                            </p>
+                            <p className="text-sm">
+                              <span className="font-medium">Type:</span> {record.type}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                              {record.notes}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <p className="text-center py-8 text-gray-500">No follow-ups currently required in this program.</p>
+                    <p className="text-center py-8 text-gray-500">
+                      No follow-ups currently required in this cohort.
+                    </p>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
             
-            {/* Overdue Tab */}
+            {/* Overdue Follow-ups */}
             <TabsContent value="overdue">
               <Card>
                 <CardHeader>
                   <CardTitle>Overdue Follow-ups</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  {getOverdueFollowUps()
-                    .filter(interaction => selectedProgram === "all" ? true : interaction.program === selectedProgram)
-                    .length > 0 ? (
+                <CardContent>
+                  {getOverdueFollowUps().length > 0 ? (
                     <div className="border rounded-md divide-y">
-                      {getOverdueFollowUps()
-                        .filter(interaction => selectedProgram === "all" ? true : interaction.program === selectedProgram)
-                        .map((interaction, index) => (
-                          <div key={index} className="p-4 bg-red-50">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <div className="flex items-center">
-                                  <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
-                                  <p className="font-medium">{interaction.studentName}</p>
-                                </div>
-                                <p className="text-sm text-gray-500">
-                                  ID: {interaction.studentId} • Program: {interaction.program}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  Staff: {interaction.staffMember}
-                                </p>
+                      {getOverdueFollowUps().map((record, index) => (
+                        <div key={index} className="p-4 bg-red-50">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="flex items-center">
+                                <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
+                                <p className="font-medium">{record.studentFirstName} {record.studentLastName}</p>
                               </div>
-                              <Button variant="default" size="sm" className="bg-red-600 hover:bg-red-700">
-                                Urgent Action
-                              </Button>
-                            </div>
-                            <div className="mt-2">
-                              <p className="text-sm">
-                                <span className="font-medium">Due:</span> {interaction.followUp.date} <span className="text-red-500">(overdue)</span>
+                              <p className="text-sm text-gray-500">
+                                ID: {record.studentId} • Cohort: {record.cohort || 'Unassigned'} • Program: {record.program}
                               </p>
-                              <p className="text-sm">
-                                <span className="font-medium">Type:</span> {interaction.type}
-                              </p>
-                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                                {interaction.notes}
+                              <p className="text-sm text-gray-500">
+                                Staff: {record.staffMember}
                               </p>
                             </div>
+                            <Button variant="default" size="sm" className="bg-red-600 hover:bg-red-700">
+                              Urgent Action
+                            </Button>
                           </div>
-                        ))}
+                          <div className="mt-2">
+                            <p className="text-sm">
+                              <span className="font-medium">Due:</span> {record.followUpDate} 
+                              <span className="text-red-500 ml-1">(overdue)</span>
+                            </p>
+                            <p className="text-sm">
+                              <span className="font-medium">Type:</span> {record.type}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                              {record.notes}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <p className="text-center py-8 text-gray-500">No overdue follow-ups in this program.</p>
+                    <p className="text-center py-8 text-gray-500">
+                      No overdue follow-ups in this cohort. Great job!
+                    </p>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
 
-          {/* Insights Overview Section */}
-          <div className="mt-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
-              Insights Overview
-            </h2>
-            <InsightsOverview />
-          </div>
+          {/* Staff Performance Overview */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Top Staff Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {analyticsData.breakdown.staffPerformance.slice(0, 6).map((staff, index) => (
+                  <div key={index} className="border rounded-lg p-4">
+                    <p className="font-medium">{staff.staffMember}</p>
+                    <p className="text-2xl font-bold text-blue-600">{staff.interactions}</p>
+                    <p className="text-sm text-gray-500">interactions</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Monthly Trends */}
+          {analyticsData.trends.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Trends</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {analyticsData.trends.map((trend, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <span className="font-medium">{trend.month}</span>
+                      <div className="flex items-center gap-4">
+                        <div className="text-center">
+                          <p className="text-sm text-gray-500">Interactions</p>
+                          <p className="font-bold">{trend.interactions}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm text-gray-500">Follow-ups</p>
+                          <p className="font-bold">{trend.followUps}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>

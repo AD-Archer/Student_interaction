@@ -1,7 +1,7 @@
 /**
  * SystemSettings.tsx
- * Renders the data management settings for importing and exporting student data.
- * Focuses on CSV import functionality and data export options.
+ * Renders all system settings including interaction frequency configuration and data management.
+ * Includes CSV import functionality, data export options, and interaction timing settings.
  * This is only used on the /settings page and is not global.
  */
 
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Download, Upload, FileText, Users, Activity, AlertCircle, CheckCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { InteractionFrequencySettings } from "./InteractionFrequencySettings"
 
 interface ImportResult {
   success: boolean
@@ -116,6 +117,9 @@ export const SystemSettings = () => {
 
   return (
     <div className="w-full space-y-6">
+      {/* Interaction Frequency Settings */}
+      <InteractionFrequencySettings />
+      
       {/* Data Import Section */}
       <Card className="shadow-lg">
         <CardHeader>

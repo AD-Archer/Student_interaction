@@ -1,6 +1,7 @@
 // API route for student operations
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getStudentsNeedingInteraction } from '@/lib/interaction-formula'
 
 // Build CORS headers per request to support credentials
 function buildCorsHeaders(request: NextRequest) {
@@ -21,18 +22,35 @@ export async function OPTIONS(request: NextRequest) {
 // GET /api/students - Fetch all students
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const cohort = searchParams.get('cohort')
+    const needsInteraction = searchParams.get('needsInteraction')
+
+    // Build where clause for filtering
+    const whereClause: Record<string, unknown> = {}
+    
+    if (cohort && cohort !== 'all') {
+      whereClause.cohort = parseInt(cohort)
+    }
+
     const students = await db.student.findMany({
+      where: whereClause,
       orderBy: {
         firstName: 'asc'
       }
     })
 
-    // Add "All Students" option for compatibility with frontend
+    // If we need students requiring interaction, use the new formula system
+    if (needsInteraction === 'true') {
+      const studentsNeedingInteraction = await getStudentsNeedingInteraction(whereClause)
+      return NextResponse.json(studentsNeedingInteraction, { headers: buildCorsHeaders(request) })
+    }
+
+    // For the standard students list (not filtered), add "All Students" option for compatibility
     const studentsWithAll = [
-      { id: "all", firstName: "All", lastName: "Students", program: "" },
+      { id: "all", firstName: "All", lastName: "Students", cohort: null, program: "" },
       ...students
     ]
-
     return NextResponse.json(studentsWithAll, { headers: buildCorsHeaders(request) })
 
   } catch (error) {

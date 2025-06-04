@@ -25,8 +25,28 @@ export async function OPTIONS(request: NextRequest) {
 // GET /api/interactions - Fetch all interactions
 export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const cohort = searchParams.get('cohort')
+    const followUpRequired = searchParams.get('followUpRequired')
+
+    // Build where clause for filtering
+    const where: Record<string, any> = {}
+    
+    if (cohort && cohort !== 'all') {
+      where.student = {
+        cohort: parseInt(cohort)
+      }
+    }
+
+    if (followUpRequired === 'true') {
+      where.followUpRequired = true
+      where.followUpSent = false
+      where.isArchived = false
+    }
+
     // I include isArchived so the frontend can show archive state
     const interactions = await db.interaction.findMany({
+      where,
       select: {
         id: true,
         studentId: true,
@@ -55,6 +75,7 @@ export async function GET(request: NextRequest) {
             id: true,
             firstName: true,
             lastName: true,
+            cohort: true,
             program: true,
             createdAt: true,
             updatedAt: true
@@ -75,28 +96,39 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform data to match current frontend format, including isArchived
-    const formattedInteractions = interactions.map((interaction) => ({
-      id: interaction.id,
-      studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
-      studentId: interaction.studentId,
-      program: interaction.program,
-      type: interaction.type,
-      reason: interaction.reason,
-      notes: interaction.notes,
-      date: interaction.date,
-      time: interaction.time,
-      staffMember: interaction.staffMember,
-      status: interaction.status,
-      aiSummary: interaction.aiSummary,
-      isArchived: interaction.isArchived, // I add this so the UI can see archive state
-      followUp: {
-        required: interaction.followUpRequired,
-        date: interaction.followUpDate,
-        overdue: interaction.followUpOverdue,
-        studentEmail: interaction.followUpStudentEmail,
-        staffEmail: interaction.followUpStaffEmail
+    const formattedInteractions = interactions.map((interaction) => {
+      // Check if follow-up is overdue
+      const today = new Date().toISOString().split('T')[0]
+      const isOverdue = interaction.followUpDate && interaction.followUpDate < today
+
+      return {
+        id: interaction.id,
+        studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
+        studentFirstName: interaction.studentFirstName,
+        studentLastName: interaction.studentLastName,
+        studentId: interaction.studentId,
+        cohort: interaction.student?.cohort || null,
+        program: interaction.program,
+        type: interaction.type,
+        reason: interaction.reason,
+        notes: interaction.notes,
+        date: interaction.date,
+        time: interaction.time,
+        staffMember: interaction.staffMember,
+        status: interaction.status,
+        aiSummary: interaction.aiSummary,
+        isArchived: interaction.isArchived, // I add this so the UI can see archive state
+        followUpDate: interaction.followUpDate,
+        isOverdue: isOverdue,
+        followUp: {
+          required: interaction.followUpRequired,
+          date: interaction.followUpDate,
+          overdue: interaction.followUpOverdue,
+          studentEmail: interaction.followUpStudentEmail,
+          staffEmail: interaction.followUpStaffEmail
+        }
       }
-    }))
+    })
 
     return NextResponse.json(formattedInteractions, { headers: buildCorsHeaders(request) })
 
