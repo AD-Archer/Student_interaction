@@ -11,8 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Sparkles, TrendingUp, X } from "lucide-react"
 import ReactMarkdown from "react-markdown"
-import { interactionsAPI } from "@/lib/api"
-import { summarizeText } from "@/lib/utils" 
+import { interactionsAPI } from "@/lib/api" 
 
 interface AiInsightsPanelProps {
 	isOpen: boolean
@@ -60,9 +59,21 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 				.map(([category, notes]) => `## ${category}\n\n${notes.join("\n\n")}`)
 				.join("\n\n---\n\n")
 
-			// Summarize the formatted notes
-			const insight = await summarizeText(formattedNotes)
-			setGeneratedInsight(insight)
+			// Send formatted notes to AI for summarization
+			const response = await fetch('/api/ai', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ 
+					message: `Please provide insights and analysis for the following student interaction data:\n\n${formattedNotes}`
+				})
+			})
+
+			if (!response.ok) {
+				throw new Error(`AI summarization failed: ${response.statusText}`)
+			}
+
+			const { result } = await response.json()
+			setGeneratedInsight(result)
 		} catch (error) {
 			console.error("Error generating AI insight:", error)
 		} finally {
@@ -105,7 +116,21 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 
 			console.log("Generated weekly report:", formattedReport)
 
-			setWeeklyReport(formattedReport); // Update the state with the report
+			// Send formatted report to AI for analysis
+			const response = await fetch('/api/ai', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ 
+					message: `Please generate a weekly summary and insights for the following student interaction data from the past week:\n\n${formattedReport}`
+				})
+			})
+
+			if (!response.ok) {
+				throw new Error(`AI weekly report generation failed: ${response.statusText}`)
+			}
+
+			const { result } = await response.json()
+			setWeeklyReport(result)
 		} catch (error) {
 			console.error("Error generating weekly report:", error)
 		} finally {
