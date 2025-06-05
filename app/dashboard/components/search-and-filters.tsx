@@ -42,7 +42,7 @@ export function SearchAndFilters({
   selectedStaff,
   setSelectedStaff
 }: SearchAndFiltersProps) {
-  const [showFilters, setShowFilters] = useState(false)
+  const [showFilters, setShowFilters] = useState(true)
 
   // Load filters from localStorage on mount
   useEffect(() => {

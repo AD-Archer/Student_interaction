@@ -29,6 +29,8 @@ interface Interaction {
     date: string
   }
   isArchived?: boolean
+  cohort?: string | number // Add cohort for dashboard display
+  phase?: string // Add phase for dashboard display
 }
 
 interface InteractionsListProps {

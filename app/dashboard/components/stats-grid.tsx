@@ -1,3 +1,9 @@
+/**
+ * StatsGrid Component
+ * Modern, minimal dashboard stats grid. Uses clean glassmorphism, subtle gradients, and simple icons
+ * for a calm, premium look that matches the HeroSection. All logic is unchanged; only the UI/UX is streamlined.
+ */
+
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
@@ -8,19 +14,20 @@ interface StatsGridProps {
   pendingCount: number
   overdueCount: number
   loading: boolean
+  studentCount?: number
 }
 
-export function StatsGrid({ totalInteractions, pendingCount, overdueCount, loading }: StatsGridProps) {
+export function StatsGrid({ totalInteractions, pendingCount, overdueCount, loading, studentCount }: StatsGridProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="animate-pulse">
-                <div className="bg-gray-300 h-8 w-8 rounded-full mb-2"></div>
-                <div className="bg-gray-300 h-4 w-16 rounded mb-1"></div>
-                <div className="bg-gray-300 h-8 w-12 rounded"></div>
+          <Card key={i} className="bg-white/70 border-0 rounded-2xl shadow animate-pulse">
+            <CardContent className="p-5">
+              <div className="flex flex-col items-center gap-2">
+                <div className="bg-gray-200 h-10 w-10 rounded-xl mb-2" />
+                <div className="bg-gray-200 h-4 w-16 rounded mb-1" />
+                <div className="bg-gray-200 h-8 w-12 rounded" />
               </div>
             </CardContent>
           </Card>
@@ -29,89 +36,51 @@ export function StatsGrid({ totalInteractions, pendingCount, overdueCount, loadi
     )
   }
 
+  const students = typeof studentCount === 'number' ? studentCount : 4
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-      <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-        <CardContent className="p-3 sm:p-4 lg:p-6">
-          <div className="text-center lg:text-left">
-            <div className="flex items-center justify-center lg:justify-start mb-2">
-              <div className="bg-blue-200 p-2 rounded-full">
-                <MessageSquare className="h-4 w-4 lg:h-5 lg:w-5 text-blue-700" />
-              </div>
-            </div>
-            <p className="text-xs sm:text-sm font-medium text-blue-600">
-              Total
-            </p>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900">
-              {totalInteractions}
-            </p>
-            <p className="text-xs text-blue-600 mt-1 hidden sm:block">
-              +2 from yesterday
-            </p>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Total Interactions */}
+      <Card className="bg-white/70 border border-blue-100 rounded-2xl shadow-md">
+        <CardContent className="p-6 flex flex-col items-center justify-center gap-2">
+          <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-blue-100 mb-2">
+            <MessageSquare className="h-6 w-6 text-blue-500" />
           </div>
+          <div className="text-xs font-semibold text-blue-700 tracking-wide uppercase">Total</div>
+          <div className="text-2xl font-bold text-blue-900">{totalInteractions}</div>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-        <CardContent className="p-3 sm:p-4 lg:p-6">
-          <div className="text-center lg:text-left">
-            <div className="flex items-center justify-center lg:justify-start mb-2">
-              <div className="bg-green-200 p-2 rounded-full">
-                <Users className="h-4 w-4 lg:h-5 lg:w-5 text-green-700" />
-              </div>
-            </div>
-            <p className="text-xs sm:text-sm font-medium text-green-600">
-              Students
-            </p>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-900">
-              4
-            </p>
-            <p className="text-xs text-green-600 mt-1 hidden sm:block">
-              All programs
-            </p>
+      {/* Students */}
+      <Card className="bg-white/70 border border-green-100 rounded-2xl shadow-md">
+        <CardContent className="p-6 flex flex-col items-center justify-center gap-2">
+          <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-green-100 mb-2">
+            <Users className="h-6 w-6 text-green-500" />
           </div>
+          <div className="text-xs font-semibold text-green-700 tracking-wide uppercase">Students</div>
+          <div className="text-2xl font-bold text-green-900">{students}</div>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200">
-        <CardContent className="p-3 sm:p-4 lg:p-6">
-          <div className="text-center lg:text-left">
-            <div className="flex items-center justify-center lg:justify-start mb-2">
-              <div className="bg-yellow-200 p-2 rounded-full">
-                <Clock className="h-4 w-4 lg:h-5 lg:w-5 text-yellow-700" />
-              </div>
-            </div>
-            <p className="text-xs sm:text-sm font-medium text-yellow-600">
-              Pending
-            </p>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-yellow-900">
-              {pendingCount}
-            </p>
-            <p className="text-xs text-yellow-600 mt-1 hidden sm:block">
-              Due this week
-            </p>
+      {/* Pending */}
+      <Card className="bg-white/70 border border-yellow-100 rounded-2xl shadow-md">
+        <CardContent className="p-6 flex flex-col items-center justify-center gap-2">
+          <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-yellow-100 mb-2">
+            <Clock className="h-6 w-6 text-yellow-500" />
           </div>
+          <div className="text-xs font-semibold text-yellow-700 tracking-wide uppercase">Pending</div>
+          <div className="text-2xl font-bold text-yellow-900">{pendingCount}</div>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-        <CardContent className="p-3 sm:p-4 lg:p-6">
-          <div className="text-center lg:text-left">
-            <div className="flex items-center justify-center lg:justify-start mb-2">
-              <div className="bg-red-200 p-2 rounded-full">
-                <AlertCircle className="h-4 w-4 lg:h-5 lg:w-5 text-red-700" />
-              </div>
-            </div>
-            <p className="text-xs sm:text-sm font-medium text-red-600">
-              Overdue
-            </p>
-            <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-900">
-              {overdueCount}
-            </p>
-            <p className="text-xs text-red-600 mt-1 hidden sm:block">
-              Needs attention
-            </p>
+      {/* Overdue */}
+      <Card className="bg-white/70 border border-pink-100 rounded-2xl shadow-md">
+        <CardContent className="p-6 flex flex-col items-center justify-center gap-2">
+          <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-pink-100 mb-2">
+            <AlertCircle className="h-6 w-6 text-pink-500" />
           </div>
+          <div className="text-xs font-semibold text-pink-700 tracking-wide uppercase">Overdue</div>
+          <div className="text-2xl font-bold text-pink-900">{overdueCount}</div>
         </CardContent>
       </Card>
     </div>

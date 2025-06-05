@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
+import { sendStaffNotification } from '@/lib/email'
 
 // Build CORS headers per request to support credentials
 function buildCorsHeaders(request: NextRequest) {
@@ -108,9 +109,12 @@ export async function PUT(
     }
     
     // Handle password reset or new password
+    let passwordReset = false
+    let temporaryPassword = ''
     if (resetPassword || password) {
-      const passwordToUse = password || '@Changeme2'
-      updateData.password = await bcrypt.hash(passwordToUse, 10)
+      temporaryPassword = password || '@Changeme2'
+      updateData.password = await bcrypt.hash(temporaryPassword, 10)
+      passwordReset = true
     }
 
     // Update the staff member
@@ -127,6 +131,22 @@ export async function PUT(
         createdAt: true
       }
     })
+
+    // Send password reset email if password was changed
+    if (passwordReset) {
+      try {
+        await sendStaffNotification({
+          type: 'password-reset',
+          to: updatedStaff.email,
+          staffName: `${updatedStaff.firstName} ${updatedStaff.lastName}`.trim(),
+          temporaryPassword
+        })
+        console.log(`Password reset email sent to ${updatedStaff.email}`)
+      } catch (emailError) {
+        // I log the error but don't fail the update
+        console.error('Failed to send password reset email:', emailError)
+      }
+    }
 
     return NextResponse.json(updatedStaff, { headers: buildCorsHeaders(request) })
 

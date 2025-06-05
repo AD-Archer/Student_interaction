@@ -66,6 +66,7 @@ export default function Page() {
   const [aiPanelData, setAiPanelData] = useState<{ title: string; notes: string[] }>({ title: "", notes: [] });
   const [showArchived, setShowArchived] = useState(false)
   const [selectedStaff, setSelectedStaff] = useState("all")
+  const [cohortPhaseMap, setCohortPhaseMap] = useState<Record<string, string>>({});
 
   // Load all data from API
   useEffect(() => {
@@ -92,13 +93,56 @@ export default function Page() {
     loadData()
   }, [])
 
+  // Fetch system settings for cohort-phase mapping
+  useEffect(() => {
+    const fetchCohortPhaseMap = async () => {
+      try {
+        const res = await fetch("/api/settings/system");
+        if (res.ok) {
+          const data = await res.json();
+          setCohortPhaseMap(data.cohortPhaseMap || {});
+        }
+      } catch {
+        // If this fails, fallback to empty mapping (phase fallback to program)
+        setCohortPhaseMap({});
+      }
+    };
+    fetchCohortPhaseMap();
+  }, []);
+
   // Always recalculate overdue status for all interactions
   const processedInteractions = interactions.map(withCalculatedOverdue)
+
+  // Helper to get phase for a cohort number
+  const getPhaseForCohort = (cohortNum: string | number | null | undefined, program: string) => {
+    if (!cohortNum) return program;
+    const key = typeof cohortNum === 'number' ? String(cohortNum) : cohortNum;
+    return cohortPhaseMap[key] || program;
+  };
+
+  // Helper to safely extract cohort from interaction
+  function extractCohort(interaction: Interaction): string | number | undefined {
+    // @ts-expect-error: backend may provide cohort directly or nested in student
+    if (typeof interaction.cohort !== 'undefined') return interaction.cohort;
+    // @ts-expect-error: backend may provide student object
+    if (interaction.student && typeof interaction.student.cohort !== 'undefined') return interaction.student.cohort;
+    return undefined;
+  }
+
+  // Attach cohort and phase to each processed interaction for filtering and display
+  const processedWithCohortPhase = processedInteractions.map(i => {
+    const cohort = extractCohort(i);
+    return {
+      ...i,
+      cohort: cohort ?? '',
+      phase: getPhaseForCohort(cohort ?? '', i.program),
+    };
+  })
 
   // Build staff options for filter dropdown
   const staffOptions = staff.map((s) => ({ id: s.id, name: s.name }))
 
-  const filteredInteractions = processedInteractions
+  const filteredInteractions = processedWithCohortPhase
     .filter((interaction) => {
       const searchTermLower = searchTerm.toLowerCase();
 
@@ -107,8 +151,9 @@ export default function Page() {
         interaction.reason.toLowerCase().includes(searchTermLower) ||
         interaction.notes.toLowerCase().includes(searchTermLower);
 
+      // Filter by cohort number (not phase or program)
       const matchesCohort =
-        selectedCohort === "all" || interaction.program.toLowerCase() === selectedCohort.toLowerCase();
+        selectedCohort === "all" || String(interaction.cohort ?? "") === selectedCohort;
 
       const matchesArchived = showArchived ? interaction.isArchived : !interaction.isArchived;
 
@@ -191,7 +236,7 @@ export default function Page() {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               selectedCohort={selectedCohort}
-              setSelectedCohort={setSelectedCohort}
+              setSelectedCohort={(val) => setSelectedCohort(val === '' ? 'all' : val)}
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}
               filteredCount={filteredInteractions.length}
@@ -214,6 +259,8 @@ export default function Page() {
                     date: i.followUp.date ?? "",
                   },
                   isArchived: i.isArchived ?? false,
+                  cohort: i.cohort,
+                  phase: i.phase,
                 }))}
                 showAiInsights={showAiInsights}
                 setShowAiInsights={setShowAiInsights}

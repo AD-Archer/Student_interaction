@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
+import { sendStaffNotification } from '@/lib/email'
 
 // Build CORS headers per request to support credentials
 function buildCorsHeaders(request: NextRequest) {
@@ -138,6 +139,20 @@ export async function POST(request: NextRequest) {
       ...staff,
       name: `${staff.firstName} ${staff.lastName}`.trim(),
       isAdmin: staff.permissions.includes('admin')
+    }
+
+    // Send welcome email notification to new staff member
+    try {
+      await sendStaffNotification({
+        to: email,
+        type: 'account-created',
+        staffName: `${finalFirstName} ${finalLastName}`.trim(),
+        temporaryPassword: finalPassword
+      })
+      console.log(`Welcome email sent to new staff member: ${email}`)
+    } catch (emailError) {
+      // I log email errors but don't fail the account creation
+      console.error('Failed to send welcome email to new staff member:', emailError)
     }
 
     return NextResponse.json(transformedStaff, { status: 201, headers: buildCorsHeaders(request) })
