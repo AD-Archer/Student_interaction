@@ -15,7 +15,7 @@ import { AlertCircle, Clock, User, Eye, Edit, Mail, ArchiveRestore, Archive, Ale
 import { format, formatDistanceToNow } from "date-fns"
 import { useEmailFunctionality } from "@/app/create/hooks/useEmailFunctionality"
 import { useState } from "react"
-import { students, staffMembers } from "@/lib/data"
+// import { students, staffMembers } from "@/lib/data" // <-- removed, fetch from API instead
 
 interface Interaction {
   id: string
@@ -88,10 +88,12 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
   const handleFollowUpSend = async (target: 'student' | 'staff') => {
     setShowEmailDialog(false)
     setEmailFeedback(null)
-    const student = students.find(s => s.id === interaction.studentId)
-    const staff = staffMembers.find(s => s.name === interaction.staffMember)
-    const studentEmail = student?.email
-    const staffEmail = staff?.email
+    // const student = students.find(s => s.id === interaction.studentId)
+    // const staff = staffMembers.find(s => s.name === interaction.staffMember)
+    // const studentEmail = student?.email
+    // const staffEmail = staff?.email
+    const studentEmail = interaction.studentEmail
+    const staffEmail = interaction.staffEmail
     try {
       if (target === 'student' && studentEmail) {
         await sendTestEmailWithNotes(studentEmail, 'student', {
@@ -320,10 +322,10 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
                 </div>
                 <div className="mb-4 text-sm text-gray-700">Who do you want to send the follow-up email to?</div>
                 <div className="flex gap-2 mb-2">
-                  <Button size="sm" className="rounded-xl" onClick={() => handleFollowUpSend('student')} disabled={!students.find(s => s.id === interaction.studentId)?.email}>
+                  <Button size="sm" className="rounded-xl" onClick={() => handleFollowUpSend('student')} disabled={!interaction.studentEmail}>
                     Student
                   </Button>
-                  <Button size="sm" className="rounded-xl" onClick={() => handleFollowUpSend('staff')} disabled={!staffMembers.find(s => s.name === interaction.staffMember)?.email}>
+                  <Button size="sm" className="rounded-xl" onClick={() => handleFollowUpSend('staff')} disabled={!interaction.staffEmail}>
                     Staff
                   </Button>
                   <Button size="sm" variant="outline" className="rounded-xl" onClick={() => setShowEmailDialog(false)}>

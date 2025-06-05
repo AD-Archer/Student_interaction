@@ -27,12 +27,28 @@ import { EmailSettings } from "./components/EmailSettings"
 import { CohortPhaseMappingSettings } from "./components/CohortPhaseMappingSettings"
 import { InteractionFrequencySettings } from "./components/InteractionFrequencySettings"
 import { StudentsSettings } from "./components/StudentsSettings"
-import { systemIntegrationData } from "@/lib/data"
+
 import { resolveIconComponent } from "@/lib/utils"
 import { useAuth } from "@/components/auth-wrapper"
 
+// Centralized system integration data (define here since not exported from lib/data.ts)
+const systemIntegrationData = [
+  {
+    name: "Playlab AI",
+    description: "AI-powered interaction summaries and insights",
+    status: "connected",
+    lastSync: "5 minutes ago",
+  },
+  {
+    name: "Database Connection",
+    description: "A test to ensure database connectivity",
+    status: "active",
+    lastSync: "12 hours ago",
+  },
+]
+
 // Map our centralized system integration data with icon components
-const systemIntegrations = systemIntegrationData.map(integration => {
+const systemIntegrations = systemIntegrationData.map((integration) => {
   // Create an icon mapping for known integrations
   const iconMapping: Record<string, keyof typeof import("lucide-react")> = {
     "Playlab AI": "Sparkles",

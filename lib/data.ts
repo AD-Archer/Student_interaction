@@ -1,22 +1,9 @@
 // -----------------------------------------------------------------------------
 // lib/data.ts
-// This file centralizes all mock data used throughout the application.
-// It serves as a single source of truth for data that will eventually
-// be replaced by actual database calls.
-// 
-// For components that need to render UI elements like icons, we store string
-// names that can be resolved to actual React components at render time using
-// the resolveIconComponent utility function from lib/utils.ts.
-//
-// Future devs: When implementing a database, you'll want to convert these
-// exports into async functions that fetch from your database instead.
-// For example:
-//
-// export async function getStudents(): Promise<Student[]> {
-//   return db.student.findMany();
-// }
-//
-// See DATA_LAYER.md for full implementation details and database migration path.
+// This file centralizes all type definitions and database CRUD utilities for the app.
+// All data must be fetched from the backend/database via API routes—no mock data is present.
+// For SSR or error fallback, we return empty arrays or undefined/null as appropriate.
+// If you see empty data, check your API/database connection.
 // -----------------------------------------------------------------------------
 
 // Types
@@ -170,106 +157,6 @@ export const interactionTrends: InteractionTrend[] = [
   { month: "Jun", interactions: 67, followUps: 20 },
 ]
 
-export const programData: ProgramData[] = [
-  { program: "Foundations", students: 8, interactions: 24, successRate: 87 },
-  { program: "101", students: 6, interactions: 18, successRate: 92 },
-  { program: "Lightspeed", students: 5, interactions: 15, successRate: 85 },
-  { program: "Liftoff", students: 4, interactions: 12, successRate: 90 },
-]
-
-export const staffPerformance: StaffPerformanceData[] = [
-  { firstName: "Tahir", lastName: "Lee", interactions: 28, avgRating: 4.8, followUpRate: 95 },
-  { firstName: "Barbara", lastName: "Cicalese", interactions: 25, avgRating: 4.9, followUpRate: 98 },
-  { firstName: "Charles", lastName: "Mitchell", interactions: 22, avgRating: 4.7, followUpRate: 92 },
-]
-
-export const interactionTypes: InteractionType[] = [
-  { type: "Coaching", count: 32, percentage: 45, trend: "up" },
-  { type: "Academic Support", count: 18, percentage: 25, trend: "up" },
-  { type: "Career Counseling", count: 12, percentage: 17, trend: "stable" },
-  { type: "Performance Improvement", count: 6, percentage: 8, trend: "down" },
-  { type: "Behavioral Intervention", count: 4, percentage: 5, trend: "down" },
-]
-
-// Dashboard page data
-export const interactions: Interaction[] = [
-  {
-    id: 1,
-    studentName: "Micheal Newman",
-    studentId: "0001",
-    program: "foundations",
-    type: "Coaching",
-    reason: "Job interview preparation",
-    notes:
-      "Worked on interview skills, practiced common questions, discussed professional attire. Student showed good progress and confidence.",
-    date: "2024-12-12",
-    time: "10:30 AM",
-    staffMember: "Tahir Lee",
-    status: "completed",
-    followUp: { required: true, date: "2024-12-20", overdue: false, sent: false },
-    aiSummary:
-      "Student received coaching on interview preparation with focus on confidence building and professional presentation.",
-  },
-  {
-    id: 2,
-    studentName: "Amira Johnson",
-    studentId: "0002",
-    program: "101",
-    type: "Academic Support",
-    reason: "Course planning assistance",
-    notes:
-      "Reviewed current course load, discussed upcoming semester options, identified areas needing additional support.",
-    date: "2024-12-11",
-    time: "2:15 PM",
-    staffMember: "Barbara Cicalese",
-    status: "completed",
-    followUp: { required: true, date: "2024-12-18", overdue: false, sent: false },
-    aiSummary:
-      "Academic planning session focused on course selection and identifying support needs for upcoming semester.",
-  },
-  {
-    id: 3,
-    studentName: "Koleona Smith",
-    studentId: "0003",
-    program: "lightspeed",
-    type: "Career Counseling",
-    reason: "Industry exploration",
-    notes:
-      "Explored different career paths in technology, discussed internship opportunities, reviewed portfolio development.",
-    date: "2024-12-10",
-    time: "11:00 AM",
-    staffMember: "Charles Mitchell",
-    status: "completed",
-    followUp: { required: false, sent: false },
-    aiSummary:
-      "Career exploration session covering technology industry opportunities and portfolio development strategies.",
-  },
-  {
-    id: 4,
-    studentName: "Zaire Williams",
-    studentId: "0004",
-    program: "liftoff",
-    type: "Performance Improvement",
-    reason: "Attendance improvement",
-    notes:
-      "Discussed attendance patterns, identified barriers to consistent attendance, developed action plan for improvement.",
-    date: "2024-12-09",
-    time: "9:45 AM",
-    staffMember: "Tahir Lee",
-    status: "completed",
-    followUp: { required: true, date: "2024-12-15", overdue: true, sent: false },
-    aiSummary:
-      "Performance improvement plan established to address attendance issues with specific action items and timeline.",
-  },
-]
-
-export const students: Student[] = [
-  { id: "all", firstName: "All", lastName: "Students" },
-  { id: "0001", firstName: "Micheal", lastName: "Newman", email: "michael.newman@example.com" },
-  { id: "0002", firstName: "Amira", lastName: "Johnson", email: "amira.johnson@example.com" },
-  { id: "0003", firstName: "Koleona", lastName: "Smith", email: "koleona.smith@example.com" },
-  { id: "0004", firstName: "Zaire", lastName: "Williams", email: "zaire.williams@example.com" },
-]
 
 export const interactionTypeOptions: InteractionTypeOption[] = [
   { value: "all", label: "All Types" },
@@ -290,99 +177,10 @@ export const formInteractionTypes = [
   { value: "other", label: "Other" },
 ]
 
-// Dashboard AI insights and notes
-export const aiInsights: AiInsight[] = [
-  {
-    type: "trend",
-    title: "Attendance Patterns",
-    description: "3 students showing improved attendance after coaching sessions",
-    severity: "positive",
-    icon: "TrendingUp",
-  },
-  {
-    type: "alert",
-    title: "Follow-up Required",
-    description: "Zaire Williams has missed 2 scheduled follow-ups",
-    severity: "warning",
-    icon: "AlertTriangle",
-  },
-  {
-    type: "insight",
-    title: "Program Success",
-    description: "Lightspeed program students show 85% engagement rate",
-    severity: "positive",
-    icon: "Users",
-  },
-  {
-    type: "recommendation",
-    title: "Intervention Needed",
-    description: "Consider group coaching for time management skills",
-    severity: "info",
-    icon: "MessageSquare",
-  },
-]
 
-export const recentNotes: StaffNote[] = [
-  {
-    id: 1,
-    author: "Tahir Lee",
-    content:
-      "Need to follow up on Micheal's interview preparation. He's showing great progress but needs confidence building.",
-    timestamp: "2 hours ago",
-    priority: "high",
-  },
-  {
-    id: 2,
-    author: "Barbara Cicalese",
-    content: "Amira is excelling in academic support. Consider advancing her to next program level.",
-    timestamp: "4 hours ago",
-    priority: "medium",
-  },
-  {
-    id: 3,
-    author: "Charles Mitchell",
-    content: "Group session on career exploration was very successful. Students engaged well.",
-    timestamp: "1 day ago",
-    priority: "low",
-  },
-]
 
-// Login and Settings page data - for fallback/demo purposes
-export const staffMembers: StaffMember[] = [
-  {
-    id: "1",
-    firstName: "Barbara",
-    lastName: "Cicalese",
-    name: "Barbara Cicalese",
-    email: "barbara@launchpad.org",
-    role: "Senior Counselor",
-    permissions: ["read", "write"],
-    isAdmin: true,
-    createdAt: "2024-01-15"
-  },
-  {
-    id: "2",
-    firstName: "Tahir",
-    lastName: "Lee",
-    name: "Tahir Lee",
-    email: "tahir@launchpad.org",
-    role: "Workforce Coordinator",
-    permissions: ["read", "write"],
-    isAdmin: true,
-    createdAt: "2024-02-10"
-  },
-  {
-    id: "3",
-    firstName: "Charles",
-    lastName: "Mitchell",
-    name: "Charles Mitchell",
-    email: "charles@launchpad.org",
-    role: "Program Manager",
-    permissions: ["read", "write"],
-    isAdmin: false,
-    createdAt: "2024-03-05"
-  },
-]
+
+
 
 // Note: We don't export systemIntegrations from here since the icons need to be actual React components
 // In the settings page, we're keeping the direct definition of systemIntegrations with proper Lucide icon components
@@ -395,29 +193,7 @@ export interface SystemIntegrationData {
   // icon is intentionally omitted here as it needs to be a React component in the UI
 }
 
-// This data can be used for database initialization, but not for direct rendering
-export const systemIntegrationData: SystemIntegrationData[] = [
-  {
-    name: "Playlab AI",
-    description: "AI-powered interaction summaries and insights",
-    status: "connected",
-    lastSync: "5 minutes ago",
-  },
-  {
-    name: "Database Connection",
-    description: "A test to ensure database connectivity",
-    status: "active",
-    lastSync: "12 hours ago",
-  },
-]
 
-// Settings page default values
-export const defaultSystemSettings: SystemSettingsState = {
-  autoBackup: true,
-  aiSummaries: true,
-  dataRetention: "2years",
-  sessionTimeout: "8hours",
-}
 
 // -----------------------------------------------------------------------------
 // Database CRUD utilities for Interactions
@@ -431,18 +207,18 @@ export const defaultSystemSettings: SystemSettingsState = {
  * Note: This is now async and should be used with await.
  */
 export async function getInteractions(): Promise<Interaction[]> {
-  if (typeof window === 'undefined') return interactions // SSR fallback
-  
+  // On SSR or error, return an empty array—no mock data fallback
+  if (typeof window === 'undefined') return []
   try {
     const response = await fetch('/api/interactions')
     if (!response.ok) {
-      console.error('Failed to fetch interactions, falling back to mock data')
-      return interactions
+      console.error('Failed to fetch interactions, returning empty array')
+      return []
     }
     return await response.json()
   } catch (error) {
     console.error('Error fetching interactions:', error)
-    return interactions // Fallback to mock data
+    return []
   }
 }
 
@@ -451,10 +227,8 @@ export async function getInteractions(): Promise<Interaction[]> {
  * Returns undefined if not found.
  */
 export async function getInteractionById(id: number): Promise<Interaction | undefined> {
-  if (typeof window === 'undefined') {
-    return interactions.find((i) => i.id === id) // SSR fallback
-  }
-  
+  // On SSR or error, return undefined—no mock data fallback
+  if (typeof window === 'undefined') return undefined
   try {
     const response = await fetch(`/api/interactions/${id}`)
     if (!response.ok) {
@@ -534,8 +308,5 @@ export async function deleteInteraction(id: number): Promise<void> {
     throw error
   }
 }
-
-// Alias for form usage: allows other modules to import formStudents for clarity
-export const formStudents = students;
 
 

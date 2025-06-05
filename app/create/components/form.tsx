@@ -1,6 +1,9 @@
 /**
  * This file defines the main student interaction form for the Launchpad Philly Student Interaction Tracker.
- * It orchestrates all the smaller form components and hooks to create a cohesive form experience.
+ * It orc    router.push("/")
+  }
+
+  // I wrap performAIAction to match InteractionDetailsCard's expected signature all the smaller form components and hooks to create a cohesive form experience.
  * The form is now broken down into logical sections for better maintainability and reusability.
  *
  * Components used:
@@ -52,8 +55,10 @@ export function Form({ interactionId }: { interactionId?: number }) {
     aiError,
     showAiSummary,
     aiSummary,
-    handleAiSummarizeNotes,
+    actionLoading,
     generateAISummaryAfterSubmit,
+    performAIAction,
+    generateBriefSummary,
   } = useAIFunctionality()
 
   // I handle email sending logic
@@ -95,15 +100,21 @@ export function Form({ interactionId }: { interactionId?: number }) {
     }
     // Save the interaction
     try {
+      console.log('Submitting interaction with payload:', payload)
       const response = await fetch("/api/interactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
       if (!response.ok) {
-        console.error("Failed to save interaction:", await response.text())
+        const errorText = await response.text()
+        console.error("Failed to save interaction:", errorText)
+        console.error("Response status:", response.status)
+        alert(`Failed to save interaction: ${errorText}`)
         return
       }
+      const result = await response.json()
+      console.log('Interaction saved successfully:', result)
       // Only send follow-up emails if the date is today or in the past
       if (shouldSendNow) {
         if (followUpStudent && formData.studentEmail) {
@@ -120,9 +131,10 @@ export function Form({ interactionId }: { interactionId?: number }) {
     router.push("/")
   }
 
-  // I wrap handleAiSummarizeNotes to match InteractionDetailsCard's expected signature
-  const handleAiSummarizeNotesWrapper = () => {
-    void handleAiSummarizeNotes(formData, updateFormData)
+
+  // I wrap performAIAction to match AISummaryCard's expected signature
+  const handlePerformAIAction = async (action: import('../hooks/useAIFunctionality').AIActionType, content: string) => {
+    return await performAIAction(action, content)
   }
 
   return (
@@ -140,7 +152,8 @@ export function Form({ interactionId }: { interactionId?: number }) {
           onFormDataChange={updateFormData}
           notesLoading={notesLoading}
           aiError={aiError}
-          onAiSummarizeNotes={handleAiSummarizeNotesWrapper}
+          actionLoading={actionLoading}
+          onPerformAIAction={handlePerformAIAction}
         />
 
         {/* Follow-up scheduling and email */}
@@ -164,6 +177,18 @@ export function Form({ interactionId }: { interactionId?: number }) {
       <AISummaryCard
         aiSummary={aiSummary}
         isVisible={showAiSummary}
+        onGenerateBriefSummary={() => generateBriefSummary({
+          studentName: formData.studentName,
+          type: formData.interactionType,
+          reason: formData.reason,
+          notes: formData.notes,
+        })}
+        interactionData={{
+          studentName: formData.studentName,
+          type: formData.interactionType,
+          reason: formData.reason,
+          notes: formData.notes,
+        }}
       />
     </div>
   )

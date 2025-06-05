@@ -4,7 +4,7 @@
  * and includes all relevant interaction details and follow-up information.
  */
 
-import { FormData, formStudents as students } from "@/lib/data"
+import { FormData } from "@/lib/data"
 import { useAuth } from "@/components/auth-wrapper"
 
 export function useEmailFunctionality() {
@@ -16,8 +16,8 @@ export function useEmailFunctionality() {
     formData: FormData
   ) => {
     try {
-      const selectedStudent = students.find(s => s.id === formData.studentId)
-      const studentName = selectedStudent ? `${selectedStudent.firstName} ${selectedStudent.lastName}` : formData.studentName
+      // I use the student name from formData which comes from the database-driven StudentSelectionCard
+      const studentName = formData.studentName || 'Student'
       const staffName = user ? `${user.firstName} ${user.lastName}` : "Staff Member"
       
       let emailSubject = ""

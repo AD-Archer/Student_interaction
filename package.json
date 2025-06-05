@@ -1,6 +1,6 @@
 {
   "name": "student-interaction-tracker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "description": "A student interaction form for launchpad philly created by Antonio Archer.",
