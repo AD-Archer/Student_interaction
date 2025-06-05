@@ -53,7 +53,7 @@ function interactionsToCSV(interactions: Array<{
   studentId: string
   studentFirstName: string
   studentLastName: string
-  program: string
+  program: string | null // Accept nullable program
   type: string
   reason: string
   notes: string
@@ -70,7 +70,7 @@ function interactionsToCSV(interactions: Array<{
       interaction.id.toString(),
       interaction.studentId,
       `${interaction.studentFirstName} ${interaction.studentLastName}`,
-      interaction.program,
+      interaction.program || '', // Ensure program is always a string
       interaction.type,
       interaction.reason,
       interaction.notes.replace(/,/g, ';'), // Replace commas in notes
