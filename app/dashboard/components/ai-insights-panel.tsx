@@ -1,7 +1,9 @@
 /**
  * AI Insights Panel Component
  * This component displays AI-generated insights and notes for the dashboard.
- * It includes a transparent overlay to allow visibility and interaction with the rest of the page while focusing on the panel.
+ * It features a modern glassmorphism design, playful accents, and interactive UI for a more engaging user experience.
+ * The panel overlays the dashboard with a blurred, semi-transparent background and includes animated icons, vibrant gradients, and improved layout for clarity and fun.
+ * All logic and API interactions remain unchanged; only the UI/UX is enhanced for a friendlier, more modern feel.
  */
 
 "use client"
@@ -163,52 +165,59 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 	if (!isOpen) return null
 
 	return (
-		<div className="fixed inset-0 z-50 flex justify-center items-center bg-white bg-opacity-90 backdrop-blur-md pointer-events-auto">
-			{/* Transparent overlay to allow visibility and interaction with the page */}
+		<div className="fixed inset-0 z-50 flex justify-center items-center bg-gradient-to-br from-blue-100/60 via-white/70 to-purple-100/60 backdrop-blur-xl pointer-events-auto transition-all duration-300">
+			{/* Glassy overlay for modern effect */}
 			<div
-				className="absolute inset-0 bg-transparent pointer-events-auto"
+				className="absolute inset-0 bg-gradient-to-br from-blue-200/30 via-white/40 to-purple-200/30 backdrop-blur-xl pointer-events-auto transition-all duration-300"
 				onClick={onClose}
 				aria-hidden="true"
 			></div>
 
 			{/* Panel content */}
-			<div className="relative h-full w-full max-w-5xl bg-white border border-gray-200 shadow-xl overflow-y-auto pointer-events-auto">
-				<div className="p-4 space-y-4">
-					{/* Header */}
+			<div className="relative h-full w-full max-w-5xl bg-white/80 border border-gray-200 shadow-2xl rounded-3xl overflow-y-auto pointer-events-auto transition-all duration-300 backdrop-blur-xl">
+				<div className="p-6 space-y-6">
+					{/* Header with animated sparkle */}
 					<div className="flex items-center justify-between">
 						<div className="flex items-center space-x-4">
-							<Image
-								src="/images/logos/lp_logo_transparent.png"
-								alt="Launchpad"
-								width={48}
-								height={48}
-								className="h-12 w-12 object-contain"
-							/>
-							<Sparkles className="h-6 w-6 text-blue-600" />
-							<h2 className="text-xl font-semibold text-gray-900">{title || "AI Insights"}</h2>
+							<div className="relative">
+								<Image
+									src="/images/logos/lp_logo_transparent.png"
+									alt="Launchpad"
+									width={48}
+									height={48}
+									className="h-12 w-12 object-contain drop-shadow-lg rounded-full border-2 border-blue-200 bg-white/70"
+								/>
+								{/* Animated sparkle */}
+								<span className="absolute -top-2 -right-2 animate-pulse">
+									<Sparkles className="h-6 w-6 text-blue-400 drop-shadow-md" />
+								</span>
+							</div>
+							<h2 className="text-2xl font-extrabold text-gray-900 tracking-tight bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 bg-clip-text text-transparent select-none">
+								{title || "AI Insights"}
+							</h2>
 						</div>
-						<Button variant="outline" size="sm" onClick={onClose}>
-							<X className="h-4 w-4" />
+						<Button variant="outline" size="icon" onClick={onClose} className="rounded-full border-2 border-gray-200 hover:border-pink-400 hover:bg-pink-50 transition-all duration-200 shadow-md">
+							<X className="h-5 w-5 text-gray-500 group-hover:text-pink-500 transition-colors" />
 						</Button>
 					</div>
 
 					{/* Student Notes */}
 					{insightsMarkdown && (
-						<Card className="border border-gray-300 shadow-sm bg-gradient-to-br from-white to-gray-50">
-							<CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0 border-b border-gray-100">
+						<Card className="border-0 shadow-lg bg-gradient-to-br from-white/90 to-blue-50/80 rounded-2xl">
+							<CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0 border-b border-blue-100 bg-white/60 rounded-t-2xl">
 								<div className="flex items-center gap-4">
 									<Image
 										src="/images/logos/lp_logo_transparent.png"
 										alt="Launchpad"
 										width={48}
 										height={48}
-										className="h-12 w-12 object-contain flex-shrink-0"
+										className="h-12 w-12 object-contain flex-shrink-0 rounded-full border border-blue-200 bg-white/80"
 									/>
 									<div>
-										<CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+										<CardTitle className="text-lg font-bold text-blue-800 flex items-center gap-2">
 											Student Notes
 										</CardTitle>
-										<CardDescription className="text-sm text-gray-600">
+										<CardDescription className="text-sm text-blue-600">
 											Interaction summary and observations
 										</CardDescription>
 									</div>
@@ -216,7 +225,6 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 								<Button
 									onClick={() => {
 										setLoading(true)
-										// I'll generate AI insights from the raw student notes
 										const notesAsMessage = `Please analyze these student notes and provide insights:\n\n${insightsMarkdown}`
 										fetch('/api/ai', {
 											method: 'POST',
@@ -226,23 +234,23 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 										.then(res => res.json())
 										.then(({ result }) => {
 											setGeneratedInsight(enhanceMarkdownSpacing(result))
-											setWeeklyReport(null) // Clear weekly report
+											setWeeklyReport(null)
 										})
 										.catch(console.error)
 										.finally(() => setLoading(false))
 									}}
 									size="sm"
 									variant="outline"
-									className="flex items-center gap-1 border-blue-200 hover:border-blue-300 hover:bg-blue-50"
+									className="flex items-center gap-1 border-blue-200 hover:border-blue-400 hover:bg-blue-100/60 transition-all duration-200 shadow-sm rounded-full px-3 py-1.5"
 									disabled={loading}
 								>
-									<Sparkles className="h-3 w-3 text-blue-600" />
+									<Sparkles className="h-4 w-4 text-blue-500 animate-spin-slow" />
 									{loading ? "Analyzing..." : "AI Analyze"}
 								</Button>
 							</CardHeader>
 							<CardContent className="pt-4">
 								<div 
-									className="text-sm text-gray-700 leading-relaxed bg-white rounded-md p-3 border border-gray-100"
+									className="text-sm text-gray-700 leading-relaxed bg-white/80 rounded-xl p-4 border border-blue-100 shadow-inner"
 									style={{ whiteSpace: 'pre-wrap', lineHeight: '1.5' }}
 								>
 									{insightsMarkdown}
@@ -253,15 +261,15 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 
 					{/* Interaction Notes */}
 					{notes && notes.length > 0 && (
-						<Card>
-							<CardHeader className="pb-2">
-								<CardTitle className="text-base">Interaction Notes</CardTitle>
-								<CardDescription>Summary of the interaction</CardDescription>
+						<Card className="rounded-2xl border-0 shadow bg-gradient-to-br from-white/90 to-purple-50/80">
+							<CardHeader className="pb-2 bg-white/60 rounded-t-2xl">
+								<CardTitle className="text-base font-semibold text-purple-800">Interaction Notes</CardTitle>
+								<CardDescription className="text-sm text-purple-600">Summary of the interaction</CardDescription>
 							</CardHeader>
 							<CardContent className="space-y-2">
 								<div className="space-y-2">
 									{notes.map((note, index) => (
-										<div key={index} className="text-sm text-gray-700 leading-relaxed">
+										<div key={index} className="text-sm text-gray-700 leading-relaxed bg-white/80 rounded-lg p-2 border border-purple-100 shadow-sm">
 											{note}
 										</div>
 									))}
@@ -271,27 +279,27 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 					)}
 
 					{/* Quick Actions */}
-					<Card>
-						<CardHeader className="pb-2">
-							<CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
+					<Card className="rounded-2xl border-0 shadow bg-gradient-to-br from-blue-50/80 to-pink-50/80">
+						<CardHeader className="pb-2 bg-white/60 rounded-t-2xl">
+							<CardTitle className="text-base font-semibold text-pink-700">Quick Actions</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-2">
 							<Button
 								onClick={generateInsight}
 								size="sm"
-								className="w-full flex items-center justify-start gap-2"
+								className="w-full flex items-center justify-start gap-2 rounded-full bg-gradient-to-r from-blue-400/80 to-purple-400/80 text-white font-semibold shadow-md hover:from-blue-500 hover:to-purple-500 hover:scale-[1.03] active:scale-95 transition-all duration-200"
 								disabled={loading}
 							>
-								<Sparkles className="h-4 w-4 text-blue-600" />
+								<Sparkles className="h-5 w-5 text-white drop-shadow animate-bounce" />
 								{loading ? "Generating..." : "Generate AI Insight"}
 							</Button>
 							<Button
 								onClick={generateWeeklyReport}
 								size="sm"
-								className="w-full flex items-center justify-start gap-2"
+								className="w-full flex items-center justify-start gap-2 rounded-full bg-gradient-to-r from-green-400/80 to-blue-400/80 text-white font-semibold shadow-md hover:from-green-500 hover:to-blue-500 hover:scale-[1.03] active:scale-95 transition-all duration-200"
 								disabled={loading}
 							>
-								<TrendingUp className="h-4 w-4 text-green-600" />
+								<TrendingUp className="h-5 w-5 text-white drop-shadow animate-bounce" />
 								Generate Weekly Report
 							</Button>
 						</CardContent>
@@ -299,26 +307,26 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 
 					{/* Display Weekly Report or AI Insight */}
 					{weeklyReport ? (
-						<Card className="bg-green-50 border-green-400">
-							<CardHeader className="pb-2">
+						<Card className="bg-gradient-to-br from-green-50/90 to-white/80 border-green-400 rounded-2xl shadow-lg">
+							<CardHeader className="pb-2 bg-white/60 rounded-t-2xl">
 								<CardTitle className="text-base font-semibold text-green-700">Weekly Report</CardTitle>
 								<CardDescription className="text-sm text-green-600">
 									Summary of interactions from the past week
 								</CardDescription>
 							</CardHeader>
 							<CardContent 
-								className="prose prose-sm max-w-none text-green-800 text-sm"
+								className="prose prose-sm max-w-none text-green-800 text-sm bg-white/80 rounded-b-2xl p-4 shadow-inner"
 								style={{ whiteSpace: 'pre-wrap', lineHeight: '1.2' }}
 							>
 								<div className="space-y-0">
 									<ReactMarkdown 
 										components={{
 											h2: ({ children }) => <h2 className="text-base font-semibold mt-0.5 mb-0.5 border-b border-green-200 pb-0.5 text-green-700">{children}</h2>,
-											h3: ({ children }) => <h3 className="text-sm font-medium mt-0.5 mb-0 text-green-700">{children}</h3>,
-											ul: ({ children }) => <ul className="space-y-0 mb-0.5 pl-3">{children}</ul>,
-											li: ({ children }) => <li className="leading-snug mb-0 text-green-800">{children}</li>,
-											p: ({ children }) => <p className="mb-0.5 leading-snug text-green-800">{children}</p>
-										}}
+										h3: ({ children }) => <h3 className="text-sm font-medium mt-0.5 mb-0 text-green-700">{children}</h3>,
+										ul: ({ children }) => <ul className="space-y-0 mb-0.5 pl-3">{children}</ul>,
+										li: ({ children }) => <li className="leading-snug mb-0 text-green-800">{children}</li>,
+										p: ({ children }) => <p className="mb-0.5 leading-snug text-green-800">{children}</p>
+									}}
 									>
 										{weeklyReport}
 									</ReactMarkdown>
@@ -326,26 +334,26 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 							</CardContent>
 						</Card>
 					) : generatedInsight ? (
-						<Card className="bg-blue-50 border-blue-400">
-							<CardHeader className="pb-2">
+						<Card className="bg-gradient-to-br from-blue-50/90 to-white/80 border-blue-400 rounded-2xl shadow-lg">
+							<CardHeader className="pb-2 bg-white/60 rounded-t-2xl">
 								<CardTitle className="text-base font-semibold text-blue-700">Generated AI Insight</CardTitle>
 								<CardDescription className="text-sm text-blue-600">
 									Summary of recent interactions
 								</CardDescription>
 							</CardHeader>
 							<CardContent 
-								className="prose prose-sm max-w-none text-blue-800 text-sm"
+								className="prose prose-sm max-w-none text-blue-800 text-sm bg-white/80 rounded-b-2xl p-4 shadow-inner"
 								style={{ whiteSpace: 'pre-wrap', lineHeight: '1.2' }}
 							>
 								<div className="space-y-0">
 									<ReactMarkdown 
 										components={{
 											h2: ({ children }) => <h2 className="text-base font-semibold mt-0.5 mb-0.5 border-b border-blue-200 pb-0.5 text-blue-700">{children}</h2>,
-											h3: ({ children }) => <h3 className="text-sm font-medium mt-0.5 mb-0 text-blue-700">{children}</h3>,
-											ul: ({ children }) => <ul className="space-y-0 mb-0.5 pl-3">{children}</ul>,
-											li: ({ children }) => <li className="leading-snug mb-0 text-blue-800">{children}</li>,
-											p: ({ children }) => <p className="mb-0.5 leading-snug text-blue-800">{children}</p>
-										}}
+										h3: ({ children }) => <h3 className="text-sm font-medium mt-0.5 mb-0 text-blue-700">{children}</h3>,
+										ul: ({ children }) => <ul className="space-y-0 mb-0.5 pl-3">{children}</ul>,
+										li: ({ children }) => <li className="leading-snug mb-0 text-blue-800">{children}</li>,
+										p: ({ children }) => <p className="mb-0.5 leading-snug text-blue-800">{children}</p>
+									}}
 									>
 										{generatedInsight}
 									</ReactMarkdown>
