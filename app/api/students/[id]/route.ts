@@ -63,7 +63,7 @@ export async function PUT(
   const { id } = await params
   try {
     const data = await request.json()
-    const { firstName, lastName, email, cohort, program } = data
+    const { firstName, lastName, email, cohort } = data
 
     // Validate required fields
     if (!firstName || !lastName) {
@@ -92,8 +92,7 @@ export async function PUT(
         firstName,
         lastName,
         email: email || null,
-        cohort: cohort ? (typeof cohort === 'string' ? parseInt(cohort) : cohort) : null,
-        program: program || existingStudent.program
+        cohort: cohort ? (typeof cohort === 'string' ? parseInt(cohort) : cohort) : null
       }
     })
 

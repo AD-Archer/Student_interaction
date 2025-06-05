@@ -3,6 +3,8 @@
  * Provides functions to calculate when students need interaction based on configurable
  * program-specific timeframes and priority escalation rules. This connects to the
  * SystemSettings model to use administrator-defined interaction frequencies.
+ *
+ * NOTE: The student's program/phase should be derived from cohortPhaseMap and cohort, not stored in the DB.
  */
 
 import { db } from './db'
@@ -82,7 +84,7 @@ export async function getInteractionFormula(): Promise<InteractionFormula> {
   }
 }
 
-// I calculate the interaction deadline for a specific student program
+// I calculate the interaction deadline for a specific student program/phase (must be derived, not stored)
 export function getInteractionDaysForProgram(program: string, formula: InteractionFormula): number {
   const normalizedProgram = program.toLowerCase()
   
@@ -100,7 +102,7 @@ export function getInteractionDaysForProgram(program: string, formula: Interacti
   }
 }
 
-// I determine if a student needs interaction based on their last interaction date
+// I determine if a student needs interaction based on their last interaction date and derived program/phase
 export function doesStudentNeedInteraction(
   lastInteractionDate: Date | null,
   program: string,
@@ -133,8 +135,20 @@ export function doesStudentNeedInteraction(
   }
 }
 
+// Local Student type for formula logic
+interface FormulaStudent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  cohort: number | null;
+  interactions: { createdAt: Date }[];
+}
+
 // I get students who need interaction based on the current formula
-export async function getStudentsNeedingInteraction(whereClause: Record<string, unknown> = {}) {
+export async function getStudentsNeedingInteraction(
+  whereClause: Record<string, unknown> = {},
+  getProgramForStudent: (student: FormulaStudent) => string
+) {
   try {
     const formula = await getInteractionFormula()
     
@@ -155,11 +169,13 @@ export async function getStudentsNeedingInteraction(whereClause: Record<string, 
     })
 
     const studentsNeedingInteraction = students
-      .map(student => {
+      .map((student: FormulaStudent) => {
         const lastInteraction = student.interactions[0]
         const lastInteractionDate = lastInteraction ? lastInteraction.createdAt : null
         
-        const result = doesStudentNeedInteraction(lastInteractionDate, student.program, formula)
+        // I derive the program/phase using the provided callback
+        const program = getProgramForStudent(student)
+        const result = doesStudentNeedInteraction(lastInteractionDate, program, formula)
         
         return {
           ...student,

@@ -1,17 +1,19 @@
 /**
  * StudentSelectionCard component handles student and interaction type selection.
- * This is the first section of the form where users select a student from the dropdown
+ * This is the first section of the form where users select a student from an autocomplete combobox
  * and choose the type of interaction they had with that student.
- * 
+ *
  * Now fetches students from the database via API instead of using hardcoded data.
  * Students are loaded on component mount and cached for the session.
+ *
+ * The student picker is now a custom combobox for better UX: persistent focus, keyboard navigation,
+ * and no dropdown clipping. This avoids the focus and clipping issues of the previous Select-based approach.
  */
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User, Loader2 } from "lucide-react"
 import { FormData, formInteractionTypes as interactionTypes } from "@/lib/data"
 
@@ -33,10 +35,12 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  // I add a search state for filtering students in large lists
   const [search, setSearch] = useState("")
-  // I add a cohort filter state
   const [cohortFilter, setCohortFilter] = useState<string>("")
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [highlightedIdx, setHighlightedIdx] = useState<number>(-1)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
 
   // I fetch students from the database on component mount
   useEffect(() => {
@@ -47,7 +51,6 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
           throw new Error('Failed to fetch students')
         }
         const data = await response.json()
-        // I filter out the "All Students" option which is used elsewhere but not needed here
         setStudents(data.filter((s: Student) => s.id !== "all"))
       } catch (err) {
         console.error('Error fetching students:', err)
@@ -56,29 +59,10 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
         setLoading(false)
       }
     }
-
     fetchStudents()
   }, [])
 
-  const handleStudentChange = (studentId: string) => {
-    const student = students.find((s) => s.id === studentId)
-    if (student) {
-      // I log the selected student for debugging
-      console.log(`Selected student: ${student.firstName} ${student.lastName}, Email: ${student.email || 'No email available'}`)
-      
-      onFormDataChange({
-        studentId: student.id,
-        studentName: `${student.firstName} ${student.lastName}`,
-        studentEmail: student.email ?? ""
-      })
-    }
-  }
-
-  const handleInteractionTypeChange = (value: string) => {
-    onFormDataChange({ interactionType: value })
-  }
-
-  // I get all unique cohorts from the students list for the filter dropdown, filtering out null/undefined and converting to string
+  // I get all unique cohorts from the students list for the filter dropdown
   const cohortOptions = Array.from(new Set(students.map(s => s.cohort).filter((c): c is number => typeof c === 'number'))).sort((a, b) => a - b).map(String)
 
   // I filter students by cohort and then by search string
@@ -87,6 +71,74 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
     const fullName = `${s.firstName} ${s.lastName}`.toLowerCase()
     return matchesCohort && fullName.includes(search.toLowerCase())
   })
+
+  // I handle keyboard navigation and selection for the combobox
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!dropdownOpen) return
+    if (e.key === "ArrowDown") {
+      e.preventDefault()
+      setHighlightedIdx(idx => Math.min(idx + 1, filteredStudents.length - 1))
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault()
+      setHighlightedIdx(idx => Math.max(idx - 1, 0))
+    } else if (e.key === "Enter") {
+      e.preventDefault()
+      if (highlightedIdx >= 0 && highlightedIdx < filteredStudents.length) {
+        selectStudent(filteredStudents[highlightedIdx])
+      }
+    } else if (e.key === "Escape") {
+      setDropdownOpen(false)
+    }
+  }
+
+  // I select a student and keep the input focused for continued searching
+  const selectStudent = (student: Student) => {
+    onFormDataChange({
+      studentId: student.id,
+      studentName: `${student.firstName} ${student.lastName}`,
+      studentEmail: student.email ?? ""
+    })
+    setSearch(`${student.firstName} ${student.lastName}`)
+    setDropdownOpen(false)
+    setHighlightedIdx(-1)
+    // I keep focus in the input for fast repeated entry
+    inputRef.current?.focus()
+  }
+
+  // I open the dropdown when input is focused or typed in
+  const handleInputFocus = () => {
+    setDropdownOpen(true)
+    setHighlightedIdx(-1)
+  }
+
+  // I close the dropdown if user clicks outside
+  useEffect(() => {
+    if (!dropdownOpen) return
+    const handleClick = (e: MouseEvent) => {
+      if (
+        inputRef.current &&
+        !inputRef.current.contains(e.target as Node) &&
+        listRef.current &&
+        !listRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [dropdownOpen])
+
+  // I update search and open dropdown on input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value)
+    setDropdownOpen(true)
+    setHighlightedIdx(-1)
+  }
+
+  // I keep the input value in sync with the selected student
+  useEffect(() => {
+    if (!formData.studentId) setSearch("")
+  }, [formData.studentId])
 
   return (
     <Card className="shadow-md border-blue-100 bg-white/80">
@@ -102,7 +154,7 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
       <hr className="my-2 border-gray-200" />
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="student">Select Student</Label>
+          <Label htmlFor="student-combobox">Select Student</Label>
           {/* Cohort filter dropdown above the search box */}
           <div className="flex gap-2 mb-2">
             <label htmlFor="cohort-filter" className="text-sm font-medium text-gray-700">Filter by Cohort:</label>
@@ -118,74 +170,75 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
               ))}
             </select>
           </div>
-          <Select value={formData.studentId} onValueChange={handleStudentChange} disabled={loading}>
-            <SelectTrigger>
-              <SelectValue placeholder={
-                loading ? "Loading students..." : 
-                error ? "Error loading students" : 
-                "Choose a student"
-              } />
-            </SelectTrigger>
-            <SelectContent>
-              {/* I add a search input for filtering students */}
-              <div className="px-2 py-1 sticky top-0 z-10 bg-white/95 border-b border-gray-100">
-                <input
-                  type="text"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Search students by name..."
-                  className="w-full px-2 py-1 rounded border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  autoFocus
-                />
-              </div>
-              {loading && (
-                <SelectItem value="loading" disabled>
-                  <div className="flex items-center space-x-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Loading students...</span>
-                  </div>
-                </SelectItem>
-              )}
-              {error && (
-                <SelectItem value="error" disabled>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-red-500">Error: {error}</span>
-                  </div>
-                </SelectItem>
-              )}
-              {!loading && !error && filteredStudents.length === 0 && (
-                <SelectItem value="no-results" disabled>
-                  <span className="text-gray-500">No students found</span>
-                </SelectItem>
-              )}
-              {!loading && !error && filteredStudents.map((student) => (
-                <SelectItem key={student.id} value={student.id}>
-                  <div className="flex items-center space-x-2 w-full">
-                    <User className="h-4 w-4" />
+          <div className="relative">
+            <input
+              id="student-combobox"
+              ref={inputRef}
+              type="text"
+              value={search}
+              onChange={handleInputChange}
+              onFocus={handleInputFocus}
+              onKeyDown={handleInputKeyDown}
+              placeholder={loading ? "Loading students..." : error ? "Error loading students" : "Search students by name..."}
+              className="w-full px-2 py-2 rounded border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white"
+              autoComplete="off"
+              disabled={loading}
+              aria-autocomplete="list"
+              aria-controls="student-combobox-listbox"
+              aria-activedescendant={highlightedIdx >= 0 ? `student-option-${filteredStudents[highlightedIdx]?.id}` : undefined}
+            />
+            {dropdownOpen && (
+              <ul
+                id="student-combobox-listbox"
+                ref={listRef}
+                className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-md border border-gray-200 bg-white shadow-lg"
+                role="listbox"
+              >
+                {loading && (
+                  <li className="flex items-center px-2 py-2 text-gray-500" role="option" aria-disabled="true" aria-selected="false">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />Loading students...
+                  </li>
+                )}
+                {error && (
+                  <li className="px-2 py-2 text-red-500" role="option" aria-disabled="true" aria-selected="false">Error: {error}</li>
+                )}
+                {!loading && !error && filteredStudents.length === 0 && (
+                  <li className="px-2 py-2 text-gray-500" role="option" aria-disabled="true" aria-selected="false">No students found</li>
+                )}
+                {!loading && !error && filteredStudents.map((student, idx) => (
+                  <li
+                    key={student.id}
+                    id={`student-option-${student.id}`}
+                    role="option"
+                    aria-selected={formData.studentId === student.id}
+                    className={`flex items-center gap-2 px-2 py-2 cursor-pointer ${idx === highlightedIdx ? 'bg-blue-100' : ''}`}
+                    onMouseDown={e => { e.preventDefault(); selectStudent(student) }}
+                    onMouseEnter={() => setHighlightedIdx(idx)}
+                  >
+                    <User className="h-4 w-4 text-blue-600" />
                     <span className="flex-1">{`${student.firstName} ${student.lastName}`}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
-
         <div className="space-y-2">
           <Label htmlFor="interactionType">Interaction Type</Label>
-          <Select value={formData.interactionType} onValueChange={handleInteractionTypeChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select interaction type" />
-            </SelectTrigger>
-            <SelectContent>
-              {interactionTypes
-                .filter((type) => type.value !== "other")
-                .map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+          {/* I keep the interaction type as a Select for now since it's a small, static list */}
+          <select
+            id="interactionType"
+            value={formData.interactionType}
+            onChange={e => onFormDataChange({ interactionType: e.target.value })}
+            className="w-full px-2 py-2 rounded border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white"
+          >
+            <option value="" disabled>Select interaction type</option>
+            {interactionTypes
+              .filter((type) => type.value !== "other")
+              .map((type) => (
+                <option key={type.value} value={type.value}>{type.label}</option>
+              ))}
+          </select>
         </div>
       </CardContent>
     </Card>

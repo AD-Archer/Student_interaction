@@ -34,7 +34,6 @@ export async function POST() {
         studentFirstName: true,
         studentLastName: true,
         studentId: true,
-        program: true,
         type: true,
         reason: true,
         notes: true,
@@ -56,16 +55,17 @@ export async function POST() {
     const formattedInteractions = interactions.map(interaction => ({
       ...interaction,
       studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
+      program: '', // fallback since not selected from DB
+      aiSummary: interaction.aiSummary || '',
       followUp: {
         date: interaction.followUpDate || undefined, // Convert null to undefined
         required: interaction.followUpRequired,
         sent: interaction.followUpSent,
         student: interaction.followUpStudent,
         staff: interaction.followUpStaff,
-        studentEmail: interaction.followUpStudentEmail || undefined, // Convert null to undefined
-        staffEmail: interaction.followUpStaffEmail || undefined // Convert null to undefined
-      },
-      aiSummary: interaction.aiSummary || '' // Convert null to empty string
+        studentEmail: interaction.followUpStudentEmail || undefined,
+        staffEmail: interaction.followUpStaffEmail || undefined
+      }
     }))
 
     let sentCount = 0
