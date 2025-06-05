@@ -36,6 +36,8 @@ interface Interaction {
   isArchived?: boolean
   studentEmail?: string // add for email functionality
   staffEmail?: string   // add for email functionality
+  cohort?: string | number // Add cohort for dashboard display
+  phase?: string // Add phase for dashboard display
 }
 
 interface InteractionCardProps {
@@ -182,6 +184,17 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
                 >
                   {interaction.program}
                 </Badge>
+                {/* Show cohort and phase if available */}
+                {interaction.cohort && (
+                  <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                    Cohort: {interaction.cohort}
+                  </Badge>
+                )}
+                {interaction.phase && (
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    Phase: {interaction.phase}
+                  </Badge>
+                )}
                 <Badge className={getTypeColor(interaction.type)}>
                   {interaction.type}
                 </Badge>
