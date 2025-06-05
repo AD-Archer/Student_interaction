@@ -10,6 +10,16 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { db } from '@/lib/db'
+
+// Helper to fetch the latest cohortPhaseMap from system settings
+async function getCohortPhaseMap(): Promise<Record<string, string>> {
+  const systemSettings = await db.systemSettings.findFirst({ orderBy: { updatedAt: 'desc' } })
+  if (systemSettings?.cohortPhaseMap && typeof systemSettings.cohortPhaseMap === 'object' && !Array.isArray(systemSettings.cohortPhaseMap)) {
+    return systemSettings.cohortPhaseMap as Record<string, string>
+  }
+  return {}
+}
 
 const prisma = new PrismaClient()
 
@@ -33,6 +43,28 @@ interface ImportResult {
 }
 
 /**
+ * Splits a CSV line into fields, respecting quoted entries that may contain commas
+ */
+function splitCSVLine(line: string): string[] {
+  const fields: string[] = []
+  let field = ''
+  let inQuotes = false
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+    if (char === '"') {
+      inQuotes = !inQuotes
+    } else if (char === ',' && !inQuotes) {
+      fields.push(field)
+      field = ''
+    } else {
+      field += char
+    }
+  }
+  fields.push(field)
+  return fields
+}
+
+/**
  * Parse CSV data and extract student information
  */
 function parseCSV(csvText: string): CSVStudent[] {
@@ -41,25 +73,44 @@ function parseCSV(csvText: string): CSVStudent[] {
     throw new Error('CSV must contain at least a header row and one data row')
   }
 
-  // Use original header for mapping, but normalize for matching
-  const rawHeader = lines[0].split(',').map(h => h.trim())
+  // Use proper CSV splitting for header
+  const rawHeader = splitCSVLine(lines[0]).map(h => h.trim())
   const header = rawHeader.map(h => h.toLowerCase().replace(/\s+/g, ''))
   const students: CSVStudent[] = []
 
   // Map columns from the user's spreadsheet
   // Required: Student Number, First Name, Last Name, Email, Cohort
-  const studentIdIndex = header.findIndex(h => h === 'studentnumber' || h === 'student id' || h === 'studentid' || h === 'id')
+  const studentIdIndex = header.findIndex(h => h === 'studentnumber' || h === 'studentid' || h === 'student id' || h === 'id')
   const firstNameIndex = header.findIndex(h => h === 'firstname' || h === 'first name')
   const lastNameIndex = header.findIndex(h => h === 'lastname' || h === 'last name')
   const emailIndex = header.findIndex(h => h === 'email' || h === 'emailaddress')
-  const cohortIndex = header.findIndex(h => h === 'cohort')
+  // More robust cohort header matching
+  const cohortIndex = header.findIndex(h =>
+    h === 'cohort' ||
+    h === 'cohortnumber' ||
+    h === 'cohort#' ||
+    h === 'cohortid' ||
+    h === 'cohort_id' ||
+    h === 'cohort id' ||
+    h === 'cohortnum' ||
+    h === 'cohortno' ||
+    h === 'cohortnumber#' ||
+    h === 'cohortnum#'
+  )
+
+  // If no cohort header found, fallback to 9th column (index 9) for Launchpad exports
+  let fallbackCohortIndex = -1
+  if (cohortIndex === -1) {
+    // In your CSV, Cohort is always the 10th column (index 9)
+    fallbackCohortIndex = 9
+  }
 
   // Check for required columns
   const missingColumns = []
   if (studentIdIndex === -1) missingColumns.push('Student Number')
   if (firstNameIndex === -1) missingColumns.push('First Name')
   if (lastNameIndex === -1) missingColumns.push('Last Name')
-  if (cohortIndex === -1) missingColumns.push('Cohort')
+  if (cohortIndex === -1 && fallbackCohortIndex === -1) missingColumns.push('Cohort')
   // Email is optional, but warn if missing
 
   if (missingColumns.length > 0) {
@@ -68,19 +119,40 @@ function parseCSV(csvText: string): CSVStudent[] {
 
   // Parse data rows
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map(v => v.trim().replace(/["']/g, ''))
-    if (values.length < rawHeader.length) continue // Skip incomplete rows
-
+    // Use CSV-aware splitting for data rows
+    let values = splitCSVLine(lines[i]).map(v => v.trim().replace(/['"]/g, ''))
+    // Pad values array to at least the fallback cohort index if needed
+    if (values.length <= Math.max(rawHeader.length, fallbackCohortIndex + 1)) {
+      const oldLen = values.length
+      values = values.concat(Array(Math.max(rawHeader.length, fallbackCohortIndex + 1) - values.length).fill(''))
+      console.log(`[IMPORT] Row ${i} padded: original length ${oldLen}, padded to ${values.length}`)
+    }
     // Defensive cohort parsing: always trim, treat empty/non-numeric as null
-    let cohortRaw = values[cohortIndex] || ''
+    let cohortRaw = ''
+    if (cohortIndex !== -1) {
+      cohortRaw = values[cohortIndex] || ''
+    } else if (fallbackCohortIndex !== -1) {
+      cohortRaw = values[fallbackCohortIndex] || ''
+    }
     cohortRaw = cohortRaw.trim()
-    const cohort = cohortRaw && /^\d+$/.test(cohortRaw) ? cohortRaw : ''
+    const cohort = cohortRaw
+
+    console.log(`[IMPORT] Row ${i}:`, {
+      studentId: values[studentIdIndex],
+      firstName: values[firstNameIndex],
+      lastName: values[lastNameIndex],
+      email: emailIndex !== -1 ? values[emailIndex] : '',
+      cohortRaw,
+      cohort,
+      cohortIndex,
+      fallbackCohortIndex
+    })
 
     const student: CSVStudent = {
       firstName: values[firstNameIndex] || '',
       lastName: values[lastNameIndex] || '',
       email: emailIndex !== -1 ? values[emailIndex] || '' : '',
-      cohort: cohort, // always a string, will be parsed to int later
+      cohort: cohort, // always a string, will be parsed to int or null below
       studentId: values[studentIdIndex] || ''
     }
     // Validate required fields
@@ -88,6 +160,7 @@ function parseCSV(csvText: string): CSVStudent[] {
       students.push(student)
     }
   }
+  console.log(`[IMPORT] Parsed students:`, students)
   return students
 }
 
@@ -106,6 +179,14 @@ async function importStudents(students: CSVStudent[]): Promise<ImportResult> {
     }
   }
 
+  // Fetch cohortPhaseMap once for this import
+  const cohortPhaseMap = await getCohortPhaseMap()
+  // Invert mapping: phase -> cohortNum to phaseLabel (case-insensitive) -> cohortNum
+  const phaseToCohort: Record<string, string> = {}
+  for (const [phase, cohortNum] of Object.entries(cohortPhaseMap)) {
+    phaseToCohort[phase.toLowerCase()] = cohortNum
+  }
+
   for (const student of students) {
     try {
       // Check if student already exists
@@ -113,27 +194,38 @@ async function importStudents(students: CSVStudent[]): Promise<ImportResult> {
         where: { id: student.studentId }
       })
 
-      // Ensure cohort is converted to a number and email is validated as a string
-      // I want to robustly handle cohort: trim, treat empty/non-numeric as null, always store as integer or null
+      // Always robustly parse cohort: treat empty/non-numeric as null, else store as integer
       let cohortNumber: number | null = null
-      if (typeof student.cohort === 'string') {
-        const trimmed = student.cohort.trim()
-        // Only treat as a valid cohort if it's a non-empty, all-digit string
-        if (/^\d+$/.test(trimmed)) {
-          cohortNumber = parseInt(trimmed, 10)
+      const cohortRaw = typeof student.cohort === 'string' ? student.cohort.trim() : ''
+      let resolvedCohort = cohortRaw
+      if (/^\d+$/.test(cohortRaw)) {
+        cohortNumber = parseInt(cohortRaw, 10)
+      } else if (cohortRaw) {
+        // Try to resolve phase label to cohort number using mapping
+        const mapped = phaseToCohort[cohortRaw.toLowerCase()]
+        if (mapped && /^\d+$/.test(mapped)) {
+          cohortNumber = parseInt(mapped, 10)
+          resolvedCohort = mapped
         } else {
-          // If cohort is empty, non-numeric, or invalid, store as null
           cohortNumber = null
         }
       }
       const email = student.email ? String(student.email) : null
 
+      console.log(`[IMPORT] Creating student:`, {
+        id: student.studentId,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        email,
+        cohortRaw,
+        resolvedCohort,
+        cohortNumber
+      })
+
       if (existingStudent) {
-        // Instead of updating, skip existing students
         result.details.skipped++
         continue
       } else {
-        // Create new student (do not set program)
         await prisma.student.create({
           data: {
             id: student.studentId,
@@ -151,6 +243,7 @@ async function importStudents(students: CSVStudent[]): Promise<ImportResult> {
           error instanceof Error ? error.message : 'Unknown error'
         }`
       )
+      console.error(`[IMPORT] Error importing student:`, error)
     }
   }
 
@@ -160,6 +253,7 @@ async function importStudents(students: CSVStudent[]): Promise<ImportResult> {
     result.success = result.details.errors.length < result.details.totalProcessed
   }
 
+  console.log(`[IMPORT] Import result:`, result)
   return result
 }
 

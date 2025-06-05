@@ -64,7 +64,7 @@ model Interaction {
   studentId    String
   studentFirstName String // Denormalized for easier queries
   studentLastName  String // Denormalized for easier queries
-  program      String
+  program      String?
   type         String   // "Coaching", "Academic Support", etc.
   reason       String
   notes        String

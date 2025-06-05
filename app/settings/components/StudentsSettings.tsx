@@ -85,6 +85,15 @@ export function StudentsSettings() {
     }
   }
 
+  // Helper to get phase/program for a given cohort number
+  const getPhaseForCohort = (cohort: number | string | null | undefined): string => {
+    if (!cohort) return ''
+    const cohortStr = typeof cohort === 'number' ? String(cohort) : cohort
+    // cohortPhaseMap is phase -> cohortNum, so invert to cohortNum -> phase
+    const foundPhase = Object.entries(cohortPhaseMap).find(([, v]) => v === cohortStr)?.[0]
+    return foundPhase || ''
+  }
+
   // I check if a student can be made lightspeed (only foundations students)
   const canToggleLightspeed = (student: Student) => {
     const foundationsCohort = cohortPhaseMap.foundations
@@ -285,26 +294,9 @@ export function StudentsSettings() {
                         : 'bg-gray-50'
                     }`}
                   >
-                    <div className="flex items-center space-x-3">
-                      <div>
-                        <p className="font-medium">{student.firstName} {student.lastName}</p>
-                        <p className="text-sm text-gray-600">
-                          ID: {student.id}
-                          {/* Show phase name based on cohortPhaseMap, fallback to student.program */}
-                          {(() => {
-                            let phaseLabel = student.program
-                            for (const [phase, cohortNum] of Object.entries(cohortPhaseMap)) {
-                              if (student.cohort?.toString() === cohortNum) {
-                                phaseLabel = phase
-                                break
-                              }
-                            }
-                            return ` • Program: ${phaseLabel}`
-                          })()}
-                          {student.cohort && ` • Cohort: ${student.cohort}`}
-                          {student.email && ` • Email: ${student.email}`}
-                        </p>
-                      </div>
+                    <div>
+                      <div className="font-semibold text-lg">{student.firstName} {student.lastName}</div>
+                      <div className="text-xs text-gray-600">ID: {student.id} • Program: {getPhaseForCohort(student.cohort)} • Email: {student.email || 'N/A'}</div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
