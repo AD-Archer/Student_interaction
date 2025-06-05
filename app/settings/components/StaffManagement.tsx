@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, Plus, RotateCcw, Shield, X, User, Users, Mail, Briefcase, Settings } from "lucide-react"
 import React, { useState, useEffect } from "react"
-import { StaffMember } from "@/lib/data"
+import { StaffMember, User as UserType } from "@/lib/data"
 import { staffAPI, userAPI } from "@/lib/api"
 
 export default function StaffManagement() {
@@ -23,7 +23,7 @@ export default function StaffManagement() {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string>("")
   const [success, setSuccess] = useState<string>("")
-  const [currentUser, setCurrentUser] = useState<{ id: string; isAdmin: boolean } | null>(null)
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null)
   
   const [formData, setFormData] = useState({
     firstName: "",
@@ -108,10 +108,18 @@ export default function StaffManagement() {
   }
 
   const handlePasswordReset = async (staff: StaffMember) => {
+    // Only admins can reset other staff passwords
+    if (!currentUser?.permissions?.includes('admin')) {
+      setError('Only admins can reset other staff passwords.')
+      // I scroll to the top of the page so the error is visible
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      return
+    }
     if (!window.confirm(`Reset password for ${staff.name}? The new password will be "@Changeme2"`)) {
       return
     }
-
     try {
       await staffAPI.update(staff.id, { ...staff, password: "@Changeme2" })
       alert(`Password reset for ${staff.name}. New password: @Changeme2`)
@@ -134,7 +142,7 @@ export default function StaffManagement() {
     try {
       if (editingStaff) {
         // I prevent users from removing their own admin privileges
-        if (currentUser?.id === editingStaff.id && editingStaff.isAdmin && !formData.isAdmin) {
+        if (currentUser && editingStaff && currentUser.email === editingStaff.email && editingStaff.isAdmin && !formData.isAdmin) {
           setError("You cannot remove your own admin privileges")
           return
         }
@@ -172,7 +180,7 @@ export default function StaffManagement() {
 
   const handleDelete = async (staff: StaffMember) => {
     // I prevent users from deleting themselves
-    if (currentUser?.id === staff.id) {
+    if (currentUser && staff && currentUser.email === staff.email) {
       setError("You cannot delete your own account")
       return
     }
@@ -707,7 +715,7 @@ export default function StaffManagement() {
                           </div>
 
                           {/* Admin Permission */}
-                          {currentUser?.isAdmin && (
+                          {currentUser?.permissions?.includes('admin') && (
                             <div className="pt-4 border-t border-gray-200">
                               <Label className="text-sm font-medium text-gray-700 mb-3 block">
                                 Administrator Access
@@ -766,10 +774,10 @@ export default function StaffManagement() {
                           variant="destructive" 
                           onClick={() => handleDelete(editingStaff)}
                           className="flex-1 sm:flex-none"
-                          disabled={currentUser?.id === editingStaff.id}
+                          disabled={!!(currentUser && editingStaff && currentUser.email === editingStaff.email)}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          {currentUser?.id === editingStaff.id ? 'Cannot Delete Self' : 'Delete Staff'}
+                          {currentUser && editingStaff && currentUser.email === editingStaff.email ? 'Cannot Delete Self' : 'Delete Staff'}
                         </Button>
                       )}
                     </div>

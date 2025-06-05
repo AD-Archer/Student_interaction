@@ -1,3 +1,10 @@
+/**
+ * settings/page.tsx
+ * Settings page for Launchpad. Renders all settings tabs and enforces admin-only access to system settings and staff password reset.
+ * Uses the AuthWrapper context to determine user role. Only admins can access the System tab and system settings content.
+ * All other tabs are available to any authenticated user. Follows project conventions for tab/component structure.
+ */
+
 "use client"
 
 import { useState } from "react"
@@ -20,6 +27,7 @@ import { InteractionFrequencySettings } from "./components/InteractionFrequencyS
 import { StudentsSettings } from "./components/StudentsSettings"
 import { systemIntegrationData } from "@/lib/data"
 import { resolveIconComponent } from "@/lib/utils"
+import { useAuth } from "@/components/auth-wrapper"
 
 // Map our centralized system integration data with icon components
 const systemIntegrations = systemIntegrationData.map(integration => {
@@ -42,6 +50,8 @@ const systemIntegrations = systemIntegrationData.map(integration => {
 export default function SettingsPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { user } = useAuth()
+  const isAdmin = user?.permissions?.includes("admin")
   
   // I get the current tab from URL params, defaulting to 'staff'
   const currentTab = searchParams?.get('tab') || 'staff'
@@ -104,10 +114,13 @@ export default function SettingsPage() {
                   <User className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   <span>Students</span>
                 </TabsTrigger>
-                <TabsTrigger value="system" className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base">
-                  <Shield className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
-                  <span>System</span>
-                </TabsTrigger>
+                {/* Only show System tab for admins */}
+                {isAdmin && (
+                  <TabsTrigger value="system" className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base">
+                    <Shield className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                    <span>System</span>
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="email" className="flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm md:text-base">
                   <Mail className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
                   <span>Email</span>
@@ -136,14 +149,16 @@ export default function SettingsPage() {
               </div>
             </TabsContent>
 
-            {/* System Settings Tab */}
-            <TabsContent value="system" className="space-y-4 sm:space-y-6">
-              <div className="w-full px-0 lg:px-0 space-y-6">
-                <CohortPhaseMappingSettings />
-                <InteractionFrequencySettings />
-                <SystemSettings />
-              </div>
-            </TabsContent>
+            {/* System Settings Tab - only render for admins */}
+            {isAdmin && (
+              <TabsContent value="system" className="space-y-4 sm:space-y-6">
+                <div className="w-full px-0 lg:px-0 space-y-6">
+                  <CohortPhaseMappingSettings />
+                  <InteractionFrequencySettings />
+                  <SystemSettings />
+                </div>
+              </TabsContent>
+            )}
 
             {/* Email Settings Tab */}
             <TabsContent value="email" className="space-y-4 sm:space-y-6">

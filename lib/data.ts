@@ -26,6 +26,11 @@ export interface User {
   firstName: string
   lastName: string
   role: string
+  /**
+   * Permissions array for robust role-based access control. This is populated from the backend and
+   * should always reflect the user's current permissions. Use this for all admin checks in the UI.
+   */
+  permissions: string[]
 }
 
 export interface InteractionTrend {
