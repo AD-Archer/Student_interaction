@@ -18,18 +18,20 @@ const inter = Inter({ subsets: ["latin"] });
 
 const imageReferences = [
   { url: '/launchpadlogo.png', description: 'Launchpad Philly Logo' },
-  { url: '/images/kwan.jpg', description: 'Kwan' },
-  { url: '/images/logos/antonioarcherlogo.png', description: 'Antonio Archer Logo' },
   { url: '/images/logos/lp_logo_black.svg', description: 'Launchpad Logo Black' },
   { url: '/images/logos/lp_logo_transparent.png', description: 'Launchpad Logo Transparent' },
-  { url: '/images/screenshots/desktop/ai_insights.png', description: 'AI Insights Desktop Screenshot' },
-  { url: '/images/screenshots/desktop/analytics.png', description: 'Analytics Desktop Screenshot' },
-  { url: '/images/screenshots/desktop/frontpage.png', description: 'Frontpage Desktop Screenshot' },
-  { url: '/images/screenshots/desktop/settings.png', description: 'Settings Desktop Screenshot' },
-  { url: '/images/screenshots/mobile/Ai_insights.png', description: 'AI Insights Mobile Screenshot' },
-  { url: '/images/screenshots/mobile/analytics.png', description: 'Analytics Mobile Screenshot' },
-  { url: '/images/screenshots/mobile/create.png', description: 'Create Mobile Screenshot' },
-  { url: '/images/screenshots/mobile/dashboard.png', description: 'Dashboard Mobile Screenshot' },
+  { url: '/images/logos/antonioarcherlogo.png', description: 'Antonio Archer Logo' },
+  { url: '/images/kwan.jpg', description: 'Kwan' },
+  // Final site screenshots (desktop)
+  { url: '/images/production_screenshots/final_desktop_home.png', description: 'Final Home Page (Desktop)' },
+  { url: '/images/production_screenshots/final_desktop_analytics.png', description: 'Final Analytics (Desktop)' },
+  { url: '/images/production_screenshots/final_desktop_ai_insights.png', description: 'Final AI Insights (Desktop)' },
+  { url: '/images/production_screenshots/final_desktop_settings.png', description: 'Final Settings (Desktop)' },
+  // Final site screenshots (mobile)
+  { url: '/images/production_screenshots/final_mobile_home.png', description: 'Final Home Page (Mobile)' },
+  { url: '/images/production_screenshots/final_mobile_analytics.png', description: 'Final Analytics (Mobile)' },
+  { url: '/images/production_screenshots/final_mobile_ai_insights.png', description: 'Final AI Insights (Mobile)' },
+  { url: '/images/production_screenshots/final_mobile_settings.png', description: 'Final Settings (Mobile)' },
 ];
 
 export default function RootLayout({
