@@ -283,24 +283,24 @@ export function AiInsightsPanel({ isOpen, onClose, title, notes, insightsMarkdow
 						<CardHeader className="pb-2 bg-white/60 rounded-t-2xl">
 							<CardTitle className="text-base font-semibold text-pink-700">Quick Actions</CardTitle>
 						</CardHeader>
-						<CardContent className="space-y-2">
+						<CardContent className="space-y-2 flex flex-row gap-2">
 							<Button
 								onClick={generateInsight}
 								size="sm"
-								className="w-full flex items-center justify-start gap-2 rounded-full bg-gradient-to-r from-blue-400/80 to-purple-400/80 text-white font-semibold shadow-md hover:from-blue-500 hover:to-purple-500 hover:scale-[1.03] active:scale-95 transition-all duration-200"
+								className="flex-1 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-400/80 to-purple-400/80 text-white font-semibold shadow-md hover:from-blue-500 hover:to-purple-500 hover:scale-[1.03] active:scale-95 transition-all duration-200 min-w-[0] px-4"
 								disabled={loading}
 							>
 								<Sparkles className="h-5 w-5 text-white drop-shadow animate-bounce" />
-								{loading ? "Generating..." : "Generate AI Insight"}
+								{loading ? "Generating..." : "AI Insight"}
 							</Button>
 							<Button
 								onClick={generateWeeklyReport}
 								size="sm"
-								className="w-full flex items-center justify-start gap-2 rounded-full bg-gradient-to-r from-green-400/80 to-blue-400/80 text-white font-semibold shadow-md hover:from-green-500 hover:to-blue-500 hover:scale-[1.03] active:scale-95 transition-all duration-200"
+								className="flex-1 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-green-400/80 to-blue-400/80 text-white font-semibold shadow-md hover:from-green-500 hover:to-blue-500 hover:scale-[1.03] active:scale-95 transition-all duration-200 min-w-[0] px-4"
 								disabled={loading}
 							>
 								<TrendingUp className="h-5 w-5 text-white drop-shadow animate-bounce" />
-								Generate Weekly Report
+								Report
 							</Button>
 						</CardContent>
 					</Card>
