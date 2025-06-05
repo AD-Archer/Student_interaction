@@ -37,58 +37,48 @@ function parseCSV(csvText: string): CSVStudent[] {
     throw new Error('CSV must contain at least a header row and one data row')
   }
 
-  const header = lines[0].toLowerCase().split(',').map(h => h.trim())
+  // Use original header for mapping, but normalize for matching
+  const rawHeader = lines[0].split(',').map(h => h.trim())
+  const header = rawHeader.map(h => h.toLowerCase().replace(/\s+/g, ''))
   const students: CSVStudent[] = []
 
+  // Map columns from the user's spreadsheet
+  // Required: Student Number, First Name, Last Name, Email, Cohort
+  const studentIdIndex = header.findIndex(h => h === 'studentnumber' || h === 'student id' || h === 'studentid' || h === 'id')
+  const firstNameIndex = header.findIndex(h => h === 'firstname' || h === 'first name')
+  const lastNameIndex = header.findIndex(h => h === 'lastname' || h === 'last name')
+  const emailIndex = header.findIndex(h => h === 'email' || h === 'emailaddress')
+  const cohortIndex = header.findIndex(h => h === 'cohort')
+
   // Check for required columns
-  const requiredColumns = ['firstname', 'lastname', 'email', 'cohort', 'studentid']
-  const missingColumns = requiredColumns.filter(col => {
-    if (col === 'studentid') {
-      // I want to match 'studentid', 'student_id', or just 'id'
-      return !header.some(h =>
-        h.includes('studentid') ||
-        h.includes('student_id') ||
-        h === 'id'
-      )
-    }
-    return !header.some(h => h.includes(col))
-  })
+  const missingColumns = []
+  if (studentIdIndex === -1) missingColumns.push('Student Number')
+  if (firstNameIndex === -1) missingColumns.push('First Name')
+  if (lastNameIndex === -1) missingColumns.push('Last Name')
+  if (cohortIndex === -1) missingColumns.push('Cohort')
+  // Email is optional, but warn if missing
 
   if (missingColumns.length > 0) {
     throw new Error(`Missing required columns: ${missingColumns.join(', ')}`)
   }
 
-  // Find column indices (flexible matching)
-  const getColumnIndex = (variations: string[]) => {
-    return header.findIndex(h => variations.some(v => h.includes(v)))
-  }
-
-  const firstNameIndex = getColumnIndex(['firstname', 'first_name', 'first name'])
-  const lastNameIndex = getColumnIndex(['lastname', 'last_name', 'last name'])
-  const emailIndex = getColumnIndex(['email', 'email_address'])
-  const cohortIndex = getColumnIndex(['cohort', 'cohort_number'])
-  const studentIdIndex = getColumnIndex(['studentid', 'student_id', 'id'])
-
   // Parse data rows
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split(',').map(v => v.trim().replace(/["']/g, ''))
-    
-    if (values.length < header.length) continue // Skip incomplete rows
+    if (values.length < rawHeader.length) continue // Skip incomplete rows
 
     const student: CSVStudent = {
       firstName: values[firstNameIndex] || '',
       lastName: values[lastNameIndex] || '',
-      email: values[emailIndex] || '',
+      email: emailIndex !== -1 ? values[emailIndex] || '' : '',
       cohort: values[cohortIndex] || '',
       studentId: values[studentIdIndex] || ''
     }
-
     // Validate required fields
     if (student.firstName && student.lastName && student.studentId) {
       students.push(student)
     }
   }
-
   return students
 }
 
@@ -119,26 +109,17 @@ async function importStudents(students: CSVStudent[]): Promise<ImportResult> {
       const email = student.email ? String(student.email) : null;
 
       if (existingStudent) {
-        // Update existing student
-        await prisma.student.update({
-          where: { id: student.studentId },
-          data: {
-            firstName: student.firstName,
-            lastName: student.lastName,
-            email: email, // Ensure email is passed as a string
-            cohort: cohortNumber,
-            program: 'foundations' // Default program, can be updated later
-          }
-        })
-        result.details.successfulImports++
+        // Instead of updating, skip existing students
+        result.details.skipped++
+        continue
       } else {
-        // Create new student
+        // Create new student (only import fields you use)
         await prisma.student.create({
           data: {
             id: student.studentId,
             firstName: student.firstName,
             lastName: student.lastName,
-            email: email, // Ensure email is passed as a string
+            email: email, // Only import email
             cohort: cohortNumber,
             program: 'foundations' // Default program, can be updated later
           }
