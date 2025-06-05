@@ -177,6 +177,22 @@ Launchpad Student Services
 
 ---
 
+## 📸 Final Site Screenshots
+
+
+### Desktop
+- **finalanalytics.png** ![Analytics (Desktop)](/images/production_screenshots/finalanalytics.png)
+- **finaldashboard.png** ![Dashboard (Desktop)](/images/production_screenshots/finaldashboard.png)
+- **final-ai-panel.png** ![AI Panel (Desktop)](/images/production_screenshots/final-ai-panel.png)
+- **finalsettings.png** ![Settings (Desktop)](/images/production_screenshots/finalsettings.png)
+- **email.png** ![Email (Desktop)](/images/production_screenshots/email.png)
+
+### Mobile
+- **mobile-analytics.png** ![Analytics (Mobile)](/images/production_screenshots/mobile/mobile-analytics.png)
+- **mobile-dash.png** ![Dashboard (Mobile)](/images/production_screenshots/mobile/mobile-dash.png)
+- **mobile-insights.png** ![AI Insights (Mobile)](/images/production_screenshots/mobile/mobile-insights.png)
+- **mobile-settings.png** ![Settings (Mobile)](/images/production_screenshots/mobile/mobile-settings.png)
+
 ## SQL Diagram
 - https://dbdiagram.io/d/682b4fb41227bdcb4effdfdb
 

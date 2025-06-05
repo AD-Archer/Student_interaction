@@ -195,9 +195,90 @@ export default function InfoPage() {
                         </div>
                     </div>
 
-                    {/* Screenshots Section */}
+                    {/* Final Site Screenshots Section - moved to top as requested */}
                     <div className="mt-8">
-                        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Screenshots</h2>
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Final Site Screenshots</h2>
+                        <p className="text-gray-700 mb-4">
+                            These are the final production screenshots, as shown in the project README. They represent the completed UI and features as deployed.
+                        </p>
+                        <div className="mb-8">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Desktop</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <Image
+                                    src="/images/production_screenshots/finalanalytics.png"
+                                    alt="Analytics (Desktop)"
+                                    width={800}
+                                    height={600}
+                                    className="w-full rounded-lg shadow-md"
+                                />
+                                <Image
+                                    src="/images/production_screenshots/finaldashboard.png"
+                                    alt="Dashboard (Desktop)"
+                                    width={800}
+                                    height={600}
+                                    className="w-full rounded-lg shadow-md"
+                                />
+                                <Image
+                                    src="/images/production_screenshots/final-ai-panel.png"
+                                    alt="AI Panel (Desktop)"
+                                    width={800}
+                                    height={600}
+                                    className="w-full rounded-lg shadow-md"
+                                />
+                                <Image
+                                    src="/images/production_screenshots/finalsettings.png"
+                                    alt="Settings (Desktop)"
+                                    width={800}
+                                    height={600}
+                                    className="w-full rounded-lg shadow-md"
+                                />
+                                <Image
+                                    src="/images/production_screenshots/email.png"
+                                    alt="Email (Desktop)"
+                                    width={800}
+                                    height={600}
+                                    className="w-full rounded-lg shadow-md"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Mobile</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <Image
+                                    src="/images/production_screenshots/mobile/mobile-analytics.png"
+                                    alt="Analytics (Mobile)"
+                                    width={400}
+                                    height={300}
+                                    className="w-full rounded-lg shadow-md"
+                                />
+                                <Image
+                                    src="/images/production_screenshots/mobile/mobile-dash.png"
+                                    alt="Dashboard (Mobile)"
+                                    width={400}
+                                    height={300}
+                                    className="w-full rounded-lg shadow-md"
+                                />
+                                <Image
+                                    src="/images/production_screenshots/mobile/mobile-insights.png"
+                                    alt="AI Insights (Mobile)"
+                                    width={400}
+                                    height={300}
+                                    className="w-full rounded-lg shadow-md"
+                                />
+                                <Image
+                                    src="/images/production_screenshots/mobile/mobile-settings.png"
+                                    alt="Settings (Mobile)"
+                                    width={400}
+                                    height={300}
+                                    className="w-full rounded-lg shadow-md"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Screenshots Section (Beta) - moved to bottom as requested */}
+                    <div className="mt-12">
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Beta Screenshots</h2>
                         <p className="text-gray-700 mb-4">
                             Note: These screenshots were taken before the database was connected. All data shown is sourced locally from JSON files to ensure compliance and avoid unlawful use.
                         </p>
