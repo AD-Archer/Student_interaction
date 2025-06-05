@@ -1,3 +1,10 @@
+/**
+ * app/layout.tsx
+ * Root layout for Launchpad Student Form. Sets up global font, authentication context, and global layout wrapper.
+ * Also injects SEO, favicon, and social media meta tags to ensure the Launchpad Logo Black is used as the site icon and preview image.
+ * All pages and components are rendered within this layout.
+ */
+
 import type React from "react";
 import { Inter } from "next/font/google";
 import Script from "next/script";
@@ -34,6 +41,20 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {/* Favicon and Apple Touch Icon */}
+        <link rel="icon" type="image/svg+xml" href="/images/logos/lp_logo_white_text.png" />
+        <link rel="apple-touch-icon" href="/images/logos/lp_logo_white_text.png" />
+        {/* Open Graph Meta Tags for Social Media */}
+        <meta property="og:title" content="Launchpad Philly Student Form" />
+        <meta property="og:description" content="Student interaction tracking system for  Launchpad Philly, developed by Antonio Archer." />
+        <meta property="og:image" content="/images/logos/lp_logo_white_text.png" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://launchpadphilly.org/" />
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Launchpad Philly Student Form" />
+        <meta name="twitter:description" content="Student interaction tracking system for Launchpad Philly, developed by Antonio Archer." />
+        <meta name="twitter:image" content="/images/logos/lp_logo_white_text.png" />
         <Script
           id="json-ld"
           type="application/ld+json"
@@ -42,7 +63,7 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'WebApplication',
               'name': 'Launchpad Philly Student Form',
-              'description': 'Student interaction tracking system for Building 21 Workforce Development program Launchpad Philly, developed by Antonio Archer.',
+              'description': 'Student interaction tracking system for Launchpad Philly, developed by Antonio Archer.',
               'applicationCategory': 'EducationManagementTool',
               'operatingSystem': 'All',
               'author': {

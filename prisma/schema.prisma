@@ -48,6 +48,7 @@ model Student {
   email     String? // Student email address
   cohort    Int?    // Cohort number (1, 2, 3, etc.)
   program   String // "foundations", "101", "lightspeed", "liftoff" retired btw
+  status    String @default("active") // "active" or "archived"
   
   // Relations
   interactions Interaction[]

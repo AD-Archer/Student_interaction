@@ -83,8 +83,20 @@ export const authAPI = {
     })
     
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Login failed')
+      // Sometimes the backend returns non-JSON (e.g., 500 error with HTML/text), so I try/catch JSON parsing
+      let errorMsg = 'Login failed'
+      try {
+        const error = await response.json()
+        errorMsg = error.error || errorMsg
+      } catch {
+        // If not JSON, try to get plain text for more context
+        try {
+          errorMsg = await response.text() || errorMsg
+        } catch {
+          // fallback to generic message
+        }
+      }
+      throw new Error(errorMsg)
     }
     
     return response.json()
