@@ -51,6 +51,7 @@ export function StudentsSettings() {
   const [creating, setCreating] = useState(false)
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [updating, setUpdating] = useState(false)
+  const [search, setSearch] = useState("")
 
   // Fetch students and cohort mapping from the API
   useEffect(() => {
@@ -210,6 +211,32 @@ export function StudentsSettings() {
     setSaveResult(null)
   }
 
+  // I filter students based on the search query (first name, last name, email, ID, or phase label)
+  const filteredStudents = students.filter(student => {
+    const q = search.trim().toLowerCase()
+    if (!q) return true
+    // Try to match by name, email, or ID
+    if (
+      student.firstName.toLowerCase().includes(q) ||
+      student.lastName.toLowerCase().includes(q) ||
+      (student.email?.toLowerCase().includes(q) ?? false) ||
+      student.id.toLowerCase().includes(q)
+    ) {
+      return true
+    }
+    // Try to match by phase label (using cohortPhaseMap)
+    // If the student's cohort matches a phase, and the phase label includes the query, include it
+    for (const [phase, cohortNum] of Object.entries(cohortPhaseMap)) {
+      if (
+        student.cohort?.toString() === cohortNum &&
+        phase.toLowerCase().includes(q)
+      ) {
+        return true
+      }
+    }
+    return false
+  })
+
   return (
     <div className="space-y-6">
       {/* Current Students Card */}
@@ -224,6 +251,16 @@ export function StudentsSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Student Search Input */}
+          <div className="mb-4">
+            <Input
+              type="text"
+              placeholder="Search by name, email, or ID..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full max-w-md"
+            />
+          </div>
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin" />
@@ -236,10 +273,10 @@ export function StudentsSettings() {
             </Alert>
           ) : (
             <div className="space-y-3">
-              {students.length === 0 ? (
+              {filteredStudents.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">No students found</p>
               ) : (
-                students.map(student => (
+                filteredStudents.map(student => (
                   <div 
                     key={student.id} 
                     className={`flex items-center justify-between p-4 rounded-lg border ${
@@ -252,7 +289,18 @@ export function StudentsSettings() {
                       <div>
                         <p className="font-medium">{student.firstName} {student.lastName}</p>
                         <p className="text-sm text-gray-600">
-                          ID: {student.id} • Program: {student.program}
+                          ID: {student.id}
+                          {/* Show phase name based on cohortPhaseMap, fallback to student.program */}
+                          {(() => {
+                            let phaseLabel = student.program
+                            for (const [phase, cohortNum] of Object.entries(cohortPhaseMap)) {
+                              if (student.cohort?.toString() === cohortNum) {
+                                phaseLabel = phase
+                                break
+                              }
+                            }
+                            return ` • Program: ${phaseLabel}`
+                          })()}
                           {student.cohort && ` • Cohort: ${student.cohort}`}
                           {student.email && ` • Email: ${student.email}`}
                         </p>
@@ -294,11 +342,7 @@ export function StudentsSettings() {
                             <Zap className="h-4 w-4 mr-1" />
                             Make Lightspeed
                           </Button>
-                        ) : (
-                          <span className="text-gray-500 text-sm">
-                            {student.program === "foundations" ? "Not in foundations cohort" : "Not foundations program"}
-                          </span>
-                        )
+                        ) : null // Don't render anything if not eligible
                       )}
                     </div>
                   </div>
@@ -483,20 +527,7 @@ export function StudentsSettings() {
                     onChange={e => setEditingStudent(s => s ? { ...s, cohort: e.target.value ? parseInt(e.target.value) : null } : null)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-program">Program</Label>
-                  <select
-                    id="edit-program"
-                    value={editingStudent.program}
-                    onChange={e => setEditingStudent(s => s ? { ...s, program: e.target.value } : null)}
-                    className="w-full border rounded-md px-3 py-2 bg-white"
-                  >
-                    <option value="foundations">Foundations</option>
-                    <option value="101">101</option>
-                    <option value="lightspeed">Lightspeed</option>
-                    <option value="liftoff">Liftoff</option>
-                  </select>
-                </div>
+                {/* Program cannot be changed when editing */}
               </div>
               <div className="flex gap-2">
                 <Button type="submit" disabled={updating}>

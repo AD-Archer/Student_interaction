@@ -2,6 +2,10 @@
  * API route for importing student data from CSV files
  * Handles parsing CSV data and creating/updating student records in the database
  * Used by the data management section in system settings
+ *
+ * Note: The cohort field is always parsed as an integer (or null if missing/invalid).
+ * This ensures that spreadsheet quirks (extra whitespace, empty, or non-numeric values)
+ * never break the import or result in bad data. See cohort parsing logic below.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -67,11 +71,16 @@ function parseCSV(csvText: string): CSVStudent[] {
     const values = lines[i].split(',').map(v => v.trim().replace(/["']/g, ''))
     if (values.length < rawHeader.length) continue // Skip incomplete rows
 
+    // Defensive cohort parsing: always trim, treat empty/non-numeric as null
+    let cohortRaw = values[cohortIndex] || ''
+    cohortRaw = cohortRaw.trim()
+    const cohort = cohortRaw && /^\d+$/.test(cohortRaw) ? cohortRaw : ''
+
     const student: CSVStudent = {
       firstName: values[firstNameIndex] || '',
       lastName: values[lastNameIndex] || '',
       email: emailIndex !== -1 ? values[emailIndex] || '' : '',
-      cohort: values[cohortIndex] || '',
+      cohort: cohort, // always a string, will be parsed to int later
       studentId: values[studentIdIndex] || ''
     }
     // Validate required fields
@@ -105,23 +114,33 @@ async function importStudents(students: CSVStudent[]): Promise<ImportResult> {
       })
 
       // Ensure cohort is converted to a number and email is validated as a string
-      const cohortNumber = student.cohort ? parseInt(student.cohort, 10) : null;
-      const email = student.email ? String(student.email) : null;
+      // I want to robustly handle cohort: trim, treat empty/non-numeric as null, always store as integer or null
+      let cohortNumber: number | null = null
+      if (typeof student.cohort === 'string') {
+        const trimmed = student.cohort.trim()
+        // Only treat as a valid cohort if it's a non-empty, all-digit string
+        if (/^\d+$/.test(trimmed)) {
+          cohortNumber = parseInt(trimmed, 10)
+        } else {
+          // If cohort is empty, non-numeric, or invalid, store as null
+          cohortNumber = null
+        }
+      }
+      const email = student.email ? String(student.email) : null
 
       if (existingStudent) {
         // Instead of updating, skip existing students
         result.details.skipped++
         continue
       } else {
-        // Create new student (only import fields you use)
+        // Create new student (do not set program)
         await prisma.student.create({
           data: {
             id: student.studentId,
             firstName: student.firstName,
             lastName: student.lastName,
-            email: email, // Only import email
-            cohort: cohortNumber,
-            program: 'foundations' // Default program, can be updated later
+            email: email,
+            cohort: cohortNumber // always int or null
           }
         })
         result.details.successfulImports++

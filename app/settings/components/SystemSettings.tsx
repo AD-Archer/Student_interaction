@@ -202,12 +202,21 @@ export const SystemSettings = () => {
             <h4 className="font-medium text-sm mb-2">Required CSV Format:</h4>
             <div className="text-sm text-gray-600 space-y-1">
               <p><strong>Columns:</strong> First Name, Last Name, Email, Cohort, Student ID</p>
-              <p><strong>Example:</strong></p>
+              {/*
+                I want users to know that only the order of columns matters for import, not the column names.
+                This is because our import logic maps columns by position, not by header name, to support messy or extra columns.
+                Only the first five columns are used: First Name, Last Name, Email, Cohort, Student ID (in that order).
+                Extra columns are ignored.
+              */}
+              <p><strong>Required Order:</strong> First Name, Last Name, Email, Cohort, Student ID</p>
+              <p className="text-xs text-gray-600">Column names do <b>not</b> need to match exactly, and extra columns are ignored. Only the order matters. Please ensure your CSV has the required fields in this order, even if your file has additional columns or different headers.</p>
+              <p><strong>Example (messy header is OK):</strong></p>
               <code className="block bg-white p-2 rounded text-xs font-mono">
-                First Name,Last Name,Email,Cohort,Student ID<br/>
-                John,Doe,john.doe@email.com,1,0001<br/>
-                Jane,Smith,jane.smith@email.com,2,0002
+                Student Number,Last Name,First Name,Email,Grade Level,uniqueID,Cohort,Status<br/>
+                LP0001,LastA,FirstA,studenta@example.com,101,LastA,2,E<br/>
+                LP0002,LastB,FirstB,studentb@example.com,101,LastB,2,E
               </code>
+              <p className="text-xs text-gray-600 mt-1">In the above example, only the columns in positions 3 (First Name), 2 (Last Name), 4 (Email), 7 (Cohort), and 1 (Student ID) will be used. All other columns are ignored.</p>
             </div>
           </div>
 
