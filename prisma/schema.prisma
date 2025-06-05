@@ -25,6 +25,10 @@ model User {
   lastLogin   DateTime @default(now())
   permissions String[] // Array of permission strings
   
+  // Password reset functionality
+  resetToken        String?    // Token for password reset
+  resetTokenExpiry  DateTime?  // Expiry time for reset token
+  
   // Relations
   interactions Interaction[] @relation("StaffMember")
   notes        StaffNote[]
