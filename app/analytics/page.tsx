@@ -1,12 +1,9 @@
 // filepath: /Users/archer/projects/node/Launchpad_Student_Form/app/analytics/page.tsx
 /**
- * Analytics dashboard page that displays real-time data from the Prisma database.
- * Shows comprehensive student interaction metrics, follow-up statistics, program breakdowns,
- * and actionable insights for staff members. All data is fetched from the analytics API endpoint.
- *
- * Note: All data-fetching hooks are memoized to avoid unnecessary re-renders and to satisfy
- * React hook dependency rules. This prevents stale closures and ensures the dashboard always
- * reflects the latest filter state. If you add new fetchers, memoize them with useCallback.
+ * AnalyticsPage
+ * Modern, minimal analytics dashboard for student interactions and follow-ups.
+ * Uses clean glassmorphism, subtle gradients, and simple icons for a calm, premium look.
+ * All logic is unchanged; only the UI/UX is streamlined for clarity and modernity.
  */
 
 "use client"
@@ -272,7 +269,6 @@ export default function AnalyticsPage() {
                 Real-time insights from student interactions and follow-up tracking
               </p>
             </div>
-            
             {/* Filters and Controls */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
@@ -280,11 +276,11 @@ export default function AnalyticsPage() {
                   placeholder="Search students by name or ID"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
+                  className="w-full rounded-xl border border-gray-200 bg-white/70 focus:border-blue-400"
                 />
               </div>
               <Select value={selectedCohort} onValueChange={setSelectedCohort}>
-                <SelectTrigger className="w-full sm:w-40">
+                <SelectTrigger className="w-full sm:w-40 rounded-xl border border-gray-200 bg-white/70">
                   <SelectValue placeholder="Cohort" />
                 </SelectTrigger>
                 <SelectContent>
@@ -297,7 +293,7 @@ export default function AnalyticsPage() {
                 </SelectContent>
               </Select>
               <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger className="w-full sm:w-32">
+                <SelectTrigger className="w-full sm:w-32 rounded-xl border border-gray-200 bg-white/70">
                   <SelectValue placeholder="Range" />
                 </SelectTrigger>
                 <SelectContent>
@@ -307,11 +303,11 @@ export default function AnalyticsPage() {
                 </SelectContent>
               </Select>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 sm:flex-none">
+                <Button variant="outline" className="flex-1 sm:flex-none rounded-xl border border-gray-200 bg-white/70 hover:bg-blue-50">
                   <Filter className="h-4 w-4 mr-2" />
                   Filters
                 </Button>
-                <Button onClick={handleExport} className="flex-1 sm:flex-none">
+                <Button onClick={handleExport} className="flex-1 sm:flex-none rounded-xl bg-blue-600 text-white hover:bg-blue-700">
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
@@ -322,104 +318,80 @@ export default function AnalyticsPage() {
           {/* Key Metrics Dashboard */}
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-6">
             {/* Total Students */}
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-              <CardContent className="p-3 sm:p-6">
-                <div className="text-center lg:text-left">
-                  <div className="flex items-center justify-center lg:justify-start mb-2">
-                    <div className="bg-blue-200 p-2 rounded-full">
-                      <Users className="h-4 w-4 lg:h-6 lg:w-6 text-blue-700" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-medium text-blue-600">Total Students</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900">
-                    {analyticsData.overview.totalStudents}
-                  </p>
+            <Card className="bg-white/70 border border-blue-100 rounded-2xl shadow-md">
+              <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-blue-100 mb-2">
+                  <Users className="h-6 w-6 text-blue-500" />
                 </div>
+                <p className="text-xs sm:text-sm font-semibold text-blue-700">Total Students</p>
+                <p className="text-2xl sm:text-3xl font-bold text-blue-900">
+                  {analyticsData.overview.totalStudents}
+                </p>
               </CardContent>
             </Card>
 
             {/* Students Needing Interaction */}
-            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-              <CardContent className="p-3 sm:p-6">
-                <div className="text-center lg:text-left">
-                  <div className="flex items-center justify-center lg:justify-start mb-2">
-                    <div className="bg-orange-200 p-2 rounded-full">
-                      <AlertCircle className="h-4 w-4 lg:h-6 lg:w-6 text-orange-700" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-medium text-orange-600">Need Interaction</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-900">
-                    {analyticsData.overview.studentsNeedingInteraction}
-                  </p>
+            <Card className="bg-white/70 border border-orange-100 rounded-2xl shadow-md">
+              <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-orange-100 mb-2">
+                  <AlertCircle className="h-6 w-6 text-orange-500" />
                 </div>
+                <p className="text-xs sm:text-sm font-semibold text-orange-700">Need Interaction</p>
+                <p className="text-2xl sm:text-3xl font-bold text-orange-900">
+                  {analyticsData.overview.studentsNeedingInteraction}
+                </p>
               </CardContent>
             </Card>
 
             {/* Follow-ups Required */}
-            <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
-              <CardContent className="p-3 sm:p-6">
-                <div className="text-center lg:text-left">
-                  <div className="flex items-center justify-center lg:justify-start mb-2">
-                    <div className="bg-amber-200 p-2 rounded-full">
-                      <Clock className="h-4 w-4 lg:h-6 lg:w-6 text-amber-700" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-medium text-amber-600">Follow-ups Needed</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-amber-900">
-                    {analyticsData.overview.followUpsRequired}
-                  </p>
+            <Card className="bg-white/70 border border-amber-100 rounded-2xl shadow-md">
+              <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-amber-100 mb-2">
+                  <Clock className="h-6 w-6 text-amber-500" />
                 </div>
+                <p className="text-xs sm:text-sm font-semibold text-amber-700">Follow-ups Needed</p>
+                <p className="text-2xl sm:text-3xl font-bold text-amber-900">
+                  {analyticsData.overview.followUpsRequired}
+                </p>
               </CardContent>
             </Card>
 
             {/* Overdue Follow-ups */}
-            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
-              <CardContent className="p-3 sm:p-6">
-                <div className="text-center lg:text-left">
-                  <div className="flex items-center justify-center lg:justify-start mb-2">
-                    <div className="bg-red-200 p-2 rounded-full">
-                      <AlertCircle className="h-4 w-4 lg:h-6 lg:w-6 text-red-700" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-medium text-red-600">Overdue</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-900">
-                    {analyticsData.overview.overdueFollowUps}
-                  </p>
+            <Card className="bg-white/70 border border-red-100 rounded-2xl shadow-md">
+              <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-red-100 mb-2">
+                  <AlertCircle className="h-6 w-6 text-red-500" />
                 </div>
+                <p className="text-xs sm:text-sm font-semibold text-red-700">Overdue</p>
+                <p className="text-2xl sm:text-3xl font-bold text-red-900">
+                  {analyticsData.overview.overdueFollowUps}
+                </p>
               </CardContent>
             </Card>
 
             {/* Total Interactions */}
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-              <CardContent className="p-3 sm:p-6">
-                <div className="text-center lg:text-left">
-                  <div className="flex items-center justify-center lg:justify-start mb-2">
-                    <div className="bg-green-200 p-2 rounded-full">
-                      <BarChart3 className="h-4 w-4 lg:h-6 lg:w-6 text-green-700" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-medium text-green-600">Total Interactions</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-900">
-                    {analyticsData.overview.totalInteractions}
-                  </p>
+            <Card className="bg-white/70 border border-green-100 rounded-2xl shadow-md">
+              <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-green-100 mb-2">
+                  <BarChart3 className="h-6 w-6 text-green-500" />
                 </div>
+                <p className="text-xs sm:text-sm font-semibold text-green-700">Total Interactions</p>
+                <p className="text-2xl sm:text-3xl font-bold text-green-900">
+                  {analyticsData.overview.totalInteractions}
+                </p>
               </CardContent>
             </Card>
 
             {/* Recent Interactions */}
-            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-              <CardContent className="p-3 sm:p-6">
-                <div className="text-center lg:text-left">
-                  <div className="flex items-center justify-center lg:justify-start mb-2">
-                    <div className="bg-purple-200 p-2 rounded-full">
-                      <TrendingUp className="h-4 w-4 lg:h-6 lg:w-6 text-purple-700" />
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm font-medium text-purple-600">Recent ({dateRange}d)</p>
-                  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-900">
-                    {analyticsData.overview.recentInteractions}
-                  </p>
+            <Card className="bg-white/70 border border-purple-100 rounded-2xl shadow-md">
+              <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-purple-100 mb-2">
+                  <TrendingUp className="h-6 w-6 text-purple-500" />
                 </div>
+                <p className="text-xs sm:text-sm font-semibold text-purple-700">Recent ({dateRange}d)</p>
+                <p className="text-2xl sm:text-3xl font-bold text-purple-900">
+                  {analyticsData.overview.recentInteractions}
+                </p>
               </CardContent>
             </Card>
           </div>

@@ -3,6 +3,8 @@
  * Settings page for Launchpad. Renders all settings tabs and enforces admin-only access to system settings and staff password reset.
  * Uses the AuthWrapper context to determine user role. Only admins can access the System tab and system settings content.
  * All other tabs are available to any authenticated user. Follows project conventions for tab/component structure.
+ *
+ * UI/UX: Header now uses a modern, minimal, glassy look with subtle gradients and simple icons for a premium feel.
  */
 
 "use client"
@@ -89,15 +91,13 @@ export default function SettingsPage() {
       <main className="px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
         <div className="max-w-full mx-auto space-y-6 sm:space-y-8">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-white">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="bg-white/20 p-2 sm:p-3 rounded-full">
-                <SettingsIcon className="h-6 w-6 sm:h-8 sm:w-8" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold">System Settings</h1>
-                <p className="text-blue-100 text-sm sm:text-lg">Manage your Launchpad configuration and preferences</p>
-              </div>
+          <div className="rounded-2xl bg-white/70 backdrop-blur-xl border border-blue-100 shadow-md p-6 flex items-center gap-4">
+            <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-blue-100">
+              <SettingsIcon className="h-7 w-7 text-blue-500" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">System Settings</h1>
+              <p className="text-gray-500 text-sm sm:text-lg">Manage your Launchpad configuration and preferences</p>
             </div>
           </div>
 
