@@ -333,22 +333,20 @@ export default function StaffManagement() {
                 {staffMembers.map((staff) => (
                   <div
                     key={staff.id}
-                    className="group relative bg-white border border-gray-200 rounded-xl p-4 sm:p-6 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 hover:border-blue-300 transition-all duration-300 hover:shadow-md"
+                    className="group relative bg-white border border-gray-200 rounded-xl p-3 sm:p-6 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 hover:border-blue-300 transition-all duration-300 hover:shadow-md"
                   >
-                    {/* Mobile-First Layout */}
-                    <div className="space-y-4">
+                    {/* Mobile-First Layout: compact on mobile */}
+                    <div className="flex flex-col sm:space-y-4 space-y-2">
                       {/* Header Section - Avatar, Name, and Badges */}
-                      <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className="flex items-center space-x-3 sm:space-x-4">
                         <div className="flex-shrink-0">
-                          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-lg shadow-lg">
+                          <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-lg shadow-lg">
                             {staff.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                           </div>
                         </div>
-                        
                         <div className="flex-1 min-w-0">
-                          {/* Name and Badges - Stack on mobile, row on larger screens */}
-                          <div className="space-y-2 sm:space-y-1">
-                            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 leading-tight">{staff.name}</h3>
+                          <div className="space-y-1 sm:space-y-1">
+                            <h3 className="text-base sm:text-xl font-semibold text-gray-900 leading-tight truncate">{staff.name}</h3>
                             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                               {staff.isAdmin && (
                                 <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-300 font-medium shadow-sm text-xs">
@@ -366,43 +364,37 @@ export default function StaffManagement() {
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Contact Information */}
-                      <div className="space-y-2 text-sm pl-15 sm:pl-18">{/* I align with the text content */}
-                        <div className="flex items-center text-gray-600">
-                          <Mail className="h-4 w-4 mr-3 text-gray-400 flex-shrink-0" />
-                          <span className="truncate text-sm">{staff.email}</span>
+                      {/* Contact and Permissions: single line on mobile */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 text-xs sm:text-sm text-gray-600 mt-1 sm:mt-0">
+                        <div className="flex items-center mb-1 sm:mb-0">
+                          <Mail className="h-4 w-4 mr-1 text-gray-400 flex-shrink-0" />
+                          <span className="truncate">{staff.email}</span>
                         </div>
-                        <div className="flex items-start text-gray-500">
-                          <Shield className="h-4 w-4 mr-3 text-gray-400 flex-shrink-0 mt-0.5" />
-                          <div className="text-xs">
-                            <span className="text-gray-500">Permissions: </span>
-                            <span className="font-medium text-gray-600">{staff.permissions.join(', ')}</span>
-                          </div>
+                        <div className="flex items-center">
+                          <Shield className="h-4 w-4 mr-1 text-gray-400 flex-shrink-0" />
+                          <span className="truncate">{staff.permissions.join(', ')}</span>
                         </div>
                       </div>
-                      
-                      {/* Action Buttons - Full width on mobile, compact on larger screens */}
-                      <div className="pt-3 sm:pt-2 border-t border-gray-100">
-                        <div className="flex flex-col xs:flex-row gap-2 sm:gap-2">
+                      {/* Action Buttons - horizontal row, compact on mobile */}
+                      <div className="pt-2 sm:pt-2 border-t border-gray-100 mt-2 sm:mt-3">
+                        <div className="flex flex-row gap-2 justify-end">
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="flex-1 xs:flex-none xs:min-w-[100px] border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-colors shadow-sm text-sm py-2"
+                            className="flex-1 sm:flex-none min-w-0 sm:min-w-[100px] border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-colors shadow-sm text-xs sm:text-sm py-2"
                             onClick={() => handleEdit(staff)}
                           >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
+                            <Edit className="h-4 w-4 mr-1" />
+                            <span className="hidden xs:inline">Edit</span>
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="flex-1 xs:flex-none xs:min-w-[130px] border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-colors shadow-sm text-sm py-2"
+                            className="flex-1 sm:flex-none min-w-0 sm:min-w-[110px] border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-colors shadow-sm text-xs sm:text-sm py-2"
                             onClick={() => handlePasswordReset(staff)}
                           >
-                            <RotateCcw className="h-4 w-4 mr-2" />
-                            <span className="hidden xs:inline">Reset Password</span>
-                            <span className="xs:hidden">Reset</span>
+                            <RotateCcw className="h-4 w-4 mr-1" />
+                            <span className="hidden xs:inline">Reset</span>
                           </Button>
                         </div>
                       </div>

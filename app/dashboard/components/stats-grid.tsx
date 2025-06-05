@@ -36,8 +36,6 @@ export function StatsGrid({ totalInteractions, pendingCount, overdueCount, loadi
     )
   }
 
-  const students = typeof studentCount === 'number' ? studentCount : 4
-
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Total Interactions */}
@@ -58,7 +56,7 @@ export function StatsGrid({ totalInteractions, pendingCount, overdueCount, loadi
             <Users className="h-6 w-6 text-green-500" />
           </div>
           <div className="text-xs font-semibold text-green-700 tracking-wide uppercase">Students</div>
-          <div className="text-2xl font-bold text-green-900">{students}</div>
+          <div className="text-2xl font-bold text-green-900">{studentCount || 0}</div>
         </CardContent>
       </Card>
 

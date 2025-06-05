@@ -18,7 +18,7 @@ function studentsToCSV(students: Array<{
   lastName: string
   email: string | null
   cohort: number | null
-  program: string
+  program?: string // Make program optional
   createdAt: Date
 }>): string {
   const header = 'Student ID,First Name,Last Name,Email,Cohort,Program,Created At\n'
@@ -30,7 +30,7 @@ function studentsToCSV(students: Array<{
       student.lastName,
       student.email || '',
       student.cohort?.toString() || '',
-      student.program,
+      student.program || '', // Default to empty string if missing
       student.createdAt.toISOString().split('T')[0] // Date only
     ]
 
@@ -102,6 +102,9 @@ export async function GET(request: NextRequest) {
 
     switch (exportType) {
       case 'students':
+        // When exporting students, derive program from cohortPhaseMap and cohort
+        // You will need to fetch system settings and build a cohortPhaseMap, then for each student:
+        // const program = cohortPhaseMap[student.cohort?.toString() || ''] || ''
         const students = await prisma.student.findMany({
           select: {
             id: true,
@@ -109,12 +112,24 @@ export async function GET(request: NextRequest) {
             lastName: true,
             email: true,
             cohort: true,
-            program: true,
             createdAt: true
           },
           orderBy: { createdAt: 'desc' }
         })
-        csvContent = studentsToCSV(students)
+
+        // Fetch system settings to build cohortPhaseMap
+        const systemSettings = await prisma.systemSettings.findFirst({ orderBy: { updatedAt: 'desc' } })
+        let cohortPhaseMap: Record<string, string> = {}
+        if (systemSettings?.cohortPhaseMap && typeof systemSettings.cohortPhaseMap === 'object' && !Array.isArray(systemSettings.cohortPhaseMap)) {
+          cohortPhaseMap = systemSettings.cohortPhaseMap as Record<string, string>
+        }
+        // Map students to include derived program
+        const studentsWithProgram = students.map(student => {
+          const program = cohortPhaseMap[student.cohort?.toString() || ''] || ''
+          return { ...student, program }
+        })
+
+        csvContent = studentsToCSV(studentsWithProgram)
         filename = `students-export-${new Date().toISOString().split('T')[0]}.csv`
         break
 
@@ -135,7 +150,6 @@ export async function GET(request: NextRequest) {
             lastName: true,
             email: true,
             cohort: true,
-            program: true,
             createdAt: true
           },
           orderBy: { createdAt: 'desc' }

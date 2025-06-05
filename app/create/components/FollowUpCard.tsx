@@ -3,14 +3,11 @@
  * Handles both student and staff follow-up options, including test email functionality
  * that uses the actual notes and follow-up information in the email content.
  *
- * Updates:
- * - Shows a clear message in the follow-up dialog if the student email is missing, so the user knows why the button is disabled.
- * - Adds a visual cue for the current value of formData.studentEmail for debugging.
- * - Improved UI for better feedback when sending emails.
+ * Now uses student email from formData instead of hardcoded student data.
+ * The student email is properly populated by StudentSelectionCard from database data.
  */
 
 import React, { useState } from "react"
-import { students } from "@/lib/data"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -39,8 +36,9 @@ export function FollowUpCard({
   const { sendTestEmailWithNotes } = useEmailFunctionality()
   const [feedback, setFeedback] = useState<string | null>(null)
   const [loading, setLoading] = useState<'student' | 'staff' | 'both' | false>(false)
-  const selectedStudent = students.find(s => s.id === formData.studentId)
-  const studentEmail = selectedStudent?.email || ""
+  
+  // I use the student email from formData which is populated by StudentSelectionCard from the database
+  const studentEmail = formData.studentEmail || ""
 
   const handleFollowUpDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFormDataChange({ followUpDate: e.target.value })

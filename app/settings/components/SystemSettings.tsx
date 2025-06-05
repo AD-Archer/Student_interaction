@@ -1,7 +1,7 @@
 /**
  * SystemSettings.tsx
- * Renders all system settings including interaction frequency configuration and data management.
- * Includes CSV import functionality, data export options, and interaction timing settings.
+ * Renders system-level settings including data management tools like CSV import/export and database operations.
+ * Includes CSV import functionality, data export options, and database flush capabilities.
  * This is only used on the /settings page and is not global.
  */
 
@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Download, Upload, FileText, Users, Activity, AlertCircle, CheckCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { InteractionFrequencySettings } from "./InteractionFrequencySettings"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { useRouter } from "next/navigation"
 
 interface ImportResult {
   success: boolean
@@ -30,7 +31,12 @@ export const SystemSettings = () => {
   const [isExporting, setIsExporting] = useState(false)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [exportType, setExportType] = useState<'students' | 'interactions' | 'all'>('students')
+  const [showFlushDialog, setShowFlushDialog] = useState(false)
+  const [isFlushing, setIsFlushing] = useState(false)
+  const [flushError, setFlushError] = useState<string | null>(null)
+  const [showCreateUser, setShowCreateUser] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
 
   // Handle file import
   const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,11 +121,70 @@ export const SystemSettings = () => {
     }
   }
 
+  // I handle the flush database action
+  const handleFlushDatabase = async () => {
+    setIsFlushing(true)
+    setFlushError(null)
+    try {
+      const res = await fetch("/api/admin/flush-db", { method: "POST" })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || "Flush failed")
+      }
+      
+      const result = await res.json()
+      console.log('Database flushed:', result.message)
+      
+      setShowFlushDialog(false)
+      setShowCreateUser(true)
+    } catch (err) {
+      setFlushError(err instanceof Error ? err.message : "Unknown error")
+    } finally {
+      setIsFlushing(false)
+    }
+  }
+
+  // I handle user creation after flush
+  const handleCreateUser = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setFlushError(null)
+    
+    const form = e.currentTarget
+    const formData = new FormData(form)
+    
+    const userData = {
+      firstName: formData.get("firstName") as string,
+      lastName: formData.get("lastName") as string,
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+      role: "System Administrator",
+      permissions: ["read", "write", "admin"],
+      isAdmin: true
+    }
+    
+    try {
+      const res = await fetch("/api/staff", {
+        method: "POST",
+        body: JSON.stringify(userData),
+        headers: { "Content-Type": "application/json" }
+      })
+      
+      if (res.ok) {
+        setShowCreateUser(false)
+        alert("Admin user created successfully! You can now log in with your new credentials.")
+        // I redirect to login page since the current session is invalid
+        router.push('/login')
+      } else {
+        const errorData = await res.json()
+        throw new Error(errorData.error || "Failed to create user")
+      }
+    } catch (error) {
+      setFlushError(error instanceof Error ? error.message : "Failed to create user. Please try again.")
+    }
+  }
+
   return (
     <div className="w-full space-y-6">
-      {/* Interaction Frequency Settings */}
-      <InteractionFrequencySettings />
-      
       {/* Data Import Section */}
       <Card className="shadow-lg">
         <CardHeader>
@@ -137,12 +202,21 @@ export const SystemSettings = () => {
             <h4 className="font-medium text-sm mb-2">Required CSV Format:</h4>
             <div className="text-sm text-gray-600 space-y-1">
               <p><strong>Columns:</strong> First Name, Last Name, Email, Cohort, Student ID</p>
-              <p><strong>Example:</strong></p>
+              {/*
+                I want users to know that only the order of columns matters for import, not the column names.
+                This is because our import logic maps columns by position, not by header name, to support messy or extra columns.
+                Only the first five columns are used: First Name, Last Name, Email, Cohort, Student ID (in that order).
+                Extra columns are ignored.
+              */}
+              <p><strong>Required Order:</strong> First Name, Last Name, Email, Cohort, Student ID</p>
+              <p className="text-xs text-gray-600">Column names do <b>not</b> need to match exactly, and extra columns are ignored. Only the order matters. Please ensure your CSV has the required fields in this order, even if your file has additional columns or different headers.</p>
+              <p><strong>Example (messy header is OK):</strong></p>
               <code className="block bg-white p-2 rounded text-xs font-mono">
-                First Name,Last Name,Email,Cohort,Student ID<br/>
-                John,Doe,john.doe@email.com,1,0001<br/>
-                Jane,Smith,jane.smith@email.com,2,0002
+                Student Number,Last Name,First Name,Email,Grade Level,uniqueID,Cohort,Status<br/>
+                LP0001,LastA,FirstA,studenta@example.com,101,LastA,2,E<br/>
+                LP0002,LastB,FirstB,studentb@example.com,101,LastB,2,E
               </code>
+              <p className="text-xs text-gray-600 mt-1">In the above example, only the columns in positions 3 (First Name), 2 (Last Name), 4 (Email), 7 (Cohort), and 1 (Student ID) will be used. All other columns are ignored.</p>
             </div>
           </div>
 
@@ -278,6 +352,155 @@ export const SystemSettings = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Danger Zone */}
+      <Card className="shadow-lg border-red-200">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl text-red-700">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            <span>Danger Zone</span>
+          </CardTitle>
+          <CardDescription>
+            This action will permanently delete all students, staff, interactions, and all data. After flushing, you will be prompted to create a new admin account. <b>This cannot be undone.</b>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="destructive" onClick={() => setShowFlushDialog(true)} disabled={isFlushing}>
+            {isFlushing ? "Flushing..." : "Flush Database"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Flush Confirmation Dialog */}
+      <Dialog open={showFlushDialog} onOpenChange={() => setShowFlushDialog(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Database Flush</DialogTitle>
+          </DialogHeader>
+          <p className="mb-4 text-red-700">Are you sure you want to delete <b>ALL</b> data? This cannot be undone.</p>
+          {flushError && <Alert className="border-red-200 bg-red-50 text-red-800 mb-2">{flushError}</Alert>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFlushDialog(false)} disabled={isFlushing}>Cancel</Button>
+            <Button variant="destructive" onClick={handleFlushDatabase} disabled={isFlushing}>Yes, Delete Everything</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create First User Dialog */}
+      <Dialog open={showCreateUser} onOpenChange={() => setShowCreateUser(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                <span>Create New Admin Account</span>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <Alert className="border-blue-200 bg-blue-50">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                Database has been cleared. Create a new admin account to continue using the system.
+              </AlertDescription>
+            </Alert>
+            
+            {flushError && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800">{flushError}</AlertDescription>
+              </Alert>
+            )}
+            
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-sm font-medium">First Name</Label>
+                  <input 
+                    id="firstName"
+                    name="firstName" 
+                    required 
+                    className="w-full border border-gray-300 rounded-md p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                    placeholder="Enter first name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-sm font-medium">Last Name</Label>
+                  <input 
+                    id="lastName"
+                    name="lastName" 
+                    required 
+                    className="w-full border border-gray-300 rounded-md p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                    placeholder="Enter last name"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
+                <input 
+                  id="email"
+                  name="email" 
+                  type="email" 
+                  required 
+                  className="w-full border border-gray-300 rounded-md p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                  placeholder="admin@example.com"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                <input 
+                  id="password"
+                  name="password" 
+                  type="password" 
+                  required 
+                  minLength={6}
+                  className="w-full border border-gray-300 rounded-md p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                  placeholder="Enter secure password (min 6 characters)"
+                />
+              </div>
+              
+              <div className="bg-gray-50 p-3 rounded-md">
+                <p className="text-xs text-gray-600">
+                  <strong>Note:</strong> This account will have full administrative privileges including the ability to manage all users, students, and system settings.
+                </p>
+              </div>
+              
+              <DialogFooter>
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowCreateUser(false)} 
+                    disabled={isFlushing}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={isFlushing}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isFlushing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Users className="h-4 w-4 mr-2" />
+                        Create Admin Account
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </DialogFooter>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

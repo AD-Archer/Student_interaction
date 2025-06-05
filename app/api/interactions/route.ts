@@ -70,7 +70,10 @@ export async function GET(request: NextRequest) {
       [key: string]: unknown
     }
     // I expect cohortPhaseMap to be a JSON object like { "1": "liftoff", "2": "101", "3": "foundations" }
-    const cohortPhaseMap: Record<string, string> = systemSettings?.cohortPhaseMap || {}
+    let cohortPhaseMap: Record<string, string> = {}
+    if (systemSettings?.cohortPhaseMap && typeof systemSettings.cohortPhaseMap === 'object' && !Array.isArray(systemSettings.cohortPhaseMap)) {
+      cohortPhaseMap = systemSettings.cohortPhaseMap as Record<string, string>
+    }
 
     // Helper to get phase for a cohort
     const getPhaseForCohort = (cohortNum: number | null): string => {
@@ -96,7 +99,6 @@ export async function GET(request: NextRequest) {
         studentId: true,
         studentFirstName: true,
         studentLastName: true,
-        program: true,
         type: true,
         reason: true,
         notes: true,
@@ -119,8 +121,7 @@ export async function GET(request: NextRequest) {
             id: true,
             firstName: true,
             lastName: true,
-            cohort: true,
-            program: true,
+            cohort: true, // I add cohort so we can map to phase
             createdAt: true,
             updatedAt: true
           }
@@ -159,7 +160,6 @@ export async function GET(request: NextRequest) {
         studentLastName: interaction.studentLastName,
         studentId: interaction.studentId,
         cohort: cohortNum,
-        program: interaction.program,
         type: interaction.type,
         reason: interaction.reason,
         notes: interaction.notes,
@@ -203,7 +203,6 @@ export async function POST(request: NextRequest) {
     const {
       studentName,
       studentId,
-      program,
       type,
       reason,
       notes,
@@ -227,13 +226,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get the student's cohort and derive the phase/program from cohortPhaseMap
+    const student = await db.student.findUnique({ where: { id: studentId } })
+    let program = 'default'
+    if (student && student.cohort) {
+      // Fetch system settings for cohort-phase mapping
+      const systemSettings = await db.systemSettings.findFirst({ orderBy: { updatedAt: 'desc' } })
+      let cohortPhaseMap: Record<string, string> = {}
+      if (systemSettings?.cohortPhaseMap && typeof systemSettings.cohortPhaseMap === 'object' && !Array.isArray(systemSettings.cohortPhaseMap)) {
+        cohortPhaseMap = systemSettings.cohortPhaseMap as Record<string, string>
+      }
+      program = cohortPhaseMap[student.cohort.toString()] || 'default'
+    }
+
     // Create the interaction, explicitly set isArchived to false by default
     const interaction = await db.interaction.create({
       data: {
         studentFirstName,
         studentLastName,
         studentId,
-        program: program || '',
         type,
         reason,
         notes: notes || '',
@@ -248,14 +259,14 @@ export async function POST(request: NextRequest) {
         followUpOverdue: followUp?.overdue || false,
         followUpStudentEmail: followUp?.studentEmail || null,
         followUpStaffEmail: followUp?.staffEmail || null,
-        isArchived: false // always start unarchived
+        isArchived: false, // always start unarchived
+        program // set from mapping
       },
       select: {
         id: true,
         studentId: true,
         studentFirstName: true,
         studentLastName: true,
-        program: true,
         type: true,
         reason: true,
         notes: true,
@@ -276,7 +287,6 @@ export async function POST(request: NextRequest) {
             id: true,
             firstName: true,
             lastName: true,
-            program: true,
             createdAt: true,
             updatedAt: true
           }
@@ -297,7 +307,6 @@ export async function POST(request: NextRequest) {
       id: interaction.id,
       studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
       studentId: interaction.studentId,
-      program: interaction.program,
       type: interaction.type,
       reason: interaction.reason,
       notes: interaction.notes,

@@ -8,9 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Lock, Mail, Building2, Users } from "lucide-react"
+import { Eye, EyeOff, Lock, Mail, Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { staffMembers } from "@/lib/data"
 import { login } from "@/lib/api"
 
 export default function LoginPage() {
@@ -45,13 +44,6 @@ export default function LoginPage() {
     setIsLoading(false)
   }
 
-  const handleDemoLogin = (staffMember: (typeof staffMembers)[0]) => {
-    setFormData({
-      email: staffMember.email,
-      password: "staff123", // All demo accounts use this password
-    })
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
@@ -63,7 +55,7 @@ export default function LoginPage() {
             </div>
             <div className="text-left">
               <h1 className="text-xl font-bold text-gray-900">Launchpad</h1>
-              <p className="text-xs text-gray-600">Building 21 Workforce Development</p>
+              <p className="text-xs text-gray-600">Student Interaction Tracker</p>
             </div>
           </div>
         </div>
@@ -135,33 +127,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
-        {/* Demo Accounts */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center space-x-2">
-              <Users className="h-5 w-5 text-blue-600" />
-              <span>Demo Staff Accounts</span>
-            </CardTitle>
-            <CardDescription>Click any staff member below to auto-fill login credentials</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {staffMembers.map((staff, index) => (
-              <button
-                key={index}
-                onClick={() => handleDemoLogin(staff)}
-                className="w-full text-left p-3 rounded-lg border border-blue-200 bg-white hover:bg-blue-50 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900">{`${staff.firstName} ${staff.lastName}`}</p>
-                    <p className="text-sm text-gray-600">{staff.role}</p>
-                  </div>
-                  <div className="text-xs text-blue-600 font-medium">Click to login</div>
-                </div>
-              </button>
-            ))}
-          </CardContent>
-        </Card>
+       
 
        
       </div>

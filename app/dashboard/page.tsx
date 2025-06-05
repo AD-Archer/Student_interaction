@@ -67,6 +67,12 @@ export default function Page() {
   const [showArchived, setShowArchived] = useState(false)
   const [selectedStaff, setSelectedStaff] = useState("all")
   const [cohortPhaseMap, setCohortPhaseMap] = useState<Record<string, string>>({});
+  
+  // I add state for analytics data from the database
+  const [analyticsData, setAnalyticsData] = useState<{
+    totalStudents: number
+    totalInteractions: number
+  }>({ totalStudents: 0, totalInteractions: 0 })
 
   // Load all data from API
   useEffect(() => {
@@ -74,14 +80,24 @@ export default function Page() {
       try {
         setLoading(true)
         
-        // Fetch all data in parallel
-        const [interactionsData, staffData] = await Promise.all([
+        // Fetch all data in parallel including analytics
+        const [interactionsData, staffData, analyticsResponse] = await Promise.all([
           interactionsAPI.getAll(),
-          staffAPI.getAll()
+          staffAPI.getAll(),
+          fetch('/api/analytics')
         ])
         
         setInteractions(interactionsData)
         setStaff(staffData)
+        
+        // Parse analytics data
+        if (analyticsResponse.ok) {
+          const analytics = await analyticsResponse.json()
+          setAnalyticsData({
+            totalStudents: analytics.overview.totalStudents,
+            totalInteractions: analytics.overview.totalInteractions
+          })
+        }
       } catch (error) {
         console.error('Error loading data:', error)
         // TODO: Show error message to user
@@ -225,10 +241,11 @@ export default function Page() {
 
             {/* Stats Grid */}
             <StatsGrid 
-              totalInteractions={userInteractions.length}
+              totalInteractions={analyticsData.totalInteractions}
               pendingCount={pendingCount}
               overdueCount={overdueCount}
               loading={loading}
+              studentCount={analyticsData.totalStudents}
             />
 
             {/* Search and Filters */}

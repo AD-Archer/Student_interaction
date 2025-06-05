@@ -211,11 +211,13 @@ export default function AnalyticsPage() {
         .sort((a, b) => Number(a) - Number(b))
     : [];
 
-  // Helper to get phase for a cohort
+  // Helper to get phase for a cohort (mapping is phase->cohort, so we invert it)
   const getPhaseForCohort = (cohortNum: string | number | null | undefined, program: string) => {
     if (!cohortNum) return program
-    const key = typeof cohortNum === 'number' ? String(cohortNum) : cohortNum
-    return cohortPhaseMap[key] || program
+    const cohortStr = typeof cohortNum === 'number' ? String(cohortNum) : cohortNum
+    // Find the phase whose value matches the cohort number
+    const foundPhase = Object.entries(cohortPhaseMap).find(([, v]) => v === cohortStr)?.[0]
+    return foundPhase || program
   }
 
   // Helper to get days overdue for a follow-up

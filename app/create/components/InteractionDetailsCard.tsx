@@ -11,15 +11,17 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Sparkles } from "lucide-react"
+import { Sparkles, Wand2, FileText, TrendingUp, Target, Loader2 } from "lucide-react"
 import { FormData } from "@/lib/data"
+import { AIActionType } from "@/app/create/hooks/useAIFunctionality"
 
 interface InteractionDetailsCardProps {
   formData: FormData
   onFormDataChange: (updates: Partial<FormData>) => void
   notesLoading: boolean
   aiError: string | null
-  onAiSummarizeNotes: () => void
+  actionLoading?: AIActionType | null
+  onPerformAIAction?: (action: AIActionType, content: string) => Promise<string>
 }
 
 export function InteractionDetailsCard({
@@ -27,7 +29,8 @@ export function InteractionDetailsCard({
   onFormDataChange,
   notesLoading,
   aiError,
-  onAiSummarizeNotes
+  actionLoading,
+  onPerformAIAction
 }: InteractionDetailsCardProps) {
   const handleReasonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFormDataChange({ reason: e.target.value })
@@ -35,6 +38,18 @@ export function InteractionDetailsCard({
 
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onFormDataChange({ notes: e.target.value })
+  }
+
+  // I handle AI action button clicks
+  const handleAIAction = async (action: AIActionType) => {
+    if (!onPerformAIAction || !formData.notes) return
+    
+    try {
+      const result = await onPerformAIAction(action, formData.notes)
+      onFormDataChange({ notes: result })
+    } catch (error) {
+      console.error(`Error performing ${action} action:`, error)
+    }
   }
 
   return (
@@ -73,29 +88,75 @@ export function InteractionDetailsCard({
           />
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-end">
-          <div className="flex-1 w-full">
-            {/* AI button positioned below textarea */}
+        <div className="space-y-3">
+          <div className="text-sm font-medium text-gray-700">
+            AI Actions:
           </div>
-          <Button
-            type="button"
-            variant="secondary"
-            className="mt-2 sm:mt-0 whitespace-nowrap"
-            onClick={onAiSummarizeNotes}
-            disabled={notesLoading || !formData.notes}
-          >
-            {notesLoading ? (
-              <div className="flex items-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400 mr-2"></div>
-                Cleaning...
-              </div>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-1 text-blue-500" />
-                AI Summarize/Clean Up
-              </>
-            )}
-          </Button>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleAIAction('cleanup')}
+              disabled={actionLoading === 'cleanup' || notesLoading || !formData.notes}
+              className="flex items-center space-x-1"
+            >
+              {actionLoading === 'cleanup' ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Wand2 className="h-3 w-3" />
+              )}
+              <span>Clean Up</span>
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleAIAction('summarize')}
+              disabled={actionLoading === 'summarize' || notesLoading || !formData.notes}
+              className="flex items-center space-x-1"
+            >
+              {actionLoading === 'summarize' ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <FileText className="h-3 w-3" />
+              )}
+              <span>Summarize</span>
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleAIAction('enhance')}
+              disabled={actionLoading === 'enhance' || notesLoading || !formData.notes}
+              className="flex items-center space-x-1"
+            >
+              {actionLoading === 'enhance' ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <TrendingUp className="h-3 w-3" />
+              )}
+              <span>Enhance</span>
+            </Button>
+            
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleAIAction('glows-grows')}
+              disabled={actionLoading === 'glows-grows' || notesLoading || !formData.notes}
+              className="flex items-center space-x-1"
+            >
+              {actionLoading === 'glows-grows' ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Target className="h-3 w-3" />
+              )}
+              <span>Glows & Grows</span>
+            </Button>
+          </div>
         </div>
         
         {aiError && (

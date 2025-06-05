@@ -40,3 +40,14 @@ export async function summarizeText(text: string): Promise<string> {
   // Placeholder: Return the full text for now to avoid truncation
   return text;
 }
+
+/**
+ * Given a mapping of phase->cohort (e.g. { liftoff: "1", 101: "2", foundations: "3" })
+ * and a cohort number (as string or number), returns the phase name for that cohort.
+ * Returns undefined if not found.
+ */
+export function getPhaseForCohort(cohortPhaseMap: Record<string, string>, cohort: string | number): string | undefined {
+  const cohortStr = String(cohort)
+  // I find the phase whose value matches the cohort
+  return Object.entries(cohortPhaseMap).find(([, v]) => v === cohortStr)?.[0]
+}

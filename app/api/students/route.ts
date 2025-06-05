@@ -42,7 +42,16 @@ export async function GET(request: NextRequest) {
 
     // If we need students requiring interaction, use the new formula system
     if (needsInteraction === 'true') {
-      const studentsNeedingInteraction = await getStudentsNeedingInteraction(whereClause)
+      // Fetch system settings for cohortPhaseMap
+      const systemSettings = await db.systemSettings.findFirst({ orderBy: { updatedAt: 'desc' } })
+      let cohortPhaseMap: Record<string, string> = {}
+      if (systemSettings?.cohortPhaseMap && typeof systemSettings.cohortPhaseMap === 'object' && !Array.isArray(systemSettings.cohortPhaseMap)) {
+        cohortPhaseMap = systemSettings.cohortPhaseMap as Record<string, string>
+      }
+      // Pass the callback to derive program/phase
+      const studentsNeedingInteraction = await getStudentsNeedingInteraction(whereClause, (student) => {
+        return cohortPhaseMap[student.cohort?.toString() || ''] || 'default'
+      })
       return NextResponse.json(studentsNeedingInteraction, { headers: buildCorsHeaders(request) })
     }
 
@@ -67,7 +76,7 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
     
-    const { id, firstName, lastName, email, cohort, program } = data
+    const { id, firstName, lastName, email, cohort } = data
 
     // Validate required fields
     if (!id || !firstName || !lastName || !email || !cohort) {
@@ -89,25 +98,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create the student with foundations as default program
+    // Create the student
     const student = await db.student.create({
       data: {
         id,
         firstName,
         lastName,
         email,
-        cohort: typeof cohort === 'string' ? parseInt(cohort) : cohort,
-        program: program || 'foundations' // Default to foundations for new students
+        cohort: typeof cohort === 'string' ? parseInt(cohort) : cohort
       }
     })
 
-    return NextResponse.json(student, { status: 201 })
-
+    return NextResponse.json(student, { status: 201, headers: buildCorsHeaders(request) })
   } catch (error) {
     console.error('Error creating student:', error)
     return NextResponse.json(
       { error: 'Failed to create student' },
-      { status: 500 }
+      { status: 500, headers: buildCorsHeaders(request) }
     )
   }
 }
