@@ -137,8 +137,16 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
 
   // I keep the input value in sync with the selected student
   useEffect(() => {
-    if (!formData.studentId) setSearch("")
-  }, [formData.studentId])
+    if (!formData.studentId) {
+      setSearch("")
+      if (formData.studentName !== "" || formData.studentEmail !== "") {
+        onFormDataChange({ studentName: "", studentEmail: "" })
+      }
+    } else if (formData.studentName) {
+      // When editing, ensure the input shows the student name from formData
+      setSearch(formData.studentName)
+    }
+  }, [formData.studentId, formData.studentName, formData.studentEmail, onFormDataChange])
 
   return (
     <Card className="shadow-md border-blue-100 bg-white/80">

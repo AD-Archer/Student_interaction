@@ -137,7 +137,11 @@ export function FollowUpCard({
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() => sendTestEmailWithNotes(studentEmail, 'student', formData)}
+                        onClick={async () => {
+                          setLoading('student')
+                          await sendTestEmailWithNotes(studentEmail, 'student', formData)
+                          setLoading(false)
+                        }}
                         disabled={loading === 'student' || loading === 'both'}
                       >
                         <Send className="h-3 w-3 mr-1" />
@@ -163,7 +167,11 @@ export function FollowUpCard({
                         type="button"
                         size="sm"
                         variant="outline"
-                        onClick={() => sendTestEmailWithNotes(formData.staffEmail!, 'staff', formData)}
+                        onClick={async () => {
+                          setLoading('staff')
+                          await sendTestEmailWithNotes(formData.staffEmail!, 'staff', formData)
+                          setLoading(false)
+                        }}
                         disabled={loading === 'staff' || loading === 'both'}
                       >
                         <Send className="h-3 w-3 mr-1" />

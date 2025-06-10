@@ -92,6 +92,9 @@ model Interaction {
   staff   User    @relation("StaffMember", fields: [staffMemberId], references: [id])
   staffMemberId Int
   
+  // Updated by information
+  updatedBy    String?  // Staff member who last updated this interaction
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
