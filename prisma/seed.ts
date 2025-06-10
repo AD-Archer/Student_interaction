@@ -7,6 +7,14 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Starting database seed...')
 
+  // Check if any users and any students exist; if so, skip seeding
+  const userCount = await prisma.user.count()
+  const studentCount = await prisma.student.count()
+  if (userCount > 0 && studentCount > 0) {
+    console.log('seed not needed')
+    return
+  }
+
   // Create staff users with hashed passwords
   const staffMembers = [
     {

@@ -204,3 +204,58 @@ Launchpad Student Services
 
 ## Project Board
 - https://github.com/users/AD-Archer/projects/18
+
+# Docker & Containerization
+
+I've added Docker support for this project to make it portable and easy to run in any environment. Here are the steps and context for using Docker with this app:
+
+## Files Added
+- **Dockerfile**: Builds and runs the Next.js app using pnpm and multi-stage builds for a small, production-ready image.
+- **.dockerignore**: Prevents unnecessary files (like node_modules, .env, build artifacts) from being copied into the Docker image.
+- **docker-compose.yml**: Runs the app and a PostgreSQL database together for local development or production. The app expects environment variables (see .env.example) for DB and email config.
+
+## Usage
+
+### 1. Build and Run with Docker Compose
+```fish
+# Build and start the app and database
+cd /Users/archer/projects/node/Launchpad_Student_Form
+docker compose up --build
+```
+
+- The app will be available at http://localhost:3000
+- The database will be available at localhost:5432 (user: postgres, password: postgres, db: launchpad)
+
+### 2. Running Database Migrations
+You may need to run migrations inside the container:
+```fish
+docker compose exec app pnpm prisma migrate deploy
+```
+
+### 3. Stopping Containers
+```fish
+docker compose down
+```
+
+## Docker Compose Workflow (Environment & Seeding)
+
+- The `.env` file at the project root is used for all secrets and configuration (including Playlab API key, database URL, email, etc). It is **not** copied into the image, but is loaded at runtime by Docker Compose.
+- When you run `docker compose up`, the following happens:
+  1. The `db` service (PostgreSQL) starts first.
+  2. The `seed` service runs `pnpm db:seed` to populate the database with initial data (see `prisma/seed.ts`). This only runs once per `up`.
+  3. The `app` service (Next.js) starts **after** the database is seeded, with all environment variables from `.env` available.
+- If you change your `.env` or seed data, you may need to run `docker compose down -v` to reset the database and then `docker compose up` again.
+
+### Troubleshooting
+- If the app cannot read environment variables (e.g., Playlab API key, database URL), ensure `.env` exists at the project root and is not empty. Docker Compose must be run from the project root.
+- If the database is empty, check the logs for the `seed` service: `docker compose logs seed`.
+- To reseed the database, run: `docker compose run --rm seed` (this will only work if the database is running).
+
+## Notes
+- The app expects environment variables for DB and email config. Copy `.env.example` to `.env.local` and edit as needed.
+- For production, you can use the same Docker setup and provide production-ready environment variables.
+- The Dockerfile uses Node 20 LTS and pnpm 9.x for best compatibility with the current codebase.
+
+---
+
+If you need to customize the database, add more services, or have questions about deploying to cloud providers, let me know!

@@ -1,0 +1,18 @@
+# .dockerignore
+# This file tells Docker which files/folders to ignore when building the image.
+# I want to keep the image small and avoid copying unnecessary files.
+node_modules
+.next
+npm-debug.log
+dist
+coverage
+.env
+.env.local
+.env.*.local
+.DS_Store
+*.md
+*.tsbuildinfo
+.idea
+.vscode
+.git
+.gitignore

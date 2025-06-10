@@ -1,0 +1,57 @@
+# docker-compose.yml
+# This file defines services for local development and production.
+# It runs the Next.js app and a PostgreSQL database in separate containers.
+# The app service expects environment variables (see .env.example) for DB and email config.
+#
+# By default, the app and seed services use DATABASE_URL from your .env file.
+# To use the local Postgres container instead, uncomment the db service below and override DATABASE_URL as needed.
+#
+# Example override (uncomment to use local DB):
+#   environment:
+#     DATABASE_URL: "postgres://postgres:postgres@db:5432/launchpad"
+
+services:
+  # db:
+  #   image: postgres:16.3-alpine
+  #   container_name: launchpad_student_interaction_form_db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: launchpad
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+
+  seed:
+    build: .
+    container_name: launchpad_student_interaction_form_seed
+    # If using local db, add depends_on:
+    # depends_on:
+    #   - db
+    env_file:
+      - .env
+    # Uncomment below to force local DB for seeding:
+    # environment:
+    #   DATABASE_URL: "postgres://postgres:postgres@db:5432/launchpad"
+    entrypoint: ["pnpm", "db:seed"]
+    restart: "no"
+
+  app:
+    build: .
+    container_name: launchpad_student_interaction_form_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      # - db  # Uncomment if using local db
+      - seed
+    # Uncomment below to force local DB for app:
+    # environment:
+    #   DATABASE_URL: "postgres://postgres:postgres@db:5432/launchpad"
+
+volumes:
+  pgdata:
