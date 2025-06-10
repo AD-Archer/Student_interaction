@@ -38,7 +38,7 @@ export function RadioGroup({ value, onValueChange, children, className }: RadioG
 
 interface RadioGroupItemProps {
   value: string
-  label: string
+  label: React.ReactNode // allow icons and rich content
   checked?: boolean
   onChange?: () => void
   id?: string

@@ -169,6 +169,9 @@ model SystemSettings {
    */
   cohortPhaseMap      Json?   // e.g., { "1": "liftoff", "2": "101", "3": "foundations" }
 
+  // AI provider selection ("playlab", "openai", or "auto")
+  aiProvider String @default("auto")
+
   updatedAt      DateTime @updatedAt
 
   @@map("system_settings")

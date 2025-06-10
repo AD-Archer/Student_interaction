@@ -14,6 +14,8 @@ import { Download, Upload, FileText, Users, Activity, AlertCircle, CheckCircle }
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { useRouter } from "next/navigation"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Sparkles, Bot } from "lucide-react"
 
 interface ImportResult {
   success: boolean
@@ -26,6 +28,9 @@ interface ImportResult {
   }
 }
 
+// --- AI Provider Fallback Section ---
+type AiTestResult = { provider: string; status: string; message: string }
+
 export const SystemSettings = () => {
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -35,6 +40,16 @@ export const SystemSettings = () => {
   const [isFlushing, setIsFlushing] = useState(false)
   const [flushError, setFlushError] = useState<string | null>(null)
   const [showCreateUser, setShowCreateUser] = useState(false)
+  // --- AI Provider Fallback Section ---
+  const [aiProvider, setAiProvider] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("aiProvider") || "auto"
+    }
+    return "auto"
+  })
+  const [aiTestResult, setAiTestResult] = useState<AiTestResult[] | null>(null)
+  const [aiTestProvider, setAiTestProvider] = useState<string | null>(null)
+  const [aiTestLoading, setAiTestLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
@@ -183,8 +198,136 @@ export const SystemSettings = () => {
     }
   }
 
+  // I update localStorage when the provider changes
+  const handleProviderChange = (value: string) => {
+    setAiProvider(value)
+    if (typeof window !== "undefined") {
+      localStorage.setItem("aiProvider", value)
+    }
+  }
+
+  // I test the current provider by sending a sample message
+  const handleTestAI = async () => {
+    setAiTestLoading(true)
+    setAiTestResult(null)
+    setAiTestProvider(null)
+    if (aiProvider === "auto") {
+      // Test Playlab, then OpenAI, show both results
+      const results: { provider: string; status: string; message: string }[] = []
+      // Playlab
+      try {
+        const res = await fetch("/api/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: "Test AI provider fallback", provider: "playlab" })
+        })
+        const data = await res.json()
+        if (res.status === 500 && data.details?.includes("credentials missing")) {
+          results.push({ provider: "Playlab", status: "API key not set", message: "Playlab API key or project ID is not set." })
+        } else if (!res.ok) {
+          results.push({ provider: "Playlab", status: "Test failed", message: data.error || "Unknown error" })
+        } else {
+          results.push({ provider: "Playlab", status: "Test succeeded", message: data.result })
+        }
+      } catch (err) {
+        results.push({ provider: "Playlab", status: "Test failed", message: err instanceof Error ? err.message : "Unknown error" })
+      }
+      // OpenAI
+      try {
+        const res = await fetch("/api/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: "Test AI provider fallback", provider: "openai" })
+        })
+        const data = await res.json()
+        if (res.status === 500 && data.details?.includes("OpenAI API key missing")) {
+          results.push({ provider: "OpenAI", status: "API key not set", message: "OpenAI API key is not set." })
+        } else if (!res.ok) {
+          results.push({ provider: "OpenAI", status: "Test failed", message: data.error || "Unknown error" })
+        } else {
+          results.push({ provider: "OpenAI", status: "Test succeeded", message: data.result })
+        }
+      } catch (err) {
+        results.push({ provider: "OpenAI", status: "Test failed", message: err instanceof Error ? err.message : "Unknown error" })
+      }
+      setAiTestResult(results)
+      setAiTestProvider("auto (Playlab→OpenAI fallback)")
+    } else {
+      // Test single provider
+      try {
+        const res = await fetch("/api/ai", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: "Test AI provider fallback", provider: aiProvider })
+        })
+        const data = await res.json()
+        if (res.status === 500 && data.details?.includes("credentials missing")) {
+          setAiTestResult([{ provider: aiProvider === "playlab" ? "Playlab" : "OpenAI", status: "API key not set", message: aiProvider === "playlab" ? "Playlab API key or project ID is not set." : "OpenAI API key is not set." }])
+        } else if (!res.ok) {
+          setAiTestResult([{ provider: aiProvider === "playlab" ? "Playlab" : "OpenAI", status: "Test failed", message: data.error || "Unknown error" }])
+        } else {
+          setAiTestResult([{ provider: aiProvider === "playlab" ? "Playlab" : "OpenAI", status: "Test succeeded", message: data.result }])
+        }
+        setAiTestProvider(aiProvider)
+      } catch (err) {
+        setAiTestResult([{ provider: aiProvider === "playlab" ? "Playlab" : "OpenAI", status: "Test failed", message: err instanceof Error ? err.message : "Unknown error" }])
+        setAiTestProvider(aiProvider)
+      }
+    }
+    setAiTestLoading(false)
+  }
+
   return (
     <div className="w-full space-y-6">
+      {/* --- AI Provider Fallback Section --- */}
+      <Card className="shadow-lg border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
+            <Sparkles className="h-5 w-5 text-blue-600" />
+            <span>AI Provider</span>
+          </CardTitle>
+          <CardDescription>
+            Choose which AI provider to use for summaries and insights. &quot;Auto&quot; will use Playlab and fall back to OpenAI if needed.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <RadioGroup
+            value={aiProvider}
+            onValueChange={handleProviderChange}
+            className="flex flex-col gap-2"
+            aria-label="AI Provider Selection"
+          >
+            <RadioGroupItem value="auto" label={<span className="flex items-center gap-1"><Bot className="h-4 w-4 text-blue-500" />Auto (Playlab → OpenAI fallback)</span>} />
+            <RadioGroupItem value="playlab" label={<span className="flex items-center gap-1"><Sparkles className="h-4 w-4 text-purple-500" />Playlab Only</span>} />
+            <RadioGroupItem value="openai" label={<span className="flex items-center gap-1"><Bot className="h-4 w-4 text-green-500" />OpenAI Only</span>} />
+          </RadioGroup>
+          <div className="flex items-center gap-2 mt-2">
+            <Button onClick={handleTestAI} disabled={aiTestLoading} variant="outline">
+              {aiTestLoading ? "Testing..." : "Test AI Provider"}
+            </Button>
+            {aiTestProvider && (
+              <span className="text-xs text-gray-600">Provider: <b>{aiTestProvider}</b></span>
+            )}
+          </div>
+          {aiTestResult && Array.isArray(aiTestResult) && (
+            <div className="mt-2 space-y-4">
+              {aiTestResult.map((r, i) => (
+                <div key={i} className={`p-3 border rounded text-sm whitespace-pre-line ${
+                  r.status === "Test succeeded"
+                    ? "bg-green-50 border-green-200 text-green-800"
+                    : r.status === "API key not set"
+                    ? "bg-yellow-50 border-yellow-200 text-yellow-800"
+                    : "bg-red-50 border-red-200 text-red-800"
+                }`}>
+                  <div className="font-semibold mb-1">{r.provider}: {r.status}</div>
+                  <div>{r.message}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Data Import Section */}
       <Card className="shadow-lg">
         <CardHeader>
@@ -436,67 +579,49 @@ export const SystemSettings = () => {
                   />
                 </div>
               </div>
-              
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
+                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                 <input 
                   id="email"
                   name="email" 
-                  type="email" 
+                  type="email"
                   required 
                   className="w-full border border-gray-300 rounded-md p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
-                  placeholder="admin@example.com"
+                  placeholder="Enter email address"
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                <input 
-                  id="password"
-                  name="password" 
-                  type="password" 
-                  required 
-                  minLength={6}
-                  className="w-full border border-gray-300 rounded-md p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
-                  placeholder="Enter secure password (min 6 characters)"
-                />
-              </div>
-              
-              <div className="bg-gray-50 p-3 rounded-md">
-                <p className="text-xs text-gray-600">
-                  <strong>Note:</strong> This account will have full administrative privileges including the ability to manage all users, students, and system settings.
-                </p>
-              </div>
-              
-              <DialogFooter>
-                <div className="flex gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setShowCreateUser(false)} 
-                    disabled={isFlushing}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isFlushing}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    {isFlushing ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <Users className="h-4 w-4 mr-2" />
-                        Create Admin Account
-                      </>
-                    )}
-                  </Button>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                  <input 
+                    id="password"
+                    name="password" 
+                    type="password"
+                    required 
+                    className="w-full border border-gray-300 rounded-md p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                    placeholder="Enter password"
+                  />
                 </div>
-              </DialogFooter>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
+                  <input 
+                    id="confirmPassword"
+                    name="confirmPassword" 
+                    type="password"
+                    required 
+                    className="w-full border border-gray-300 rounded-md p-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
+                    placeholder="Confirm password"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowCreateUser(false)} disabled={isFlushing}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="default" disabled={isFlushing}>
+                  {isFlushing ? "Creating..." : "Create Admin User"}
+                </Button>
+              </div>
             </form>
           </div>
         </DialogContent>
