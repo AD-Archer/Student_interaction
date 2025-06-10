@@ -4,6 +4,9 @@
  * Connects to the /api/staff endpoints for real database operations.
  * Includes admin permission checking and self-protection features.
  * This is only used on the /settings page and is not global.
+ *
+ * I now use a custom confirmation modal for staff deletion, so users must confirm before a staff member is deleted.
+ * After deletion, the modal closes automatically.
  */
 
 import { Card, CardContent } from "@/components/ui/card"
@@ -42,6 +45,8 @@ export default function StaffManagement() {
   const [passwordLoading, setPasswordLoading] = useState(false)
   const [passwordError, setPasswordError] = useState("")
   const [passwordSuccess, setPasswordSuccess] = useState("")
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<null | StaffMember>(null)
 
   // I fetch current user info to check admin status
   useEffect(() => {
@@ -184,18 +189,22 @@ export default function StaffManagement() {
       setError("You cannot delete your own account")
       return
     }
+    setShowDeleteConfirm(staff)
+  }
 
-    if (!window.confirm(`Are you sure you want to delete ${staff.name}?`)) {
-      return
-    }
-
+  // I handle the actual delete after confirmation
+  const confirmDelete = async () => {
+    if (!showDeleteConfirm) return
     try {
-      await staffAPI.delete(staff.id)
-      setStaffMembers(prev => prev.filter(s => s.id !== staff.id))
+      await staffAPI.delete(showDeleteConfirm.id)
+      setStaffMembers(prev => prev.filter(s => s.id !== showDeleteConfirm.id))
       setSuccess("Staff member deleted successfully")
+      setShowDeleteConfirm(null)
+      setShowForm(false) // I close the modal after delete
     } catch (error) {
       console.error('Failed to delete staff:', error)
       setError('Failed to delete staff member')
+      setShowDeleteConfirm(null)
     }
   }
 
@@ -341,12 +350,17 @@ export default function StaffManagement() {
                       <div className="flex items-center space-x-3 sm:space-x-4">
                         <div className="flex-shrink-0">
                           <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-lg shadow-lg">
-                            {staff.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            {/* I always show initials, even if staff.name is missing */}
+                            {(() => {
+                              const displayName = staff.name || `${staff.firstName || ''} ${staff.lastName || ''}`.trim();
+                              if (!displayName) return '?';
+                              return displayName.split(' ').map(n => n[0]).join('').toUpperCase();
+                            })()}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="space-y-1 sm:space-y-1">
-                            <h3 className="text-base sm:text-xl font-semibold text-gray-900 leading-tight truncate">{staff.name}</h3>
+                            <h3 className="text-base sm:text-xl font-semibold text-gray-900 leading-tight truncate">{staff.name || `${staff.firstName || ''} ${staff.lastName || ''}`.trim() || staff.email}</h3>
                             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                               {staff.isAdmin && (
                                 <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-300 font-medium shadow-sm text-xs">
@@ -776,6 +790,27 @@ export default function StaffManagement() {
                   </form>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full">
+            <h3 className="text-lg font-bold mb-2 text-gray-900">Delete Staff Member</h3>
+            <p className="mb-4 text-gray-700">
+              Are you sure you want to delete <span className="font-semibold">{showDeleteConfirm.name || `${showDeleteConfirm.firstName} ${showDeleteConfirm.lastName}`.trim() || showDeleteConfirm.email}</span>?<br />
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(null)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Delete
+              </Button>
             </div>
           </div>
         </div>

@@ -87,9 +87,10 @@ export function Form({ interactionId }: { interactionId?: number }) {
         overdue: false,
         studentEmail: followUpStudent ? formData.studentEmail : null,
         staffEmail: followUpStaff ? formData.staffEmail : null
-      }
+      },
+      // I add updatedBy for audit trail
+      ...(interactionId && user ? { updatedBy: `${user.firstName} ${user.lastName}` } : {})
     }
-    // Determine if follow-up should be sent now
     let shouldSendNow = false
     if (payload.followUp.required && payload.followUp.date) {
       const today = new Date()
@@ -98,14 +99,23 @@ export function Form({ interactionId }: { interactionId?: number }) {
       followUpDate.setHours(0, 0, 0, 0)
       shouldSendNow = followUpDate <= today
     }
-    // Save the interaction
     try {
-      console.log('Submitting interaction with payload:', payload)
-      const response = await fetch("/api/interactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
+      let response
+      if (interactionId) {
+        // I update the existing interaction if editing
+        response = await fetch(`/api/interactions/${interactionId}` , {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+      } else {
+        // I create a new interaction if not editing
+        response = await fetch("/api/interactions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+      }
       if (!response.ok) {
         const errorText = await response.text()
         console.error("Failed to save interaction:", errorText)
