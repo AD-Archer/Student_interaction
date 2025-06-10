@@ -176,3 +176,12 @@ model SystemSettings {
 
   @@map("system_settings")
 }
+
+// System integration status model
+model SystemIntegrationStatus {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  lastSync  DateTime
+  status    String   @default("unknown")
+  updatedAt DateTime @updatedAt
+}

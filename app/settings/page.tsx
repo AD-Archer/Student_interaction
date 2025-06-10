@@ -9,7 +9,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -30,6 +30,7 @@ import { StudentsSettings } from "./components/StudentsSettings"
 
 import { resolveIconComponent } from "@/lib/utils"
 import { useAuth } from "@/components/auth-wrapper"
+import { getSystemIntegrationStatuses } from "@/lib/data"
 
 // Centralized system integration data (define here since not exported from lib/data.ts)
 const systemIntegrationData = [
@@ -37,33 +38,20 @@ const systemIntegrationData = [
     name: "Playlab AI",
     description: "AI-powered interaction summaries and insights",
     status: "connected",
-    lastSync: "5 minutes ago",
   },
   {
     name: "Database Connection",
     description: "A test to ensure database connectivity",
     status: "active",
-    lastSync: "12 hours ago",
+  },
+  {
+    name: "Scheduled Follow-up Cron",
+    description: "Checks if the daily follow-up email cron logic is working (dry run, no emails sent)",
+    status: "active",
   },
 ]
 
 // Map our centralized system integration data with icon components
-const systemIntegrations = systemIntegrationData.map((integration) => {
-  // Create an icon mapping for known integrations
-  const iconMapping: Record<string, keyof typeof import("lucide-react")> = {
-    "Playlab AI": "Sparkles",
-    "Database Connection": "Database"
-  };
-  
-  // Get the icon name or use a default
-  const iconName = iconMapping[integration.name] || "Globe";
-  
-  // Return the integration with the resolved icon component
-  return {
-    ...integration,
-    icon: resolveIconComponent(iconName)
-  };
-});
 
 export default function SettingsPage() {
   const searchParams = useSearchParams()
@@ -101,6 +89,42 @@ export default function SettingsPage() {
         return "bg-gray-100 text-gray-800 border-gray-200"
     }
   }
+
+  const [integrationStatuses, setIntegrationStatuses] = useState<{
+    [name: string]: { status: string; lastSync: string }
+  }>({})
+
+  // Fetch integration statuses on mount
+  const fetchStatuses = useCallback(async () => {
+    const statuses = await getSystemIntegrationStatuses()
+    // Map to { [name]: { status, lastSync } }
+    const statusMap: { [name: string]: { status: string; lastSync: string } } = {}
+    for (const row of statuses) {
+      statusMap[row.name] = { status: row.status, lastSync: row.lastSync }
+    }
+    setIntegrationStatuses(statusMap)
+  }, [])
+
+  useEffect(() => {
+    fetchStatuses()
+  }, [fetchStatuses])
+
+  // Merge static integration data with real status/lastSync
+  const mergedSystemIntegrations = systemIntegrationData.map((integration) => {
+    // Create an icon mapping for known integrations
+    const iconMapping: Record<string, keyof typeof import("lucide-react")> = {
+      "Playlab AI": "Sparkles",
+      "Database Connection": "Database"
+    }
+    const iconName = iconMapping[integration.name] || "Globe"
+    const realStatus = integrationStatuses[integration.name]
+    return {
+      ...integration,
+      status: realStatus?.status || integration.status,
+      lastSync: realStatus?.lastSync || '',
+      icon: resolveIconComponent(iconName)
+    }
+  })
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -186,8 +210,9 @@ export default function SettingsPage() {
             {/* Integrations Tab */}
             <TabsContent value="integrations" className="space-y-4 sm:space-y-6">
               <div className="w-full px-0 lg:px-0 space-y-6">
-                <SystemIntegrations systemIntegrations={systemIntegrations} getStatusColor={getStatusColor} />
+                <SystemIntegrations systemIntegrations={mergedSystemIntegrations} getStatusColor={getStatusColor} />
                 <EmailTest />
+                {/* Cron Health Test Result */}
               </div>
             </TabsContent>
 

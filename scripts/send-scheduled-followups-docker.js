@@ -1,25 +1,17 @@
 #!/usr/bin/env node
 /**
- * send-scheduled-followups.js
- * Node cron job script to send scheduled follow-up emails for Launchpad Student Form.
+ * send-scheduled-followups-docker.js
+ * Docker cron job script to send scheduled follow-up emails for Launchpad Student Form.
  *
- * This script should be run periodically (e.g. daily via cron) on your server.
- * It finds all interactions in the database where followUpRequired=true, followUpSent=false,
- * and followUpDate is today or earlier, sends the emails, and marks them as sent.
+ * This script is intended to be run inside a Docker container with cron.
+ * It loads environment variables from process.env (Docker passes them in),
+ * and otherwise works identically to the main script.
  *
- * Usage (add to crontab):
- *   0 7 * * * /usr/bin/node /path/to/scripts/send-scheduled-followups.js
- *
- * Requires: Node.js, Prisma Client, nodemailer, dotenv
+ * Usage: This will be called by cron inside the Docker cron service.
  */
 
 import { PrismaClient } from '@prisma/client'
 import { createTransport } from 'nodemailer'
-import path from 'path'
-import dotenv from 'dotenv'
-
-// I want to load environment variables from the .env file in the project root
-dotenv.config({ path: path.resolve(__dirname, '../.env') })
 
 const prisma = new PrismaClient()
 
@@ -44,34 +36,30 @@ async function sendEmail({ to, subject, text }) {
 }
 
 function buildEmailContent(interaction, recipientType) {
-  // You can customize this template as needed
   return `Hello ${recipientType === 'student' ? interaction.studentFirstName : interaction.staffMember},\n\nThis is a reminder for your scheduled follow-up.\n\nSession Details:\n- Student: ${interaction.studentFirstName} ${interaction.studentLastName}\n- Program: ${interaction.program}\n- Type: ${interaction.type}\n- Reason: ${interaction.reason}\n- Notes: ${interaction.notes}\n- Follow-up Date: ${interaction.followUpDate}\n\nBest regards,\nLaunchpad Student Services`
 }
 
 async function main() {
-  console.log("[CRON] Starting scheduled follow-up email script...")
+  console.log("[DOCKER CRON] Starting scheduled follow-up email script...")
 
   // Check environment config
   if (!process.env.EMAIL_HOST || !process.env.EMAIL_PORT || !process.env.EMAIL_FROM || !process.env.EMAIL_PASSWORD) {
-    console.error("[CRON] ERROR: Missing required email environment variables. Check .env file.")
-    return
+    console.error("[DOCKER CRON] ERROR: Missing required email environment variables. Check Docker env config.")
   } else {
-    console.log("[CRON] Email environment variables loaded.")
+    console.log("[DOCKER CRON] Email environment variables loaded.")
   }
 
   // Check Prisma client
   if (prisma) {
-    console.log("[CRON] Prisma client loaded.")
+    console.log("[DOCKER CRON] Prisma client loaded.")
   } else {
-    console.error("[CRON] ERROR: Prisma client failed to load.")
-    return
+    console.error("[DOCKER CRON] ERROR: Prisma client failed to load.")
   }
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const todayStr = today.toISOString().slice(0, 10)
 
-  // Find all interactions needing follow-up today or earlier, not yet sent
   const interactions = await prisma.interaction.findMany({
     where: {
       followUpRequired: true,
@@ -91,7 +79,6 @@ async function main() {
 
   let sentCount = 0
   for (const interaction of interactions) {
-    // Send to student if requested and email available
     if (interaction.followUpStudent && interaction.followUpStudentEmail) {
       await sendEmail({
         to: interaction.followUpStudentEmail,
@@ -100,8 +87,6 @@ async function main() {
       })
       sentCount++
     }
-    
-    // Send to staff if requested and email available
     if (interaction.followUpStaff && interaction.followUpStaffEmail) {
       await sendEmail({
         to: interaction.followUpStaffEmail,
@@ -110,18 +95,16 @@ async function main() {
       })
       sentCount++
     }
-    
-    // Mark as sent
     await prisma.interaction.update({
       where: { id: interaction.id },
       data: { followUpSent: true },
     })
   }
-  console.log(`Sent ${sentCount} follow-up emails.`)
+  console.log(`[DOCKER CRON] Sent ${sentCount} follow-up emails.`)
   await prisma.$disconnect()
 }
 
 main().catch((err) => {
-  console.error('Error sending scheduled follow-ups:', err)
+  console.error('[DOCKER CRON] Error sending scheduled follow-ups:', err)
   process.exit(1)
 })

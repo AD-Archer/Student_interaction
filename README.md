@@ -1,90 +1,140 @@
-# Launchpad_Student_Form
+# 🚀 Launchpad_Student_Form
 
 A comprehensive student interaction tracking system with automated follow-up email scheduling for Launchpad Philly.
 
-## 📧 Follow-Up Email System
+---
 
-This application includes a complete automated follow-up email system that allows staff to schedule and send follow-up emails to both students and staff members.
+## 📦 Features
+- Dual recipient selection for follow-up emails (student and staff)
+- Immediate and scheduled email sending
+- Automated daily cron job for scheduled emails
+- Email tracking to prevent duplicates
+- Gmail SMTP integration (with dev-mode console logging)
+- Built-in AI assistant for summarization and insights
+- Modern Next.js 15, Node 20 LTS, and pnpm 9.x stack
 
-### ✨ Features
+---
 
-- **Dual Recipient Selection**: Select both student and staff recipients with individual email inputs
-- **Immediate & Scheduled Emails**: Send emails immediately for today/past dates, or schedule for future dates
-- **Automated Scheduling**: Cron job automatically sends scheduled emails daily
-- **Email Tracking**: Prevents duplicate emails by tracking sent status
-- **Gmail SMTP Integration**: Professional email sending via Gmail SMTP
-- **Development Mode**: Console logging when email credentials aren't configured
+## ⚡ Quick Start
 
-### 🎯 How It Works
-
-1. **Form Submission**: Staff selects recipients (student/staff) with checkboxes and enters email addresses
-2. **Immediate Processing**: If follow-up date is today or past, emails are sent immediately
-3. **Future Scheduling**: If follow-up date is in the future, emails are stored for scheduled sending
-4. **Daily Cron Job**: Server runs daily cron job to send all scheduled emails for that day
-5. **Status Tracking**: System marks emails as sent to prevent duplicates
-
-### 🛠️ Setup Instructions
-
-#### 1. Database Migration
+### 1. Clone the Repository
 ```bash
-cd /Users/archer/projects/node/Launchpad_Student_Form
+# Clone the repo and enter the directory
+git clone <your-repo-url> Launchpad_Student_Form
+cd Launchpad_Student_Form
+```
+
+### 2. Environment Configuration
+Copy the example environment file and edit it with your credentials:
+```bash
+cp .env.example .env.local
+# Edit .env.local with your Gmail SMTP and DB settings
+```
+
+**Gmail SMTP setup:**
+- Enable 2-factor authentication on your Gmail account
+- Generate an "App Password" from Google Account settings
+- Use the App Password as `EMAIL_PASSWORD` in `.env.local`
+
+---
+
+## 🐳 Running with Docker (Recommended)
+
+### 1. Build and Start the App and Database
+```bash
+docker compose up --build
+```
+- App: http://localhost:3000
+- DB:  localhost:5432 (user: postgres, password: postgres, db: launchpad)
+
+### 2. Database Migrations (if needed)
+```bash
+docker compose exec app pnpm prisma migrate deploy
+```
+
+### 3. Stopping Containers
+```bash
+docker compose down
+```
+
+### 4. Reseeding the Database
+```bash
+docker compose run --rm seed
+```
+
+**Notes:**
+- The `.env` file at the project root is used for all secrets/configuration (not copied into the image, but loaded at runtime).
+- If you change `.env` or seed data, run:
+  ```bash
+  docker compose down -v
+  docker compose up
+  ```
+- For troubleshooting, check logs:
+  ```bash
+  docker compose logs seed
+  ```
+
+---
+
+## ⏰ Running Scheduled Follow-Ups with Docker Cron
+
+If you want Docker to manage the daily follow-up email job, use the built-in cron service:
+
+1. Make sure the `cron` service is enabled in `docker-compose.yml` (already set up).
+2. The cron container will run the follow-up script every day at 7am (container time).
+3. Logs are written to `/var/log/cron.log` inside the container.
+
+### To view cron logs:
+```bash
+docker compose exec cron tail -n 50 /var/log/cron.log
+```
+
+### To test the script manually in the container:
+```bash
+docker compose exec cron node /app/scripts/send-scheduled-followups-docker.js
+```
+
+**Note:**
+- The cron job uses the same environment variables as the app (from `.env`).
+- You can still run the script on your host with your system's cron if you prefer.
+
+---
+
+## 🖥️ Running Locally (Without Docker)
+
+### 1. Install Dependencies
+```bash
+pnpm install
+```
+
+### 2. Database Migration & Generation
+```bash
 npx prisma db push
 npx prisma generate
 ```
 
-#### 2. Environment Configuration
-Copy the example environment file and configure your Gmail SMTP settings:
+### 3. Start the App
 ```bash
-cp .env.example .env.local
+pnpm dev
 ```
+- App: http://localhost:3000
 
-Edit `.env.local` with your Gmail credentials:
-```env
-# Email Configuration for Gmail SMTP
-EMAIL_HOST="smtp.gmail.com"
-EMAIL_PORT="587"
-EMAIL_SECURE="false"
-EMAIL_FROM="your-email@gmail.com"
-EMAIL_PASSWORD="your-app-password"
-```
+---
 
-**Important**: For Gmail, you need:
-- 2-factor authentication enabled on your Gmail account
-- An "App Password" (not your regular password) generated from Google Account settings
-- Use the App Password as `EMAIL_PASSWORD`
+## 🛠️ System Components
 
-#### 3. Production Deployment (DigitalOcean)
+### Frontend
+- `app/create/components/FollowUpCard.tsx`: Dual checkbox UI for recipient selection
+- `app/create/form.tsx`: Main form for follow-up data
 
-Set up the daily cron job on your server:
-```bash
-# Edit crontab
-crontab -e
+### Backend
+- `app/api/interactions/route.ts`: API for creating interactions
+- `app/api/followup-cron/route.ts`: Cron endpoint for scheduled emails
+- `scripts/send-scheduled-followups.js`: Node.js cron script for email automation
+- `lib/email.ts`: Email utility with templates
 
-# Add this line to run daily at 7 AM
-0 7 * * * /usr/bin/node /path/to/your/scripts/send-scheduled-followups.js
-```
-
-Alternatively, you can call the API endpoint from your server's cron:
-```bash
-# Daily at 7 AM via API call
-0 7 * * * curl -X POST https://your-domain.com/api/followup-cron
-```
-
-### 📁 System Components
-
-#### Frontend Components
-- **`FollowUpCard.tsx`**: UI component with dual checkboxes for recipient selection
-- **`form.tsx`**: Main form handling follow-up data submission
-
-#### Backend Components
-- **`/api/interactions/route.ts`**: API for creating interactions with follow-up data
-- **`/api/followup-cron/route.ts`**: Cron endpoint for scheduled email sending
-- **`/scripts/send-scheduled-followups.js`**: Node.js cron script for email automation
-- **`/lib/email.ts`**: Email utility with professional templates
-
-#### Database Schema
+### Database Schema (Prisma)
 ```sql
--- New follow-up fields in Interaction table
 followUpRequired      BOOLEAN DEFAULT false
 followUpDate          TEXT
 followUpOverdue       BOOLEAN DEFAULT false  
@@ -95,10 +145,12 @@ followUpStudentEmail  TEXT
 followUpStaffEmail    TEXT
 ```
 
-### 🔄 API Usage
+---
 
-#### Create Interaction with Follow-Up
-```javascript
+## 🔄 API Usage Examples
+
+### Create Interaction with Follow-Up
+```http
 POST /api/interactions
 {
   "studentName": "John Doe",
@@ -117,36 +169,36 @@ POST /api/interactions
 }
 ```
 
-#### Trigger Manual Email Send
-```javascript
+### Trigger Manual Email Send
+```http
 POST /api/followup-cron
 // Returns: { "success": true, "sentCount": 5 }
 ```
 
-### 🧪 Testing
+---
 
-#### Development Mode
-When email credentials aren't configured, the system logs emails to console:
+## 🧪 Testing
+
+### Development Mode
+If email credentials aren't configured, emails are logged to the console:
 ```
 [EMAIL] Would send follow-up to student <student@example.com> for interaction #123
 [EMAIL] Subject: Scheduled Follow-up Reminder
 [EMAIL] Content:
 Hello John,
-
-This is a reminder for your scheduled follow-up.
 ...
 ```
 
-#### Production Testing
+### Production Testing
 Test email functionality with configured credentials:
-```bash
-# Call the cron endpoint to test
-curl -X POST https://your-domain.com/api/followup-cron
+```fish
+curl -X POST http://localhost:3000/api/followup-cron
 ```
 
-### 📝 Email Template
+---
 
-The system sends professional emails with this format:
+## 📝 Email Template
+
 ```
 Subject: Scheduled Follow-up Reminder
 
@@ -166,96 +218,63 @@ Best regards,
 Launchpad Student Services
 ```
 
-### 🚀 Benefits
+---
 
-- **No More Missed Follow-Ups**: Automated system ensures follow-ups are never forgotten
-- **Flexible Recipients**: Send to students, staff, or both as needed
-- **Professional Communication**: Consistent, professional email templates
-- **Easy Management**: Simple checkbox interface replaces confusing popup menus
-- **Reliable Delivery**: Gmail SMTP ensures high deliverability rates
-- **Development Friendly**: Console logging for testing without sending emails
+## 📸 Screenshots
+
+### Desktop
+- ![Analytics (Desktop)](/images/production_screenshots/finalanalytics.png)
+- ![Dashboard (Desktop)](/images/production_screenshots/finaldashboard.png)
+- ![AI Panel (Desktop)](/images/production_screenshots/final-ai-panel.png)
+- ![Settings (Desktop)](/images/production_screenshots/finalsettings.png)
+- ![Email (Desktop)](/images/production_screenshots/email.png)
+
+### Mobile
+- ![Analytics (Mobile)](/images/production_screenshots/mobile/mobile-analytics.png)
+- ![Dashboard (Mobile)](/images/production_screenshots/mobile/mobile-dash.png)
+- ![AI Insights (Mobile)](/images/production_screenshots/mobile/mobile-insights.png)
+- ![Settings (Mobile)](/images/production_screenshots/mobile/mobile-settings.png)
 
 ---
 
-## 📸 Final Site Screenshots
+## 🗂️ Reference & Links
+- SQL Diagram: https://dbdiagram.io/d/682b4fb41227bdcb4effdfdb
+- Wireframe: https://excalidraw.com/#json=LBfreDwmu2HOgaCv66uJ6,WVSCjOagw48yEX7IkCDiyA
+- Notion Doc: https://www.notion.so/Launchpad-Form-1f860add3da980f2bd36c658a18d50db?pvs=4
+- Project Board: https://github.com/users/AD-Archer/projects/18
 
+---
 
-### Desktop
-- **finalanalytics.png** ![Analytics (Desktop)](/images/production_screenshots/finalanalytics.png)
-- **finaldashboard.png** ![Dashboard (Desktop)](/images/production_screenshots/finaldashboard.png)
-- **final-ai-panel.png** ![AI Panel (Desktop)](/images/production_screenshots/final-ai-panel.png)
-- **finalsettings.png** ![Settings (Desktop)](/images/production_screenshots/finalsettings.png)
-- **email.png** ![Email (Desktop)](/images/production_screenshots/email.png)
-
-### Mobile
-- **mobile-analytics.png** ![Analytics (Mobile)](/images/production_screenshots/mobile/mobile-analytics.png)
-- **mobile-dash.png** ![Dashboard (Mobile)](/images/production_screenshots/mobile/mobile-dash.png)
-- **mobile-insights.png** ![AI Insights (Mobile)](/images/production_screenshots/mobile/mobile-insights.png)
-- **mobile-settings.png** ![Settings (Mobile)](/images/production_screenshots/mobile/mobile-settings.png)
-
-## SQL Diagram
-- https://dbdiagram.io/d/682b4fb41227bdcb4effdfdb
-
-## Wireframe
-- https://excalidraw.com/#json=LBfreDwmu2HOgaCv66uJ6,WVSCjOagw48yEX7IkCDiyA
-
-## Document
-- https://www.notion.so/Launchpad-Form-1f860add3da980f2bd36c658a18d50db?pvs=4
-
-## Project Board
-- https://github.com/users/AD-Archer/projects/18
-
-# Docker & Containerization
-
-I've added Docker support for this project to make it portable and easy to run in any environment. Here are the steps and context for using Docker with this app:
-
-## Files Added
-- **Dockerfile**: Builds and runs the Next.js app using pnpm and multi-stage builds for a small, production-ready image.
-- **.dockerignore**: Prevents unnecessary files (like node_modules, .env, build artifacts) from being copied into the Docker image.
-- **docker-compose.yml**: Runs the app and a PostgreSQL database together for local development or production. The app expects environment variables (see .env.example) for DB and email config.
-
-## Usage
-
-### 1. Build and Run with Docker Compose
-```fish
-# Build and start the app and database
-cd /Users/archer/projects/node/Launchpad_Student_Form
-docker compose up --build
-```
-
-- The app will be available at http://localhost:3000
-- The database will be available at localhost:5432 (user: postgres, password: postgres, db: launchpad)
-
-### 2. Running Database Migrations
-You may need to run migrations inside the container:
-```fish
-docker compose exec app pnpm prisma migrate deploy
-```
-
-### 3. Stopping Containers
-```fish
-docker compose down
-```
-
-## Docker Compose Workflow (Environment & Seeding)
-
-- The `.env` file at the project root is used for all secrets and configuration (including Playlab API key, database URL, email, etc). It is **not** copied into the image, but is loaded at runtime by Docker Compose.
-- When you run `docker compose up`, the following happens:
-  1. The `db` service (PostgreSQL) starts first.
-  2. The `seed` service runs `pnpm db:seed` to populate the database with initial data (see `prisma/seed.ts`). This only runs once per `up`.
-  3. The `app` service (Next.js) starts **after** the database is seeded, with all environment variables from `.env` available.
-- If you change your `.env` or seed data, you may need to run `docker compose down -v` to reset the database and then `docker compose up` again.
-
-### Troubleshooting
-- If the app cannot read environment variables (e.g., Playlab API key, database URL), ensure `.env` exists at the project root and is not empty. Docker Compose must be run from the project root.
-- If the database is empty, check the logs for the `seed` service: `docker compose logs seed`.
-- To reseed the database, run: `docker compose run --rm seed` (this will only work if the database is running).
-
-## Notes
+## 📝 Notes for Developers
 - The app expects environment variables for DB and email config. Copy `.env.example` to `.env.local` and edit as needed.
 - For production, you can use the same Docker setup and provide production-ready environment variables.
 - The Dockerfile uses Node 20 LTS and pnpm 9.x for best compatibility with the current codebase.
+- If you need to customize the database, add more services, or have questions about deploying to cloud providers, reach out to the maintainer.
 
 ---
 
-If you need to customize the database, add more services, or have questions about deploying to cloud providers, let me know!
+## 🗝️ Example .env Configuration
+
+Below is a sample of the actual `.env` file used in production. **Never commit your real secrets to version control.**
+
+```env
+DATABASE_URL="postgresql://user:password@host:5432/dbname"
+JWT_SECRET="your-jwt-secret"
+NEXTAUTH_SECRET="your-nextauth-secret"
+NEXTAUTH_URL="http://localhost:3000"
+VERCEL_OIDC_TOKEN="<your-vercel-oidc-token>"
+PLAYLAB_API_KEY="sk-pl-EXAMPLE"
+PLAYLAB_PROJECT_ID="projectid"
+OPENAI_API_KEY='sk-EXAMPLE'
+EMAIL_FROM="noreply@example.com"
+EMAIL_PASSWORD="your-app-password"
+EMAIL_HOST="smtp.example.com"
+EMAIL_PORT="587"
+EMAIL_SECURE="false"
+```
+
+**Gmail Setup Notes:**
+- Enable 2-factor authentication on your Gmail account
+- Generate an "App Password" (not your regular password)
+- Use that app password as `EMAIL_PASSWORD`
+- [Google App Password Instructions](https://support.google.com/accounts/answer/185833)
