@@ -38,17 +38,16 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const cohort = searchParams.get('cohort')
+    const studentId = searchParams.get('studentId')
     const followUpRequired = searchParams.get('followUpRequired')
 
     // Build where clause for filtering
-    const where: Partial<{
-      student: { cohort: number }
-      followUpRequired: boolean
-      followUpSent: boolean
-      isArchived: boolean
-    }> = {}
+    const where: any = {}
     if (cohort && cohort !== 'all') {
       where.student = { cohort: parseInt(cohort) }
+    }
+    if (studentId) {
+      where.studentId = studentId
     }
     if (followUpRequired === 'true') {
       where.followUpRequired = true

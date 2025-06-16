@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { getPhaseForCohort } from "@/lib/utils"
+import { useSearchParams } from "next/navigation"
 
 interface Student {
   id: string
@@ -24,6 +25,7 @@ interface Interaction {
 
 export default function StudentPage() {
   const params = useParams<{ id: string }>()
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null
   const router = useRouter()
   const id = params?.id
   const [student, setStudent] = useState<Student | null>(null)
