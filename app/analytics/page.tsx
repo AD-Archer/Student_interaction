@@ -10,7 +10,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AlertCircle, Clock, Users, TrendingUp, BarChart3 } from "lucide-react"
+import { AlertCircle, Clock, Users, BarChart3 } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Loader } from "@/components/ui/loader"

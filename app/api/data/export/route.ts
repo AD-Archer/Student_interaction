@@ -135,10 +135,27 @@ export async function GET(request: NextRequest) {
 
       case 'interactions':
         const interactions = await prisma.interaction.findMany({
+          include: { type: true },
           orderBy: { createdAt: 'desc' },
           take: 1000 // Limit to last 1000 interactions to avoid huge files
         })
-        csvContent = interactionsToCSV(interactions)
+        // Map to expected CSV shape
+        const interactionsForCSV = interactions.map(i => ({
+          id: i.id,
+          studentId: i.studentId,
+          studentFirstName: i.studentFirstName,
+          studentLastName: i.studentLastName,
+          program: i.program,
+          type: i.type?.name || '',
+          reason: i.reason,
+          notes: i.notes,
+          date: i.date,
+          time: i.time,
+          staffMember: i.staffMember,
+          status: i.status,
+          createdAt: i.createdAt
+        }))
+        csvContent = interactionsToCSV(interactionsForCSV)
         filename = `interactions-export-${new Date().toISOString().split('T')[0]}.csv`
         break
 

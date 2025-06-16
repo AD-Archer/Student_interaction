@@ -97,49 +97,6 @@ export function StudentsSettings() {
     return foundPhase || ''
   }
 
-  // I check if a student can be made lightspeed (only foundations students)
-  const canToggleLightspeed = (student: Student) => {
-    const foundationsCohort = cohortPhaseMap.foundations
-    return foundationsCohort && student.cohort?.toString() === foundationsCohort
-  }
-
-  // I handle toggling lightspeed status
-  const handleToggleLightspeed = async (student: Student) => {
-    const newProgram = student.program === "lightspeed" ? "foundations" : "lightspeed"
-    
-    try {
-      // Update in database first
-      const res = await fetch(`/api/students/${student.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...student, program: newProgram })
-      })
-      
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Failed to update student")
-      }
-      
-      // Update UI after successful API call
-      setStudents(prev =>
-        prev.map(s =>
-          s.id === student.id ? { ...s, program: newProgram } : s
-        )
-      )
-      
-      setSaveResult({
-        success: true,
-        message: `${student.firstName} ${student.lastName} ${newProgram === "lightspeed" ? "promoted to" : "returned from"} Lightspeed`
-      })
-      setTimeout(() => setSaveResult(null), 3000)
-      
-    } catch (err) {
-      // Revert UI changes if API call failed
-      setError(err instanceof Error ? err.message : String(err))
-      setTimeout(() => setError(null), 5000)
-    }
-  }
-
   // I handle manual student creation
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault()

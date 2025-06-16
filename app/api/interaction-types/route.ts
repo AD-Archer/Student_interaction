@@ -37,8 +37,7 @@ export async function GET(request: NextRequest) {
     // Merge and return
     const types = [...defaultTypes, ...customTypes]
     return NextResponse.json(types, { headers: buildCorsHeaders(request) })
-  } catch (error) {
-    console.error('Error fetching interaction types:', error)
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch interaction types' },
       { status: 500, headers: buildCorsHeaders(request) }
@@ -60,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
     const type = await db.interactionType.create({ data: { name, isDefault: false } })
     return NextResponse.json(type, { headers: buildCorsHeaders(request) })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to add interaction type' }, { status: 500, headers: buildCorsHeaders(request) })
   }
 }
@@ -82,7 +81,7 @@ export async function DELETE(request: NextRequest) {
     }
     await db.interactionType.delete({ where: { id } })
     return NextResponse.json({ success: true }, { headers: buildCorsHeaders(request) })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete interaction type' }, { status: 500, headers: buildCorsHeaders(request) })
   }
 }

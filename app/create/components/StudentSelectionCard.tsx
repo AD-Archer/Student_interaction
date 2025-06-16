@@ -41,7 +41,6 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
   const [highlightedIdx, setHighlightedIdx] = useState<number>(-1)
   const [interactionTypes, setInteractionTypes] = useState<{ id: number, name: string, isDefault: boolean }[]>([])
   const [typeLoading, setTypeLoading] = useState(true)
-  const [typeError, setTypeError] = useState<string|null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
 
@@ -158,9 +157,7 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
       try {
         const types = await fetch('/api/interaction-types').then(r => r.json())
         setInteractionTypes(types)
-      } catch (e) {
-        setTypeError('Failed to load interaction types')
-      } finally {
+      } catch {
         setTypeLoading(false)
       }
     }
@@ -239,7 +236,7 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
                     role="option"
                     aria-selected={formData.studentId === student.id}
                     className={`flex items-center gap-2 px-2 py-2 cursor-pointer ${idx === highlightedIdx ? 'bg-blue-100' : ''}`}
-                    onMouseDown={e => { e.preventDefault(); selectStudent(student) }}
+                    onMouseDown={() => selectStudent(student)}
                     onMouseEnter={() => setHighlightedIdx(idx)}
                   >
                     <User className="h-4 w-4 text-blue-600" />
@@ -264,7 +261,7 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
               {Array.isArray(interactionTypes) &&
                 // Show default types first, then custom types
                 [...interactionTypes.filter(t => t.isDefault), ...interactionTypes.filter(t => !t.isDefault)]
-                  .map((type, idx, arr) => (
+                  .map((type, idx) => (
                     <option key={type.id + '-' + type.name + '-' + idx} value={type.name}>{type.name}</option>
                   ))}
             </select>

@@ -38,6 +38,13 @@ export default function StudentPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const [cohortPhaseMap, setCohortPhaseMap] = useState<Record<string, string> | null>(null)
+  const [interactionSearch, setInteractionSearch] = useState("")
+  const [personalNotes, setPersonalNotes] = useState("");
+  const [staffNotes, setStaffNotes] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [notesError, setNotesError] = useState<string | null>(null)
+  const [savingPersonalNotes, setSavingPersonalNotes] = useState(false);
+  const [personalNotesError, setPersonalNotesError] = useState<string | null>(null);
   // TODO: Replace with real user/auth context
   const isAdmin = true
 
@@ -60,6 +67,26 @@ export default function StudentPage() {
       .then(r => r.ok ? r.json() : null)
       .then(data => setCohortPhaseMap(data?.cohortPhaseMap || null))
   }, [])
+
+  // Fetch staff notes on mount
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/students/${id}/notes`).then(r => r.ok ? r.json() : null).then((data) => {
+      if (data && Array.isArray(data) && data.length > 0) {
+        setStaffNotes(data[0].content || "");
+      }
+    });
+  }, [id]);
+
+  // Fetch personal notes on mount
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/students/${id}/personal-notes`).then(r => r.ok ? r.json() : null).then((data) => {
+      if (data && data.content) {
+        setPersonalNotes(data.content);
+      }
+    });
+  }, [id]);
 
   const handleEdit = () => setEditing(true)
   const handleCancel = () => {
@@ -86,8 +113,8 @@ export default function StudentPage() {
       setSaveSuccess(true)
       setEditing(false)
       setStudent(editData)
-    } catch (err: any) {
-      setSaveError(err.message || "Unknown error")
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : String(err) || "Unknown error")
     } finally {
       setSaving(false)
     }
@@ -107,15 +134,61 @@ export default function StudentPage() {
       if (!res.ok) throw new Error("Failed to generate AI summary")
       const data = await res.json()
       setAiSummary(data.result || "No summary returned.")
-    } catch (err: any) {
-      setAiError(err.message || "Unknown error")
+    } catch (err: unknown) {
+      setAiError(err instanceof Error ? err.message : String(err) || "Unknown error")
     } finally {
       setAiLoading(false)
     }
   }
 
+  // Save staff notes
+  const handleSaveStaffNotes = async () => {
+    setSavingNotes(true);
+    setNotesError(null);
+    try {
+      const res = await fetch(`/api/students/${id}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ author: "admin", content: staffNotes, priority: "medium" })
+      });
+      if (!res.ok) throw new Error("Failed to save note");
+    } catch (e: unknown) {
+      setNotesError(e instanceof Error ? e.message : String(e) || "Unknown error");
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+  // Save personal notes
+  const handleSavePersonalNotes = async () => {
+    setSavingPersonalNotes(true);
+    setPersonalNotesError(null);
+    try {
+      const res = await fetch(`/api/students/${id}/personal-notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: personalNotes })
+      });
+      if (!res.ok) throw new Error("Failed to save personal note");
+    } catch (e: unknown) {
+      setPersonalNotesError(e instanceof Error ? e.message : String(e) || "Unknown error");
+    } finally {
+      setSavingPersonalNotes(false);
+    }
+  };
+
   // Compute program/phase from cohortPhaseMap and student.cohort
   const program = cohortPhaseMap && student?.cohort != null ? getPhaseForCohort(cohortPhaseMap, student.cohort) : student?.program || 'N/A'
+
+  // Filter interactions based on search term
+  const filteredInteractions = interactionSearch
+    ? interactions.filter(i =>
+        i.type.toLowerCase().includes(interactionSearch.toLowerCase()) ||
+        i.reason.toLowerCase().includes(interactionSearch.toLowerCase()) ||
+        i.staffMember.toLowerCase().includes(interactionSearch.toLowerCase()) ||
+        i.notes.toLowerCase().includes(interactionSearch.toLowerCase())
+      )
+    : interactions
 
   if (loading) {
     return <main className="max-w-2xl mx-auto py-10 px-4"><div>Loading…</div></main>
@@ -143,7 +216,7 @@ export default function StudentPage() {
               >
                 Program: {program || 'N/A'}
                 <span className="absolute left-0 mt-1 w-64 bg-black text-white text-xs rounded p-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg">
-                  Program/phase is set automatically based on the student's cohort, as configured in <b>Settings &rarr; Phase-to-Cohort Mapping</b>. To change a student's program, update the cohort mapping in settings.
+                  Program/phase is set automatically based on the student&apos;s cohort, as configured in <b>Settings &rarr; Phase-to-Cohort Mapping</b>. To change a student&apos;s program, update the cohort mapping in settings.
                 </span>
               </span>
               • Email: {student.email || 'N/A'} •
@@ -153,7 +226,7 @@ export default function StudentPage() {
               >
                 Cohort: {student.cohort || 'Unassigned'}
                 <span className="absolute left-0 mt-1 w-64 bg-black text-white text-xs rounded p-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg">
-                  Program/phase is set automatically based on the student's cohort, as configured in <b>Settings &rarr; Phase-to-Cohort Mapping</b>. To change a student's program, update the cohort mapping in settings.
+                  Program/phase is set automatically based on the student&apos;s cohort, as configured in <b>Settings &rarr; Phase-to-Cohort Mapping</b>. To change a student&apos;s program, update the cohort mapping in settings.
                 </span>
               </span>
             </div>
@@ -201,22 +274,69 @@ export default function StudentPage() {
         )}
       </div>
 
+      {/* Notes Section */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-white rounded-xl shadow p-4">
+          <h3 className="font-semibold mb-2">Your Personal Notes</h3>
+          <textarea
+            className="w-full min-h-[80px] rounded border border-gray-200 p-2 text-sm"
+            placeholder="Add private notes..."
+            value={personalNotes}
+            onChange={e => setPersonalNotes(e.target.value)}
+          />
+          <button
+            className="mt-2 px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 transition"
+            onClick={handleSavePersonalNotes}
+            disabled={savingPersonalNotes}
+          >
+            {savingPersonalNotes ? "Saving..." : "Save Personal Notes"}
+          </button>
+          {personalNotesError && <div className="text-xs text-red-600 mt-1">{personalNotesError}</div>}
+        </div>
+        <div className="bg-white rounded-xl shadow p-4">
+          <h3 className="font-semibold mb-2">Staff Notes</h3>
+          <textarea
+            className="w-full min-h-[80px] rounded border border-gray-200 p-2 text-sm"
+            placeholder="Add notes for all staff..."
+            value={staffNotes}
+            onChange={e => setStaffNotes(e.target.value)}
+          />
+          <button
+            className="mt-2 px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 transition"
+            onClick={handleSaveStaffNotes}
+            disabled={savingNotes}
+          >
+            {savingNotes ? "Saving..." : "Save Staff Notes"}
+          </button>
+          {notesError && <div className="text-xs text-red-600 mt-1">{notesError}</div>}
+        </div>
+      </section>
+
       {/* Interactions Section */}
       <section className="bg-white rounded-xl shadow p-6">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
           <h2 className="text-lg font-semibold">Interactions</h2>
-          <button
-            className="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 transition"
-            onClick={() => router.push(`/create?studentId=${student.id}&studentName=${encodeURIComponent(student.firstName + ' ' + student.lastName)}`)}
-          >
-            New Interaction
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <input
+              type="text"
+              placeholder="Search interactions..."
+              className="w-full sm:w-64 px-2 py-1 rounded border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+              value={interactionSearch}
+              onChange={e => setInteractionSearch(e.target.value)}
+            />
+            <button
+              className="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 transition"
+              onClick={() => router.push(`/create?studentId=${student.id}&studentName=${encodeURIComponent(student.firstName + ' ' + student.lastName)}`)}
+            >
+              New Interaction
+            </button>
+          </div>
         </div>
-        {interactions.length === 0 ? (
-          <p className="text-gray-500">No interactions yet.</p>
+        {filteredInteractions.length === 0 ? (
+          <p className="text-gray-500">No interactions found.</p>
         ) : (
           <ul className="space-y-3">
-            {interactions.map(interaction => (
+            {filteredInteractions.map(interaction => (
               <li key={interaction.id} className="border rounded-lg p-3 bg-blue-50/30">
                 <div className="flex justify-between items-center">
                   <div className="font-semibold text-blue-900">{interaction.type}</div>
@@ -237,18 +357,6 @@ export default function StudentPage() {
             ))}
           </ul>
         )}
-      </section>
-
-      {/* Notes Section */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl shadow p-4">
-          <h3 className="font-semibold mb-2">Your Personal Notes</h3>
-          <textarea className="w-full min-h-[80px] rounded border border-gray-200 p-2 text-sm" placeholder="Add private notes..." />
-        </div>
-        <div className="bg-white rounded-xl shadow p-4">
-          <h3 className="font-semibold mb-2">Staff Notes</h3>
-          <textarea className="w-full min-h-[80px] rounded border border-gray-200 p-2 text-sm" placeholder="Add notes for all staff..." />
-        </div>
       </section>
 
       {/* AI Ideas Section */}
