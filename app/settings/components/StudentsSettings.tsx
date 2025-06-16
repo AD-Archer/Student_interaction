@@ -18,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Label } from "@/components/ui/label"
 import { Users, Loader2, CheckCircle, AlertTriangle, Zap, Edit, X } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useRouter } from "next/navigation"
 
 // Student type matches the DB shape
 interface Student {
@@ -52,6 +53,8 @@ export function StudentsSettings() {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [updating, setUpdating] = useState(false)
   const [search, setSearch] = useState("")
+
+  const router = useRouter()
 
   // Fetch students and cohort mapping from the API
   useEffect(() => {
@@ -252,7 +255,7 @@ export function StudentsSettings() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-            <Users className="h-5 w-5 text-blue-600" />
+            <Users className="h-4 w-5 text-blue-600" />
             <span>Current Students</span>
           </CardTitle>
           <CardDescription>
@@ -286,19 +289,16 @@ export function StudentsSettings() {
                 <p className="text-gray-500 text-center py-4">No students found</p>
               ) : (
                 filteredStudents.map(student => (
-                  <div 
-                    key={student.id} 
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
-                      editingStudent?.id === student.id 
-                        ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200' 
-                        : 'bg-gray-50'
-                    }`}
+                  <div
+                    key={student.id}
+                    className={`flex items-center justify-between p-4 rounded-lg border ${editingStudent?.id === student.id ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200' : 'bg-gray-50'} cursor-pointer hover:bg-blue-100 transition`}
+                    onClick={() => router.push(`/students/${student.id}`)}
                   >
                     <div>
                       <div className="font-semibold text-lg">{student.firstName} {student.lastName}</div>
                       <div className="text-xs text-gray-600">ID: {student.id} • Program: {getPhaseForCohort(student.cohort)} • Email: {student.email || 'N/A'}</div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                       <Button
                         size="sm"
                         variant={editingStudent?.id === student.id ? "default" : "outline"}
@@ -313,29 +313,8 @@ export function StudentsSettings() {
                             <Zap className="h-4 w-4" />
                             Lightspeed
                           </span>
-                          {canToggleLightspeed(student) && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleToggleLightspeed(student)}
-                            >
-                              Remove Lightspeed
-                            </Button>
-                          )}
                         </div>
-                      ) : (
-                        canToggleLightspeed(student) ? (
-                          <Button
-                            size="sm"
-                            onClick={() => handleToggleLightspeed(student)}
-                            variant="default"
-                            className="bg-yellow-600 hover:bg-yellow-700"
-                          >
-                            <Zap className="h-4 w-4 mr-1" />
-                            Make Lightspeed
-                          </Button>
-                        ) : null // Don't render anything if not eligible
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 ))
