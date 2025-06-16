@@ -17,8 +17,12 @@ interface StaffOption {
 interface SearchAndFiltersProps {
   searchTerm: string
   setSearchTerm: (term: string) => void
-  selectedCohort: string
-  setSelectedCohort: (cohort: string) => void
+  selectedProgram: string
+  setSelectedProgram: (program: string) => void
+  dateFrom: string
+  setDateFrom: (date: string) => void
+  dateTo: string
+  setDateTo: (date: string) => void
   sortOrder: string
   setSortOrder: (order: string) => void
   filteredCount: number
@@ -34,8 +38,12 @@ interface SearchAndFiltersProps {
 export function SearchAndFilters({
   searchTerm,
   setSearchTerm,
-  selectedCohort,
-  setSelectedCohort,
+  selectedProgram,
+  setSelectedProgram,
+  dateFrom,
+  setDateFrom,
+  dateTo,
+  setDateTo,
   sortOrder,
   setSortOrder,
   filteredCount,
@@ -57,7 +65,9 @@ export function SearchAndFilters({
       try {
         const parsed = JSON.parse(saved)
         if (parsed.searchTerm !== undefined) setSearchTerm(parsed.searchTerm)
-        if (parsed.selectedCohort !== undefined) setSelectedCohort(parsed.selectedCohort)
+        if (parsed.selectedProgram !== undefined) setSelectedProgram(parsed.selectedProgram)
+        if (parsed.dateFrom !== undefined) setDateFrom(parsed.dateFrom)
+        if (parsed.dateTo !== undefined) setDateTo(parsed.dateTo)
         if (parsed.sortOrder !== undefined) setSortOrder(parsed.sortOrder)
         if (parsed.showArchived !== undefined) setShowArchived(parsed.showArchived)
         if (parsed.selectedStaff !== undefined) setSelectedStaff(parsed.selectedStaff)
@@ -73,14 +83,16 @@ export function SearchAndFilters({
       "dashboardFilters",
       JSON.stringify({
         searchTerm,
-        selectedCohort,
+        selectedProgram,
+        dateFrom,
+        dateTo,
         sortOrder,
         showArchived,
         selectedStaff,
         selectedType
       })
     )
-  }, [searchTerm, selectedCohort, sortOrder, showArchived, selectedStaff, selectedType])
+  }, [searchTerm, selectedProgram, dateFrom, dateTo, sortOrder, showArchived, selectedStaff, selectedType])
 
   // Fetch interaction types from API
   useEffect(() => {
@@ -123,24 +135,46 @@ export function SearchAndFilters({
 
           {/* Collapsible Filters */}
           {showFilters && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t">
+              {/* Program filter */}
+              <Select
+                value={selectedProgram}
+                onValueChange={setSelectedProgram}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by Program" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Programs</SelectItem>
+                  <SelectItem value="foundations">Foundations</SelectItem>
+                  <SelectItem value="101">101</SelectItem>
+                  <SelectItem value="liftoff">Liftoff</SelectItem>
+                  <SelectItem value="lightspeed">Lightspeed</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Date From filter */}
               <div className="flex flex-col gap-1 w-48">
                 <Input
-                  type="number"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  min={1}
-                  step={1}
-                  placeholder="Enter Cohort # (leave blank for all)"
-                  value={selectedCohort}
-                  onChange={(e) => {
-                    // Only allow numbers, no leading zeros
-                    const val = e.target.value.replace(/[^0-9]/g, '').replace(/^0+/, '')
-                    setSelectedCohort(val)
-                  }}
+                  type="date"
+                  placeholder="From Date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
                   className="border-gray-300 focus:border-blue-500"
                 />
-                <span className="text-xs text-gray-500 pl-1">Leave blank to show all cohorts</span>
+                <span className="text-xs text-gray-500 pl-1">Start date</span>
+              </div>
+
+              {/* Date To filter */}
+              <div className="flex flex-col gap-1 w-48">
+                <Input
+                  type="date"
+                  placeholder="To Date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="border-gray-300 focus:border-blue-500"
+                />
+                <span className="text-xs text-gray-500 pl-1">End date</span>
               </div>
 
               <Select

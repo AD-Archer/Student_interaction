@@ -57,7 +57,9 @@ const withCalculatedOverdue = (interaction: Interaction): Interaction => {
 export default function Page() {
   const { user: activeUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCohort, setSelectedCohort] = useState("all");
+  const [selectedProgram, setSelectedProgram] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [sortOrder, setSortOrder] = useState("mostRecent"); // Options: "mostRecent", "oldest"
   const [showAiInsights, setShowAiInsights] = useState(false)
   const [interactions, setInteractions] = useState<Interaction[]>([])
@@ -168,9 +170,14 @@ export default function Page() {
         interaction.reason.toLowerCase().includes(searchTermLower) ||
         interaction.notes.toLowerCase().includes(searchTermLower);
 
-      // Filter by cohort number (not phase or program)
-      const matchesCohort =
-        selectedCohort === "all" || String(interaction.cohort ?? "") === selectedCohort;
+      // Filter by program (not cohort)
+      const matchesProgram =
+        selectedProgram === "all" || interaction.program === selectedProgram;
+
+      // Filter by date range
+      const interactionDate = new Date(interaction.date);
+      const matchesDateFrom = !dateFrom || interactionDate >= new Date(dateFrom);
+      const matchesDateTo = !dateTo || interactionDate <= new Date(dateTo);
 
       const matchesArchived = showArchived ? interaction.isArchived : !interaction.isArchived;
 
@@ -178,7 +185,7 @@ export default function Page() {
 
       const matchesType = selectedType === "all" || interaction.type === selectedType;
 
-      return matchesSearch && matchesCohort && matchesArchived && matchesStaff && matchesType;
+      return matchesSearch && matchesProgram && matchesDateFrom && matchesDateTo && matchesArchived && matchesStaff && matchesType;
     })
     .sort((a, b) => {
       if (sortOrder === "mostRecent") {
@@ -255,8 +262,12 @@ export default function Page() {
             <SearchAndFilters 
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
-              selectedCohort={selectedCohort}
-              setSelectedCohort={(val) => setSelectedCohort(val === '' ? 'all' : val)}
+              selectedProgram={selectedProgram}
+              setSelectedProgram={setSelectedProgram}
+              dateFrom={dateFrom}
+              setDateFrom={setDateFrom}
+              dateTo={dateTo}
+              setDateTo={setDateTo}
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}
               filteredCount={filteredInteractions.length}
