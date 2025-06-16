@@ -67,6 +67,10 @@ export function StudentsSettings() {
   // Toggle for selection mode
   const [selectMode, setSelectMode] = useState(false);
 
+  // Sorting state
+  const [sortBy, setSortBy] = useState<'id' | 'firstName' | 'lastName'>('id');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
   const router = useRouter()
 
   // Fetch students and cohort mapping from the API
@@ -221,30 +225,40 @@ export function StudentsSettings() {
     }
   }
 
-  // I filter students based on the search query (first name, last name, email, ID, or phase label)
-  const filteredStudents = students.filter(student => {
-    const q = search.trim().toLowerCase()
-    if (!q) return true
-    // Try to match by name, email, or ID
+  // Sort students before filtering
+  const sortedStudents = [...students].sort((a, b) => {
+    let cmp = 0;
+    if (sortBy === 'id') {
+      // Numeric sort if possible
+      const aNum = parseInt(a.id, 10);
+      const bNum = parseInt(b.id, 10);
+      if (!isNaN(aNum) && !isNaN(bNum)) cmp = aNum - bNum;
+      else cmp = a.id.localeCompare(b.id);
+    } else {
+      cmp = (a[sortBy] || '').localeCompare(b[sortBy] || '');
+    }
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+  const filteredStudents = sortedStudents.filter(student => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
     if (
       student.firstName.toLowerCase().includes(q) ||
       student.lastName.toLowerCase().includes(q) ||
       (student.email?.toLowerCase().includes(q) ?? false) ||
       student.id.toLowerCase().includes(q)
     ) {
-      return true
+      return true;
     }
-    // Try to match by phase label (using cohortPhaseMap)
-    // If the student's cohort matches a phase, and the phase label includes the query, include it
     for (const [phase, cohortNum] of Object.entries(cohortPhaseMap)) {
       if (
         student.cohort?.toString() === cohortNum &&
         phase.toLowerCase().includes(q)
       ) {
-        return true
+        return true;
       }
     }
-    return false
+    return false;
   })
 
   // Bulk actions
@@ -390,6 +404,7 @@ export function StudentsSettings() {
         </CardContent>
       </Card>
       {/* Mass Edit Students Card */}
+      {/**
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
@@ -411,53 +426,25 @@ export function StudentsSettings() {
                 setError("All fields are required.");
                 return;
               }
-              // Fetch all students in the range from the backend
-              // Improved: handle numeric IDs and allow reverse order
-              let inRange: Student[] = [];
+              setLoading(true);
               try {
-                const res = await fetch(`/api/students`);
-                if (res.ok) {
-                  const all = await res.json();
-                  // Remove 'all' option
-                  const studentsOnly = all.filter((s: Student) => s.id !== "all");
-                  // If both IDs are numeric, compare as numbers
-                  if (/^\d+$/.test(startId) && /^\d+$/.test(endId)) {
-                    const nStart = parseInt(startId, 10);
-                    const nEnd = parseInt(endId, 10);
-                    const min = Math.min(nStart, nEnd);
-                    const max = Math.max(nStart, nEnd);
-                    inRange = studentsOnly.filter((s: Student) => {
-                      const nId = parseInt(s.id, 10);
-                      return !isNaN(nId) && nId >= min && nId <= max;
-                    });
-                  } else {
-                    // Fallback to string comparison
-                    const min = startId < endId ? startId : endId;
-                    const max = startId > endId ? startId : endId;
-                    inRange = studentsOnly.filter((s: Student) => s.id >= min && s.id <= max);
-                  }
+                const res = await fetch('/api/students/bulk-edit', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ startId, endId, newCohort })
+                });
+                const result = await res.json();
+                if (res.ok && result.success) {
+                  setSaveResult({ success: true, message: `Updated ${result.updated} students${result.failed ? `, ${result.failed} failed` : ''}` });
+                } else {
+                  setSaveResult({ success: false, message: result.error || 'Bulk update failed' });
                 }
-              } catch {}
-              let successCount = 0;
-              let failCount = 0;
-              for (const s of inRange) {
-                try {
-                  const res = await fetch(`/api/students/${s.id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ...s, cohort: parseInt(newCohort) })
-                  });
-                  if (res.ok) successCount++;
-                  else failCount++;
-                } catch {
-                  failCount++;
-                }
+                fetchStudents();
+              } catch (err) {
+                setSaveResult({ success: false, message: 'Bulk update failed' });
+              } finally {
+                setLoading(false);
               }
-              setSaveResult({
-                success: failCount === 0,
-                message: `Updated ${successCount} students${failCount ? `, ${failCount} failed` : ''}`
-              });
-              fetchStudents();
             }}
             className="space-y-4"
           >
@@ -471,7 +458,7 @@ export function StudentsSettings() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="endId">End ID</Label>
-                <Input id="endId" name="endId" type="text" placeholder="e.g., 0300" required value={massEdit.endId} onChange={e => {
+                <Input id="endId" name="endId" type="text" placeholder="e.g., 0004" required value={massEdit.endId} onChange={e => {
                   setMassEdit(m => ({ ...m, endId: e.target.value }));
                   if (e.target.value === "" && massEdit.startId === "") setSearch("");
                 }} />
@@ -506,6 +493,7 @@ export function StudentsSettings() {
           </form>
         </CardContent>
       </Card>
+      **/}
 
       {/* Bulk Actions Bar */}
       {selectMode && selectedIds.length > 0 && (
@@ -543,6 +531,15 @@ export function StudentsSettings() {
               onChange={e => setSearch(e.target.value)}
               className="w-full max-w-md"
             />
+            <div className="flex flex-wrap gap-2 mt-2 items-center justify-center">
+              <span className="text-xs text-gray-600">Sort by:</span>
+              <Button size="sm" variant={sortBy === 'id' ? 'default' : 'outline'} onClick={() => setSortBy('id')}>ID Number</Button>
+              <Button size="sm" variant={sortBy === 'firstName' ? 'default' : 'outline'} onClick={() => setSortBy('firstName')}>First Name</Button>
+              <Button size="sm" variant={sortBy === 'lastName' ? 'default' : 'outline'} onClick={() => setSortBy('lastName')}>Last Name</Button>
+              <Button size="sm" variant="ghost" onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}>
+                {sortDir === 'asc' ? '↑' : '↓'}
+              </Button>
+            </div>
             {selectMode && (
               <div className="flex items-center gap-2 mt-2">
                 <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} style={{ width: 28, height: 28 }} />
