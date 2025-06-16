@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Filter, ChevronRight } from "lucide-react"
+import { fetchInteractionTypes } from '@/lib/data'
 
 interface StaffOption {
   id: string
@@ -26,6 +27,8 @@ interface SearchAndFiltersProps {
   staffOptions: StaffOption[]
   selectedStaff: string
   setSelectedStaff: (staffId: string) => void
+  selectedType: string
+  setSelectedType: (type: string) => void
 }
 
 export function SearchAndFilters({
@@ -40,9 +43,12 @@ export function SearchAndFilters({
   setShowArchived,
   staffOptions,
   selectedStaff,
-  setSelectedStaff
+  setSelectedStaff,
+  selectedType,
+  setSelectedType,
 }: SearchAndFiltersProps) {
   const [showFilters, setShowFilters] = useState(true)
+  const [interactionTypes, setInteractionTypes] = useState<{ id: number, name: string, isDefault: boolean }[]>([])
 
   // Load filters from localStorage on mount
   useEffect(() => {
@@ -55,6 +61,7 @@ export function SearchAndFilters({
         if (parsed.sortOrder !== undefined) setSortOrder(parsed.sortOrder)
         if (parsed.showArchived !== undefined) setShowArchived(parsed.showArchived)
         if (parsed.selectedStaff !== undefined) setSelectedStaff(parsed.selectedStaff)
+        if (parsed.selectedType !== undefined) setSelectedType(parsed.selectedType)
       } catch {}
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,10 +76,16 @@ export function SearchAndFilters({
         selectedCohort,
         sortOrder,
         showArchived,
-        selectedStaff
+        selectedStaff,
+        selectedType
       })
     )
-  }, [searchTerm, selectedCohort, sortOrder, showArchived, selectedStaff])
+  }, [searchTerm, selectedCohort, sortOrder, showArchived, selectedStaff, selectedType])
+
+  // Fetch interaction types from API
+  useEffect(() => {
+    fetchInteractionTypes().then(setInteractionTypes).catch(() => setInteractionTypes([]))
+  }, [])
 
   return (
     <Card className="shadow-lg">
@@ -155,6 +168,22 @@ export function SearchAndFilters({
                   <SelectItem value="all">All Staff</SelectItem>
                   {staffOptions.map((staff) => (
                     <SelectItem key={staff.id} value={staff.id}>{staff.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Interaction Type filter */}
+              <Select
+                value={selectedType}
+                onValueChange={setSelectedType}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Interaction Types</SelectItem>
+                  {interactionTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

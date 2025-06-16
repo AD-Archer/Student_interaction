@@ -82,18 +82,32 @@ export async function GET(request: NextRequest) {
     })
 
     // Get interaction types breakdown
-    const interactionTypes = await db.interaction.groupBy({
-      by: ['type'],
+    // Note: Since we changed type to a relation, we'll get all interactions and group manually
+    const allInteractions = await db.interaction.findMany({
       where: interactionWhere,
-      _count: {
-        id: true
-      },
-      orderBy: {
-        _count: {
-          id: 'desc'
+      select: {
+        id: true,
+        type: {
+          select: {
+            name: true
+          }
         }
       }
     })
+    
+    // Group by type name manually
+    const typeGroups = allInteractions.reduce((acc, interaction) => {
+      const typeName = interaction.type?.name || 'Unknown'
+      if (!acc[typeName]) {
+        acc[typeName] = 0
+      }
+      acc[typeName]++
+      return acc
+    }, {} as Record<string, number>)
+    
+    const interactionTypes = Object.entries(typeGroups)
+      .map(([type, count]) => ({ type, _count: { id: count } }))
+      .sort((a, b) => b._count.id - a._count.id)
 
     // Get staff performance metrics
     const staffPerformance = await db.interaction.groupBy({

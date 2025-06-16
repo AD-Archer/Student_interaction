@@ -66,6 +66,7 @@ export default function Page() {
   const [aiPanelData, setAiPanelData] = useState<{ title: string; notes: string[] }>({ title: "", notes: [] });
   const [showArchived, setShowArchived] = useState(false)
   const [selectedStaff, setSelectedStaff] = useState("all")
+  const [selectedType, setSelectedType] = useState("all")
   const [cohortPhaseMap, setCohortPhaseMap] = useState<Record<string, string>>({});
   
   // I add state for analytics data from the database
@@ -175,7 +176,9 @@ export default function Page() {
 
       const matchesStaff = selectedStaff === "all" || interaction.staffMember === staff.find(s => s.id === selectedStaff)?.name;
 
-      return matchesSearch && matchesCohort && matchesArchived && matchesStaff;
+      const matchesType = selectedType === "all" || interaction.type === selectedType;
+
+      return matchesSearch && matchesCohort && matchesArchived && matchesStaff && matchesType;
     })
     .sort((a, b) => {
       if (sortOrder === "mostRecent") {
@@ -262,6 +265,8 @@ export default function Page() {
               staffOptions={staffOptions}
               selectedStaff={selectedStaff}
               setSelectedStaff={setSelectedStaff}
+              selectedType={selectedType}
+              setSelectedType={setSelectedType}
             />
 
             {/* Interactions List */}

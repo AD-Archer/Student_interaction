@@ -333,4 +333,13 @@ export async function getSystemIntegrationStatuses(): Promise<SystemIntegrationS
   }
 }
 
+/**
+ * Fetch interaction types from the API for use in the form and dashboard.
+ */
+export async function fetchInteractionTypes(): Promise<{ id: number, name: string, isDefault: boolean }[]> {
+  const res = await fetch('/api/interaction-types')
+  if (!res.ok) throw new Error('Failed to fetch interaction types')
+  return res.json()
+}
+
 
