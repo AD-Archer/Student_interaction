@@ -10,8 +10,9 @@
 
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Filter, Download, AlertCircle, Clock, Users, TrendingUp, BarChart3 } from "lucide-react"
+import { AlertCircle, Clock, Users, TrendingUp, BarChart3 } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Loader } from "@/components/ui/loader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -78,10 +79,12 @@ const formatDateUS = (dateStr: string | null | undefined): string => {
 }
 
 export default function AnalyticsPage() {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [selectedCohort, setSelectedCohort] = useState("all")
   const [dateRange, setDateRange] = useState("30")
   const [searchQuery, setSearchQuery] = useState("")
+  const [activeTab, setActiveTab] = useState("needInteraction")
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [studentsNeedingInteraction, setStudentsNeedingInteraction] = useState<StudentRecord[]>([])
   const [followUpRecords, setFollowUpRecords] = useState<FollowUpRecord[]>([])
@@ -205,26 +208,7 @@ export default function AnalyticsPage() {
     return followUpRecords.filter((record: FollowUpRecord) => record.isOverdue)
   }
 
-  // Export analytics data as JSON
-  const handleExport = (): void => {
-    if (!analyticsData) return
-    // I include only the most relevant data for export
-    const exportData = {
-      overview: analyticsData.overview,
-      breakdown: analyticsData.breakdown,
-      exportDate: new Date().toISOString(),
-      filters: analyticsData.filters
-    }
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: 'application/json'
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `analytics-cohort-${selectedCohort}-${new Date().toISOString().split('T')[0]}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+
 
   // Dynamically build cohort options from analytics data
   const cohortOptions = analyticsData
@@ -266,6 +250,59 @@ export default function AnalyticsPage() {
   // Helper to get follow-ups overdue by more than 1 week
   const getFollowUpsOverdueMoreThanWeek = (): FollowUpRecord[] => {
     return getOverdueFollowUps().filter(f => getDaysOverdue(f.followUpDate) > 14)
+  }
+
+  // Click handlers for card navigation
+  const handleCardClick = (cardType: string) => {
+    switch (cardType) {
+      case 'students':
+        router.push('/settings?tab=students')
+        break
+      case 'needInteraction':
+        // Scroll to tabs and switch to interactions tab
+        setActiveTab('needInteraction')
+        setTimeout(() => {
+          const tabsElement = document.getElementById('analytics-tabs')
+          if (tabsElement) {
+            tabsElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }, 100)
+        break
+      case 'overdueFollowups':
+        // Scroll to tabs and switch to follow-ups tab
+        setActiveTab('followUps')
+        setTimeout(() => {
+          const tabsElement = document.getElementById('analytics-tabs')
+          if (tabsElement) {
+            tabsElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }, 100)
+        break
+      case 'totalInteractions':
+        // Could navigate to a detailed interactions view or just provide feedback
+        console.log('Total Interactions clicked')
+        break
+      case 'followupsNeeded':
+        setActiveTab('followUps')
+        setTimeout(() => {
+          const tabsElement = document.getElementById('analytics-tabs')
+          if (tabsElement) {
+            tabsElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }, 100)
+        break
+      case 'overdueInteractions':
+        setActiveTab('overdue')
+        setTimeout(() => {
+          const tabsElement = document.getElementById('analytics-tabs')
+          if (tabsElement) {
+            tabsElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }, 100)
+        break
+      default:
+        break
+    }
   }
 
   if (isLoading || !analyticsData) {
@@ -326,23 +363,17 @@ export default function AnalyticsPage() {
                   <SelectItem value="90">90 days</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 sm:flex-none rounded-xl border border-gray-200 bg-white/70 hover:bg-blue-50">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filters
-                </Button>
-                <Button onClick={handleExport} className="flex-1 sm:flex-none rounded-xl bg-blue-600 text-white hover:bg-blue-700">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </div>
+
             </div>
           </div>
 
           {/* Key Metrics Dashboard */}
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-6">
             {/* Total Students */}
-            <Card className="bg-white/70 border border-blue-100 rounded-2xl shadow-md">
+            <Card 
+              className="bg-white/70 border border-blue-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105"
+              onClick={() => handleCardClick('students')}
+            >
               <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
                 <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-blue-100 mb-2">
                   <Users className="h-6 w-6 text-blue-500" />
@@ -355,7 +386,10 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* Students Needing Interaction */}
-            <Card className="bg-white/70 border border-orange-100 rounded-2xl shadow-md">
+            <Card 
+              className="bg-white/70 border border-orange-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105"
+              onClick={() => handleCardClick('needInteraction')}
+            >
               <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
                 <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-orange-100 mb-2">
                   <AlertCircle className="h-6 w-6 text-orange-500" />
@@ -368,7 +402,10 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* Follow-ups Required */}
-            <Card className="bg-white/70 border border-amber-100 rounded-2xl shadow-md">
+            <Card 
+              className="bg-white/70 border border-amber-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105"
+              onClick={() => handleCardClick('followupsNeeded')}
+            >
               <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
                 <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-amber-100 mb-2">
                   <Clock className="h-6 w-6 text-amber-500" />
@@ -381,7 +418,10 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* Overdue Follow-ups */}
-            <Card className="bg-white/70 border border-red-100 rounded-2xl shadow-md">
+            <Card 
+              className="bg-white/70 border border-red-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105"
+              onClick={() => handleCardClick('overdueFollowups')}
+            >
               <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
                 <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-red-100 mb-2">
                   <AlertCircle className="h-6 w-6 text-red-500" />
@@ -394,7 +434,10 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* Overdue Interactions */}
-            <Card className="bg-white/70 border border-orange-100 rounded-2xl shadow-md">
+            <Card 
+              className="bg-white/70 border border-orange-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105"
+              onClick={() => handleCardClick('overdueInteractions')}
+            >
               <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
                 <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-orange-100 mb-2">
                   <Clock className="h-6 w-6 text-orange-500" />
@@ -407,7 +450,10 @@ export default function AnalyticsPage() {
             </Card>
 
             {/* Total Interactions */}
-            <Card className="bg-white/70 border border-green-100 rounded-2xl shadow-md">
+            <Card 
+              className="bg-white/70 border border-green-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105"
+              onClick={() => handleCardClick('totalInteractions')}
+            >
               <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
                 <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-green-100 mb-2">
                   <BarChart3 className="h-6 w-6 text-green-500" />
@@ -479,7 +525,12 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Student Action Lists */}
-          <Tabs defaultValue="needInteraction" className="w-full">
+          <Tabs 
+            value={activeTab} 
+            onValueChange={setActiveTab} 
+            className="w-full" 
+            id="analytics-tabs"
+          >
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="needInteraction">Need Interaction</TabsTrigger>
               <TabsTrigger value="followUps">Follow-ups</TabsTrigger>
