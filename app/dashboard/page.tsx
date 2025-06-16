@@ -57,7 +57,9 @@ const withCalculatedOverdue = (interaction: Interaction): Interaction => {
 export default function Page() {
   const { user: activeUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCohort, setSelectedCohort] = useState("all");
+  const [selectedProgram, setSelectedProgram] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [sortOrder, setSortOrder] = useState("mostRecent"); // Options: "mostRecent", "oldest"
   const [showAiInsights, setShowAiInsights] = useState(false)
   const [interactions, setInteractions] = useState<Interaction[]>([])
@@ -66,6 +68,7 @@ export default function Page() {
   const [aiPanelData, setAiPanelData] = useState<{ title: string; notes: string[] }>({ title: "", notes: [] });
   const [showArchived, setShowArchived] = useState(false)
   const [selectedStaff, setSelectedStaff] = useState("all")
+  const [selectedType, setSelectedType] = useState("all")
   const [cohortPhaseMap, setCohortPhaseMap] = useState<Record<string, string>>({});
   
   // I add state for analytics data from the database
@@ -167,15 +170,22 @@ export default function Page() {
         interaction.reason.toLowerCase().includes(searchTermLower) ||
         interaction.notes.toLowerCase().includes(searchTermLower);
 
-      // Filter by cohort number (not phase or program)
-      const matchesCohort =
-        selectedCohort === "all" || String(interaction.cohort ?? "") === selectedCohort;
+      // Filter by program (not cohort)
+      const matchesProgram =
+        selectedProgram === "all" || interaction.program === selectedProgram;
+
+      // Filter by date range
+      const interactionDate = new Date(interaction.date);
+      const matchesDateFrom = !dateFrom || interactionDate >= new Date(dateFrom);
+      const matchesDateTo = !dateTo || interactionDate <= new Date(dateTo);
 
       const matchesArchived = showArchived ? interaction.isArchived : !interaction.isArchived;
 
       const matchesStaff = selectedStaff === "all" || interaction.staffMember === staff.find(s => s.id === selectedStaff)?.name;
 
-      return matchesSearch && matchesCohort && matchesArchived && matchesStaff;
+      const matchesType = selectedType === "all" || interaction.type === selectedType;
+
+      return matchesSearch && matchesProgram && matchesDateFrom && matchesDateTo && matchesArchived && matchesStaff && matchesType;
     })
     .sort((a, b) => {
       if (sortOrder === "mostRecent") {
@@ -190,15 +200,26 @@ export default function Page() {
     setShowAiInsights(true);
   }
 
-  // Only include interactions for the current user (staff)
+  // Only include interactions for the current user (staff) for hero section
   const userFullName = activeUser ? `${activeUser.firstName} ${activeUser.lastName}` : null;
   const userInteractions = userFullName
     ? processedInteractions.filter(i => i.staffMember === userFullName)
     : [];
 
-  // Calculate stats using recalculated overdue, but only for current user
-  const overdueCount = userInteractions.filter((i) => i.followUp.overdue).length;
-  const pendingCount = userInteractions.filter((i) => i.followUp.required && !i.followUp.overdue).length;
+  // Calculate stats using recalculated overdue for ALL interactions (not just current user)
+  const overdueCount = processedInteractions.filter((i) => i.followUp.overdue).length;
+  const pendingCount = processedInteractions.filter((i) => i.followUp.required && !i.followUp.overdue).length;
+  
+  // Debug logging
+  console.log('Debug overdue calculation:');
+  console.log('Total interactions:', processedInteractions.length);
+  console.log('Overdue interactions:', processedInteractions.filter((i) => i.followUp.overdue));
+  console.log('Overdue count:', overdueCount);
+  console.log('Pending count:', pendingCount);
+  
+  // User-specific counts for hero section
+  const userOverdueCount = userInteractions.filter((i) => i.followUp.overdue).length;
+  const userPendingCount = userInteractions.filter((i) => i.followUp.required && !i.followUp.overdue).length;
 
   // Archive/unarchive handler for dashboard
   const handleArchive = async (id: string, archive: boolean) => {
@@ -234,8 +255,8 @@ export default function Page() {
             {/* Hero Section */}
             <HeroSection 
               userName={activeUser ? `${activeUser.firstName} ${activeUser.lastName}` : "User"}
-              overdueCount={overdueCount}
-              pendingCount={pendingCount}
+              overdueCount={userOverdueCount}
+              pendingCount={userPendingCount}
               loading={loading}
             />
 
@@ -252,8 +273,12 @@ export default function Page() {
             <SearchAndFilters 
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
-              selectedCohort={selectedCohort}
-              setSelectedCohort={(val) => setSelectedCohort(val === '' ? 'all' : val)}
+              selectedProgram={selectedProgram}
+              setSelectedProgram={setSelectedProgram}
+              dateFrom={dateFrom}
+              setDateFrom={setDateFrom}
+              dateTo={dateTo}
+              setDateTo={setDateTo}
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}
               filteredCount={filteredInteractions.length}
@@ -262,6 +287,8 @@ export default function Page() {
               staffOptions={staffOptions}
               selectedStaff={selectedStaff}
               setSelectedStaff={setSelectedStaff}
+              selectedType={selectedType}
+              setSelectedType={setSelectedType}
             />
 
             {/* Interactions List */}

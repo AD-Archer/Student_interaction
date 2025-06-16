@@ -42,7 +42,8 @@ export async function GET(
             lastName: true,
             role: true
           }
-        }
+        },
+        type: { select: { name: true } }
       }
     })
 
@@ -59,7 +60,7 @@ export async function GET(
       studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
       studentId: interaction.studentId,
       program: interaction.program,
-      type: interaction.type,
+      type: interaction.type?.name ?? '',
       reason: interaction.reason,
       notes: interaction.notes,
       date: interaction.date,
@@ -107,7 +108,6 @@ export async function PUT(
       studentName,
       studentId,
       program,
-      type,
       reason,
       notes,
       date,
@@ -129,7 +129,7 @@ export async function PUT(
         studentLastName,
         studentId,
         program,
-        type,
+        // type: interaction.type, // REMOVE this line if present
         reason,
         notes,
         date,
@@ -149,7 +149,8 @@ export async function PUT(
             lastName: true,
             role: true
           }
-        }
+        },
+        type: { select: { name: true } }
       }
     })
 
@@ -159,7 +160,7 @@ export async function PUT(
       studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
       studentId: interaction.studentId,
       program: interaction.program,
-      type: interaction.type,
+      type: interaction.type?.name ?? '',
       reason: interaction.reason,
       notes: interaction.notes,
       date: interaction.date,

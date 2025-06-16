@@ -72,6 +72,22 @@ async function main() {
     })
   }
 
+  // Create interaction types
+  const interactionTypeNames = [
+    "Coaching",
+    "Academic Support",
+    "Career Counseling"
+  ]
+  const interactionTypes: { [name: string]: number } = {}
+  for (const name of interactionTypeNames) {
+    const type = await prisma.interactionType.upsert({
+      where: { name },
+      update: {},
+      create: { name }
+    })
+    interactionTypes[name] = type.id
+  }
+
   // Create sample interactions
   const staff1 = await prisma.user.findUnique({ where: { email: "tahir@launchpad.org" } })
   const staff2 = await prisma.user.findUnique({ where: { email: "barbara@launchpad.org" } })
@@ -137,8 +153,12 @@ async function main() {
 
     console.log('Creating sample interactions...')
     for (const interaction of interactions) {
+      const { type, ...rest } = interaction
       await prisma.interaction.create({
-        data: interaction
+        data: {
+          ...rest,
+          typeId: interactionTypes[type]
+        }
       })
     }
   }

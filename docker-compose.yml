@@ -53,5 +53,16 @@ services:
     # environment:
     #   DATABASE_URL: "postgres://postgres:postgres@db:5432/launchpad"
 
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile.cron
+    container_name: launchpad_student_interaction_form_cron
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
 volumes:
   pgdata:

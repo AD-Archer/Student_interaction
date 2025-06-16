@@ -1,0 +1,34 @@
+# Dockerfile.cron
+# Docker image for running the scheduled follow-up cron job inside a container.
+# This image installs Node, pnpm, and all dependencies, then runs cron in the foreground.
+
+FROM node:20.11.1-alpine
+WORKDIR /app
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@9.1.1 --activate
+
+# Copy only what's needed for the script
+COPY package.json pnpm-lock.yaml ./
+COPY prisma ./prisma
+COPY scripts/send-scheduled-followups-docker.js ./scripts/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Generate Prisma client
+RUN pnpm prisma generate
+
+# Copy .env at runtime via docker-compose
+
+# Install cron
+RUN apk add --no-cache dumb-init curl bash busybox-suid
+
+# Add crontab file
+COPY scripts/cronjob /etc/crontabs/root
+
+# Make sure script is executable
+RUN chmod +x /app/scripts/send-scheduled-followups-docker.js
+
+# Run cron in the foreground
+CMD ["dumb-init", "crond", "-f", "-l", "2"]

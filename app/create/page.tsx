@@ -21,6 +21,8 @@ export default function CreateInteractionPage() {
   // I check for an 'id' query parameter to support editing
   const searchParams = useSearchParams()
   const id = searchParams?.get("id")
+  const studentId = searchParams?.get("studentId")
+  const studentName = searchParams?.get("studentName")
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -40,8 +42,12 @@ export default function CreateInteractionPage() {
               <CardDescription>Fill out all required fields to log the student interaction</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* I pass the id (if present) to the form for edit mode */}
-              <Form interactionId={id ? Number(id) : undefined} />
+              {/* Pass id for edit, and studentId/studentName for preselect */}
+              <Form
+                interactionId={id ? Number(id) : undefined}
+                initialStudentId={studentId || undefined}
+                initialStudentName={studentName || undefined}
+              />
             </CardContent>
           </Card>
         </div>

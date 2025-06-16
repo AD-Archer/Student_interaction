@@ -11,14 +11,16 @@ import { useAuth } from "@/components/auth-wrapper"
 
 interface UseFormDataProps {
   interactionId?: number
+  initialStudentId?: string
+  initialStudentName?: string
 }
 
-export function useFormData({ interactionId }: UseFormDataProps = {}) {
+export function useFormData({ interactionId, initialStudentId, initialStudentName }: UseFormDataProps = {}) {
   const { user } = useAuth()
   
   const [formData, setFormData] = useState<FormData>({
-    studentName: "",
-    studentId: "",
+    studentName: initialStudentName || "",
+    studentId: initialStudentId || "",
     studentEmail: "",
     interactionType: "",
     reason: "",

@@ -37,7 +37,8 @@ export async function GET(request: NextRequest) {
       where: whereClause,
       orderBy: {
         firstName: 'asc'
-      }
+      },
+      take: 10000 // Remove or increase limit to ensure all students are returned
     })
 
     // If we need students requiring interaction, use the new formula system

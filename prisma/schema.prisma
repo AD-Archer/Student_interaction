@@ -58,6 +58,18 @@ model Student {
   @@map("students")
 }
 
+// Interaction type model for custom and default types
+model InteractionType {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  isDefault Boolean  @default(false)
+  // Relations
+  interactions Interaction[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@map("interaction_types")
+}
+
 // Interaction model for student interactions
 model Interaction {
   id           Int      @id @default(autoincrement())
@@ -65,7 +77,9 @@ model Interaction {
   studentFirstName String // Denormalized for easier queries
   studentLastName  String // Denormalized for easier queries
   program      String?
-  type         String   // "Coaching", "Academic Support", etc.
+  // Replace required typeId with optional first
+  typeId        Int?    
+  type          InteractionType? @relation(fields: [typeId], references: [id])
   reason       String
   notes        String
   date         String   // Keeping as string to match current format
@@ -91,7 +105,7 @@ model Interaction {
   student Student @relation(fields: [studentId], references: [id])
   staff   User    @relation("StaffMember", fields: [staffMemberId], references: [id])
   staffMemberId Int
-  
+
   // Updated by information
   updatedBy    String?  // Staff member who last updated this interaction
 
@@ -108,11 +122,12 @@ model StaffNote {
   content   String
   timestamp String
   priority  String   // "high", "medium", "low"
-  
+
   // Relations
   userId Int
   user   User @relation(fields: [userId], references: [id])
-  
+  studentId String // Add this line to associate note with a student
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -175,4 +190,13 @@ model SystemSettings {
   updatedAt      DateTime @updatedAt
 
   @@map("system_settings")
+}
+
+// System integration status model
+model SystemIntegrationStatus {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  lastSync  DateTime
+  status    String   @default("unknown")
+  updatedAt DateTime @updatedAt
 }

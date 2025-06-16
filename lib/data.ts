@@ -104,7 +104,7 @@ export interface SystemIntegration {
   name: string
   description: string
   status: string
-  lastSync: string
+  lastSync: string // ISO string, required for all integrations
 }
 
 // AI Insights and notes from dashboard
@@ -307,6 +307,39 @@ export async function deleteInteraction(id: number): Promise<void> {
     console.error('Error deleting interaction:', error)
     throw error
   }
+}
+
+interface SystemIntegrationStatusRow {
+  name: string
+  status: string
+  lastSync: string
+  updatedAt: string
+  // description is not in DB, will be merged in UI
+}
+
+/**
+ * Fetch real system integration statuses from the backend API.
+ * Returns an array of SystemIntegrationStatusRow objects.
+ * If the API call fails, returns an empty array.
+ */
+export async function getSystemIntegrationStatuses(): Promise<SystemIntegrationStatusRow[]> {
+  try {
+    const res = await fetch('/api/integrations/status')
+    if (!res.ok) return []
+    const { statuses } = await res.json()
+    return (statuses || []) as SystemIntegrationStatusRow[]
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Fetch interaction types from the API for use in the form and dashboard.
+ */
+export async function fetchInteractionTypes(): Promise<{ id: number, name: string, isDefault: boolean }[]> {
+  const res = await fetch('/api/interaction-types')
+  if (!res.ok) throw new Error('Failed to fetch interaction types')
+  return res.json()
 }
 
 

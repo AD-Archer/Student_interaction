@@ -2,6 +2,8 @@
  * API route for testing system integrations
  * Handles testing of Playlab AI and Database connections
  * Returns standardized test results for the settings page
+ *
+ * Now also upserts SystemIntegrationStatus for each test, so the UI can show real lastSync/status.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -158,20 +160,36 @@ export async function POST(request: NextRequest) {
       case 'playlab ai':
         result = await testPlaylabIntegration()
         break
-
       case 'database connection':
         result = await testDatabaseIntegration()
         break
-      
       case 'email system':
         result = await testEmailIntegration()
         break
-      
       default:
         return NextResponse.json(
           { error: `Unknown integration: ${integration}` },
           { status: 400 }
         )
+    }
+
+    // Upsert SystemIntegrationStatus for this integration
+    try {
+      await prisma.systemIntegrationStatus.upsert({
+        where: { name: integration },
+        update: {
+          lastSync: new Date(),
+          status: result.success ? 'active' : 'disconnected',
+        },
+        create: {
+          name: integration,
+          lastSync: new Date(),
+          status: result.success ? 'active' : 'disconnected',
+        },
+      })
+    } catch (dbErr) {
+      // Log but don't block the response
+      console.error('Failed to upsert SystemIntegrationStatus:', dbErr)
     }
 
     return NextResponse.json({

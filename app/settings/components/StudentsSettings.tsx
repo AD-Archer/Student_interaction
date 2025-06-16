@@ -18,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Label } from "@/components/ui/label"
 import { Users, Loader2, CheckCircle, AlertTriangle, Zap, Edit, X } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useRouter } from "next/navigation"
 
 // Student type matches the DB shape
 interface Student {
@@ -52,6 +53,25 @@ export function StudentsSettings() {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [updating, setUpdating] = useState(false)
   const [search, setSearch] = useState("")
+
+  // Mass edit state
+  const [massEdit, setMassEdit] = useState({ startId: "", endId: "", newCohort: "" })
+
+  // Selection state for bulk actions
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const allVisibleIds = students.map(s => s.id);
+  const allSelected = allVisibleIds.length > 0 && allVisibleIds.every(id => selectedIds.includes(id));
+  const toggleSelectAll = () => setSelectedIds(allSelected ? [] : allVisibleIds);
+  const toggleSelect = (id: string) => setSelectedIds(sel => sel.includes(id) ? sel.filter(i => i !== id) : [...sel, id]);
+
+  // Toggle for selection mode
+  const [selectMode, setSelectMode] = useState(false);
+
+  // Sorting state
+  const [sortBy, setSortBy] = useState<'id' | 'firstName' | 'lastName'>('id');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const router = useRouter()
 
   // Fetch students and cohort mapping from the API
   useEffect(() => {
@@ -92,49 +112,6 @@ export function StudentsSettings() {
     // cohortPhaseMap is phase -> cohortNum, so invert to cohortNum -> phase
     const foundPhase = Object.entries(cohortPhaseMap).find(([, v]) => v === cohortStr)?.[0]
     return foundPhase || ''
-  }
-
-  // I check if a student can be made lightspeed (only foundations students)
-  const canToggleLightspeed = (student: Student) => {
-    const foundationsCohort = cohortPhaseMap.foundations
-    return foundationsCohort && student.cohort?.toString() === foundationsCohort
-  }
-
-  // I handle toggling lightspeed status
-  const handleToggleLightspeed = async (student: Student) => {
-    const newProgram = student.program === "lightspeed" ? "foundations" : "lightspeed"
-    
-    try {
-      // Update in database first
-      const res = await fetch(`/api/students/${student.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...student, program: newProgram })
-      })
-      
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Failed to update student")
-      }
-      
-      // Update UI after successful API call
-      setStudents(prev =>
-        prev.map(s =>
-          s.id === student.id ? { ...s, program: newProgram } : s
-        )
-      )
-      
-      setSaveResult({
-        success: true,
-        message: `${student.firstName} ${student.lastName} ${newProgram === "lightspeed" ? "promoted to" : "returned from"} Lightspeed`
-      })
-      setTimeout(() => setSaveResult(null), 3000)
-      
-    } catch (err) {
-      // Revert UI changes if API call failed
-      setError(err instanceof Error ? err.message : String(err))
-      setTimeout(() => setError(null), 5000)
-    }
   }
 
   // I handle manual student creation
@@ -220,130 +197,125 @@ export function StudentsSettings() {
     setSaveResult(null)
   }
 
-  // I filter students based on the search query (first name, last name, email, ID, or phase label)
-  const filteredStudents = students.filter(student => {
-    const q = search.trim().toLowerCase()
-    if (!q) return true
-    // Try to match by name, email, or ID
+  // Promote to Lightspeed and redirect to student page with edit open
+  const handlePromoteToLightspeed = async () => {
+    if (!editingStudent) return
+    setUpdating(true)
+    setError(null)
+    try {
+      const updatedStudent = { ...editingStudent, program: "lightspeed" }
+      const res = await fetch(`/api/students/${editingStudent.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedStudent)
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Failed to update student")
+      }
+      setEditingStudent(null)
+      setSaveResult({ success: true, message: "Student promoted to Lightspeed!" })
+      setTimeout(() => setSaveResult(null), 2000)
+      // Redirect to student page with edit open
+      router.push(`/students/${updatedStudent.id}?edit=1`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  // Sort students before filtering
+  const sortedStudents = [...students].sort((a, b) => {
+    let cmp = 0;
+    if (sortBy === 'id') {
+      // Numeric sort if possible
+      const aNum = parseInt(a.id, 10);
+      const bNum = parseInt(b.id, 10);
+      if (!isNaN(aNum) && !isNaN(bNum)) cmp = aNum - bNum;
+      else cmp = a.id.localeCompare(b.id);
+    } else {
+      cmp = (a[sortBy] || '').localeCompare(b[sortBy] || '');
+    }
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+  const filteredStudents = sortedStudents.filter(student => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
     if (
       student.firstName.toLowerCase().includes(q) ||
       student.lastName.toLowerCase().includes(q) ||
       (student.email?.toLowerCase().includes(q) ?? false) ||
       student.id.toLowerCase().includes(q)
     ) {
-      return true
+      return true;
     }
-    // Try to match by phase label (using cohortPhaseMap)
-    // If the student's cohort matches a phase, and the phase label includes the query, include it
     for (const [phase, cohortNum] of Object.entries(cohortPhaseMap)) {
       if (
         student.cohort?.toString() === cohortNum &&
         phase.toLowerCase().includes(q)
       ) {
-        return true
+        return true;
       }
     }
-    return false
+    return false;
   })
+
+  // Bulk actions
+  const handleBulkCohort = async (newCohort: string) => {
+    let successCount = 0, failCount = 0;
+    for (const id of selectedIds) {
+      const s = students.find(stu => stu.id === id);
+      if (!s) continue;
+      try {
+        const res = await fetch(`/api/students/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...s, cohort: parseInt(newCohort) })
+        });
+        if (res.ok) successCount++;
+        else failCount++;
+      } catch { failCount++; }
+    }
+    setSaveResult({ success: failCount === 0, message: `Updated ${successCount} students${failCount ? `, ${failCount} failed` : ''}` });
+    setSelectedIds([]);
+    fetchStudents();
+  };
+  const handleBulkDelete = async () => {
+    let successCount = 0, failCount = 0;
+    for (const id of selectedIds) {
+      try {
+        const res = await fetch(`/api/students/${id}`, { method: "DELETE" });
+        if (res.ok) successCount++;
+        else failCount++;
+      } catch { failCount++; }
+    }
+    setSaveResult({ success: failCount === 0, message: `Deleted ${successCount} students${failCount ? `, ${failCount} failed` : ''}` });
+    setSelectedIds([]);
+    fetchStudents();
+  };
+  const handleBulkLightspeed = async () => {
+    let successCount = 0, failCount = 0;
+    for (const id of selectedIds) {
+      const s = students.find(stu => stu.id === id);
+      if (!s) continue;
+      try {
+        const res = await fetch(`/api/students/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...s, program: "lightspeed" })
+        });
+        if (res.ok) successCount++;
+        else failCount++;
+      } catch { failCount++; }
+    }
+    setSaveResult({ success: failCount === 0, message: `Promoted ${successCount} students${failCount ? `, ${failCount} failed` : ''}` });
+    setSelectedIds([]);
+    fetchStudents();
+  };
 
   return (
     <div className="space-y-6">
-      {/* Current Students Card */}
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
-            <Users className="h-5 w-5 text-blue-600" />
-            <span>Current Students</span>
-          </CardTitle>
-          <CardDescription>
-            Manage existing students and promote foundations students to lightspeed status.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Student Search Input */}
-          <div className="mb-4">
-            <Input
-              type="text"
-              placeholder="Search by name, email, or ID..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full max-w-md"
-            />
-          </div>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span className="ml-2">Loading students…</span>
-            </div>
-          ) : error ? (
-            <Alert className="border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">{error}</AlertDescription>
-            </Alert>
-          ) : (
-            <div className="space-y-3">
-              {filteredStudents.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No students found</p>
-              ) : (
-                filteredStudents.map(student => (
-                  <div 
-                    key={student.id} 
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
-                      editingStudent?.id === student.id 
-                        ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200' 
-                        : 'bg-gray-50'
-                    }`}
-                  >
-                    <div>
-                      <div className="font-semibold text-lg">{student.firstName} {student.lastName}</div>
-                      <div className="text-xs text-gray-600">ID: {student.id} • Program: {getPhaseForCohort(student.cohort)} • Email: {student.email || 'N/A'}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant={editingStudent?.id === student.id ? "default" : "outline"}
-                        onClick={() => editingStudent?.id === student.id ? cancelEdit() : handleEditStudent(student)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        {editingStudent?.id === student.id ? "Cancel Edit" : "Edit"}
-                      </Button>
-                      {student.program === "lightspeed" ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-green-600 font-medium flex items-center gap-1">
-                            <Zap className="h-4 w-4" />
-                            Lightspeed
-                          </span>
-                          {canToggleLightspeed(student) && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleToggleLightspeed(student)}
-                            >
-                              Remove Lightspeed
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        canToggleLightspeed(student) ? (
-                          <Button
-                            size="sm"
-                            onClick={() => handleToggleLightspeed(student)}
-                            variant="default"
-                            className="bg-yellow-600 hover:bg-yellow-700"
-                          >
-                            <Zap className="h-4 w-4 mr-1" />
-                            Make Lightspeed
-                          </Button>
-                        ) : null // Don't render anything if not eligible
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Create Student Card */}
       <Card className="shadow-lg">
@@ -365,7 +337,7 @@ export function StudentsSettings() {
                   id="student-id"
                   type="text"
                   placeholder="e.g., 0001"
-                  value={newStudent.id}
+                  value={newStudent.id || ""}
                   onChange={e => setNewStudent(s => ({ ...s, id: e.target.value }))}
                   required
                 />
@@ -376,7 +348,7 @@ export function StudentsSettings() {
                   id="email"
                   type="email"
                   placeholder="student@example.com"
-                  value={newStudent.email}
+                  value={newStudent.email || ""}
                   onChange={e => setNewStudent(s => ({ ...s, email: e.target.value }))}
                   required
                 />
@@ -387,7 +359,7 @@ export function StudentsSettings() {
                   id="first-name"
                   type="text"
                   placeholder="First name"
-                  value={newStudent.firstName}
+                  value={newStudent.firstName || ""}
                   onChange={e => setNewStudent(s => ({ ...s, firstName: e.target.value }))}
                   required
                 />
@@ -398,7 +370,7 @@ export function StudentsSettings() {
                   id="last-name"
                   type="text"
                   placeholder="Last name"
-                  value={newStudent.lastName}
+                  value={newStudent.lastName || ""}
                   onChange={e => setNewStudent(s => ({ ...s, lastName: e.target.value }))}
                   required
                 />
@@ -409,7 +381,7 @@ export function StudentsSettings() {
                   id="cohort"
                   type="number"
                   placeholder="e.g., 1, 2, 3"
-                  value={newStudent.cohort}
+                  value={newStudent.cohort || ""}
                   onChange={e => setNewStudent(s => ({ ...s, cohort: e.target.value }))}
                   required
                 />
@@ -431,6 +403,206 @@ export function StudentsSettings() {
           </form>
         </CardContent>
       </Card>
+      {/* Mass Edit Students Card */}
+      {/**
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-lg sm:text-xl">
+            <Edit className="h-5 w-5 text-blue-600" />
+            <span>Mass Edit Students</span>
+          </CardTitle>
+          <CardDescription>
+            Update the cohort number for a range of students by ID (e.g., 0001–0300).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={async e => {
+              e.preventDefault();
+              setError(null);
+              setSaveResult(null);
+              const { startId, endId, newCohort } = massEdit;
+              if (!startId || !endId || !newCohort) {
+                setError("All fields are required.");
+                return;
+              }
+              setLoading(true);
+              try {
+                const res = await fetch('/api/students/bulk-edit', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ startId, endId, newCohort })
+                });
+                const result = await res.json();
+                if (res.ok && result.success) {
+                  setSaveResult({ success: true, message: `Updated ${result.updated} students${result.failed ? `, ${result.failed} failed` : ''}` });
+                } else {
+                  setSaveResult({ success: false, message: result.error || 'Bulk update failed' });
+                }
+                fetchStudents();
+              } catch (err) {
+                setSaveResult({ success: false, message: 'Bulk update failed' });
+              } finally {
+                setLoading(false);
+              }
+            }}
+            className="space-y-4"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startId">Start ID</Label>
+                <Input id="startId" name="startId" type="text" placeholder="e.g., 0001" required value={massEdit.startId} onChange={e => {
+                  setMassEdit(m => ({ ...m, startId: e.target.value }));
+                  if (e.target.value === "" && massEdit.endId === "") setSearch("");
+                }} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endId">End ID</Label>
+                <Input id="endId" name="endId" type="text" placeholder="e.g., 0004" required value={massEdit.endId} onChange={e => {
+                  setMassEdit(m => ({ ...m, endId: e.target.value }));
+                  if (e.target.value === "" && massEdit.startId === "") setSearch("");
+                }} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newCohort">New Cohort Number</Label>
+                <Input id="newCohort" name="newCohort" type="number" placeholder="e.g., 2" required value={massEdit.newCohort} onChange={e => setMassEdit(m => ({ ...m, newCohort: e.target.value }))} />
+              </div>
+            </div>
+            <Button type="submit" variant="default" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating…
+                </>
+              ) : (
+                <>Apply to Range</>
+              )}
+            </Button>
+            {saveResult && (
+              <Alert className={saveResult.success ? "border-green-200 bg-green-50 mt-4" : "border-red-200 bg-red-50 mt-4"}>
+                {saveResult.success ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                )}
+                <AlertDescription className={saveResult.success ? "text-green-800" : "text-red-800"}>
+                  {saveResult.message}
+                </AlertDescription>
+              </Alert>
+            )}
+          </form>
+        </CardContent>
+      </Card>
+      **/}
+
+      {/* Bulk Actions Bar */}
+      {selectMode && selectedIds.length > 0 && (
+        <div className="flex gap-2 mb-4 items-center bg-blue-50 border border-blue-200 rounded p-2">
+          <span className="font-medium">Bulk actions for {selectedIds.length} selected:</span>
+          <Button size="sm" variant="outline" onClick={() => { const cohort = prompt('Enter new cohort number:'); if (cohort) handleBulkCohort(cohort); }}>Edit Cohort</Button>
+          <Button size="sm" variant="destructive" onClick={handleBulkDelete}>Delete</Button>
+          <Button size="sm" variant="secondary" onClick={handleBulkLightspeed}><Zap className="h-4 w-4 mr-1 text-yellow-500" />Promote to Lightspeed</Button>
+        </div>
+      )}
+
+      {/* Current Students Card */}
+      <Card className="shadow-lg w-full max-w-none mx-auto">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center space-x-2 text-lg sm:text-xl">
+              <Users className="h-4 w-5 text-blue-600" />
+              <span>Current Students</span>
+            </div>
+            <div className="flex items-center"><Button size="sm" variant={selectMode ? "default" : "outline"} onClick={() => setSelectMode(m => !m)}>
+              {selectMode ? "Exit Select Mode" : "Select Students"}
+            </Button></div>
+          </div>
+          <CardDescription className="text-center sm:text-left">
+            Manage existing students and promote foundations students to lightspeed status.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Student Search Input */}
+          <div className="mb-4 flex flex-col items-stretch w-full">
+            <Input
+              type="text"
+              placeholder="Search by name, email, or ID..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full"
+            />
+            <div className="flex flex-wrap gap-2 mt-2 items-center justify-start w-full">
+              <span className="text-xs text-gray-600">Sort by:</span>
+              <Button size="sm" variant={sortBy === 'id' ? 'default' : 'outline'} onClick={() => setSortBy('id')}>ID Number</Button>
+              <Button size="sm" variant={sortBy === 'firstName' ? 'default' : 'outline'} onClick={() => setSortBy('firstName')}>First Name</Button>
+              <Button size="sm" variant={sortBy === 'lastName' ? 'default' : 'outline'} onClick={() => setSortBy('lastName')}>Last Name</Button>
+              <Button size="sm" variant="ghost" onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}>
+                {sortDir === 'asc' ? '↑' : '↓'}
+              </Button>
+            </div>
+            {selectMode && (
+              <div className="flex items-center gap-2 mt-2 w-full">
+                <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} style={{ width: 28, height: 28 }} />
+                <span className="text-xs text-gray-600">Select All</span>
+              </div>
+            )}
+          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Loading students…</span>
+            </div>
+          ) : error ? (
+            <Alert className="border-red-200 bg-red-50">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">{error}</AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-3">
+              {filteredStudents.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">No students found</p>
+              ) : (
+                filteredStudents.map(student => (
+                  <div
+                    key={student.id}
+                    className={`flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 p-4 rounded-lg border bg-gray-50 w-full`}
+                    style={{ minWidth: 0 }}
+                    onClick={() => { if (!selectMode) router.push(`/students/${student.id}`); }}
+                  >
+                    {selectMode && (
+                      <div className="flex items-center gap-2 w-full max-w-[40px]">
+                        <input type="checkbox" checked={selectedIds.includes(student.id)} onChange={e => { e.stopPropagation(); toggleSelect(student.id); }} style={{ width: 28, height: 28 }} />
+                      </div>
+                    )}
+                    <div className="flex flex-col items-start min-w-[180px] w-full">
+                      <div className="font-semibold text-lg text-left">{student.firstName} {student.lastName}</div>
+                      <div className="text-xs text-gray-600 text-left">ID: {student.id} • Program: {getPhaseForCohort(student.cohort)} • Email: {student.email || 'N/A'}</div>
+                    </div>
+                    <div className="flex items-center gap-2 justify-end w-full max-w-xs" onClick={e => e.stopPropagation()}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => router.push(`/students/${student.id}?edit=1`)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      {student.program === "lightspeed" ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-600 font-medium flex items-center gap-1">
+                            <Zap className="h-4 w-4" />
+                            Lightspeed
+                          </span>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Success/Error Messages */}
       {saveResult && (
@@ -444,104 +616,6 @@ export function StudentsSettings() {
             {saveResult.message}
           </AlertDescription>
         </Alert>
-      )}
-
-      {/* Edit Student Card - Shows when editing */}
-      {editingStudent && (
-        <Card id="edit-student-card" className="shadow-lg border-blue-200 bg-blue-50/30">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between text-lg sm:text-xl">
-              <div className="flex items-center space-x-2">
-                <Edit className="h-5 w-5 text-blue-600" />
-                <span>Edit Student: {editingStudent.firstName} {editingStudent.lastName}</span>
-              </div>
-              <Button variant="ghost" size="sm" onClick={cancelEdit}>
-                <X className="h-4 w-4" />
-              </Button>
-            </CardTitle>
-            <CardDescription>
-              Update student information and settings. Changes will be saved to the database.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdateStudent} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-student-id">Student ID</Label>
-                  <Input
-                    id="edit-student-id"
-                    type="text"
-                    value={editingStudent.id}
-                    disabled
-                    className="bg-gray-100"
-                  />
-                  <p className="text-xs text-gray-500">Student ID cannot be changed</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-email">Email Address</Label>
-                  <Input
-                    id="edit-email"
-                    type="email"
-                    placeholder="student@example.com"
-                    value={editingStudent.email || ""}
-                    onChange={e => setEditingStudent(s => s ? { ...s, email: e.target.value } : null)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-first-name">First Name</Label>
-                  <Input
-                    id="edit-first-name"
-                    type="text"
-                    placeholder="First name"
-                    value={editingStudent.firstName}
-                    onChange={e => setEditingStudent(s => s ? { ...s, firstName: e.target.value } : null)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-last-name">Last Name</Label>
-                  <Input
-                    id="edit-last-name"
-                    type="text"
-                    placeholder="Last name"
-                    value={editingStudent.lastName}
-                    onChange={e => setEditingStudent(s => s ? { ...s, lastName: e.target.value } : null)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-cohort">Cohort Number</Label>
-                  <Input
-                    id="edit-cohort"
-                    type="number"
-                    placeholder="e.g., 1, 2, 3"
-                    value={editingStudent.cohort?.toString() || ""}
-                    onChange={e => setEditingStudent(s => s ? { ...s, cohort: e.target.value ? parseInt(e.target.value) : null } : null)}
-                  />
-                </div>
-                {/* Program cannot be changed when editing */}
-              </div>
-              <div className="flex gap-2">
-                <Button type="submit" disabled={updating}>
-                  {updating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Updating…
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Update Student
-                    </>
-                  )}
-                </Button>
-                <Button type="button" variant="outline" onClick={cancelEdit}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
       )}
     </div>
   )

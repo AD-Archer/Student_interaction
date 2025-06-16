@@ -27,31 +27,29 @@ export const SystemIntegrations = ({ systemIntegrations, getStatusColor }: {
   const [testResults, setTestResults] = useState<Record<string, TestResult>>({})
 
   const testIntegration = async (integrationName: string) => {
-    // Set testing state
     setTestingStates(prev => ({ ...prev, [integrationName]: true }))
-    
     try {
-      const response = await fetch('/api/integrations/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ integration: integrationName }),
-      })
-
+      let response
+      if (integrationName === 'Scheduled Follow-up Cron') {
+        response = await fetch('/api/cron-health')
+      } else {
+        response = await fetch('/api/integrations/test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ integration: integrationName }),
+        })
+      }
       const result = await response.json()
-      
       if (!response.ok) {
         throw new Error(result.error || 'Test failed')
       }
-
       setTestResults(prev => ({
         ...prev,
         [integrationName]: {
-          success: result.success,
-          message: result.message,
-          details: result.details,
-          timestamp: result.timestamp
+          success: result.ok !== undefined ? result.ok : result.success,
+          message: result.message || (result.ok ? `Cron would process ${result.count} interactions` : 'Test succeeded'),
+          details: result.details || result.interactions,
+          timestamp: result.timestamp || new Date().toISOString(),
         }
       }))
     } catch (error) {
@@ -60,7 +58,7 @@ export const SystemIntegrations = ({ systemIntegrations, getStatusColor }: {
         [integrationName]: {
           success: false,
           message: error instanceof Error ? error.message : 'Test failed',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         }
       }))
     } finally {
@@ -96,9 +94,9 @@ export const SystemIntegrations = ({ systemIntegrations, getStatusColor }: {
         <CardDescription>Test external services and API connections</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6 place-items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6 w-full">
           {systemIntegrations.map((integration, index) => (
-            <div key={index} className="p-4 sm:p-6 border rounded-xl bg-gray-50">
+            <div key={index} className="p-4 sm:p-6 border rounded-xl bg-gray-50 w-full flex flex-col justify-between min-h-[180px]">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <div className="bg-white p-2 rounded-lg">
@@ -110,10 +108,16 @@ export const SystemIntegrations = ({ systemIntegrations, getStatusColor }: {
                   </div>
                 </div>
                 <Badge className={getStatusColor(integration.status)}>
-                  {integration.name === "Database" ? "Database Connected" : integration.status}
+                  {integration.status}
                 </Badge>
               </div>
-              
+              {/* Last Sync/Last Ran */}
+              <div className="mb-2 text-xs text-gray-500 flex items-center gap-1">
+                <span className="font-medium">Last Ran:</span>
+                {integration.lastSync
+                  ? new Date(integration.lastSync).toLocaleString()
+                  : <span className="italic text-gray-400">Never</span>}
+              </div>
               {/* Test Results Display */}
               {testResults[integration.name] && (
                 <div className={`mb-3 p-2 rounded-lg text-xs ${
@@ -132,8 +136,7 @@ export const SystemIntegrations = ({ systemIntegrations, getStatusColor }: {
                   )}
                 </div>
               )}
-              
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 mt-auto">
                 <Button 
                   variant="outline" 
                   size="sm" 

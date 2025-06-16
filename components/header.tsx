@@ -37,6 +37,7 @@ export function Header({ }: { toggleAiInsights: () => void }) {
   const navigationItems = [
     { href: "/", label: "Dashboard", icon: BarChart3, active: pathname === "/" },
     { href: "/analytics", label: "Analytics", icon: TrendingUp, active: pathname === "/analytics" },
+    { href: "/students", label: "Students", icon: LucideUser, active: pathname === "/students" },
     { href: "/settings", label: "Settings", icon: Settings, active: pathname === "/settings" },
     { href: "/create", label: "New Interaction", icon: Plus, active: pathname === "/create" },
   ]

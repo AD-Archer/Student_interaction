@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { User, Loader2 } from "lucide-react"
-import { FormData, formInteractionTypes as interactionTypes } from "@/lib/data"
+import { FormData } from "@/lib/data"
 
 interface Student {
   id: string
@@ -39,6 +39,8 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
   const [cohortFilter, setCohortFilter] = useState<string>("")
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [highlightedIdx, setHighlightedIdx] = useState<number>(-1)
+  const [interactionTypes, setInteractionTypes] = useState<{ id: number, name: string, isDefault: boolean }[]>([])
+  const [typeLoading, setTypeLoading] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
 
@@ -148,6 +150,20 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
     }
   }, [formData.studentId, formData.studentName, formData.studentEmail, onFormDataChange])
 
+  // Load interaction types from the API
+  useEffect(() => {
+    async function loadTypes() {
+      setTypeLoading(true)
+      try {
+        const types = await fetch('/api/interaction-types').then(r => r.json())
+        setInteractionTypes(types)
+      } catch {
+        setTypeLoading(false)
+      }
+    }
+    loadTypes()
+  }, [])
+
   return (
     <Card className="shadow-md border-blue-100 bg-white/80">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -220,7 +236,7 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
                     role="option"
                     aria-selected={formData.studentId === student.id}
                     className={`flex items-center gap-2 px-2 py-2 cursor-pointer ${idx === highlightedIdx ? 'bg-blue-100' : ''}`}
-                    onMouseDown={e => { e.preventDefault(); selectStudent(student) }}
+                    onMouseDown={() => selectStudent(student)}
                     onMouseEnter={() => setHighlightedIdx(idx)}
                   >
                     <User className="h-4 w-4 text-blue-600" />
@@ -233,20 +249,75 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
         </div>
         <div className="space-y-2">
           <Label htmlFor="interactionType">Interaction Type</Label>
-          {/* I keep the interaction type as a Select for now since it's a small, static list */}
-          <select
-            id="interactionType"
-            value={formData.interactionType}
-            onChange={e => onFormDataChange({ interactionType: e.target.value })}
-            className="w-full px-2 py-2 rounded border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white"
-          >
-            <option value="" disabled>Select interaction type</option>
-            {interactionTypes
-              .filter((type) => type.value !== "other")
-              .map((type) => (
-                <option key={type.value} value={type.value}>{type.label}</option>
-              ))}
-          </select>
+          <div className="flex gap-2 items-center">
+            <select
+              id="interactionType"
+              value={formData.interactionType}
+              onChange={e => onFormDataChange({ interactionType: e.target.value })}
+              className="w-full px-2 py-2 rounded border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white"
+              disabled={typeLoading}
+            >
+              <option value="" disabled>Select interaction type</option>
+              {Array.isArray(interactionTypes) &&
+                // Show default types first, then custom types
+                [...interactionTypes.filter(t => t.isDefault), ...interactionTypes.filter(t => !t.isDefault)]
+                  .map((type, idx) => (
+                    <option key={type.id + '-' + type.name + '-' + idx} value={type.name}>{type.name}</option>
+                  ))}
+            </select>
+            {/* Add custom type button */}
+            <button
+              type="button"
+              className="ml-2 px-2 py-1 rounded bg-blue-100 text-blue-700 border border-blue-200 text-xs"
+              onClick={() => {
+                const name = prompt('Enter new interaction type:')?.trim()
+                if (name) {
+                  fetch('/api/interaction-types', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                  })
+                  .then(r => r.json())
+                  .then(newType => {
+                    // Only add if valid
+                    if (newType && newType.id && newType.name) {
+                      setInteractionTypes(types => Array.isArray(types) ? [...types, newType] : [newType])
+                      // Automatically select the newly created type
+                      onFormDataChange({ interactionType: newType.name })
+                    } else {
+                      alert('Failed to add type: ' + (newType?.error || 'Unknown error'))
+                    }
+                  })
+                  .catch(() => alert('Failed to add type'))
+                }
+              }}
+            >
+              + Add
+            </button>
+          </div>
+          {/* Show delete button for custom types */}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {Array.isArray(interactionTypes) && interactionTypes.filter(t => !t.isDefault).map((type, idx) => (
+              <button
+                key={type.id + '-' + type.name + '-' + idx}
+                type="button"
+                className="px-2 py-1 rounded bg-red-100 text-red-700 border border-red-200 text-xs"
+                onClick={() => {
+                  if (window.confirm(`Delete custom type '${type.name}'?`)) {
+                    fetch('/api/interaction-types', {
+                      method: 'DELETE',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ id: type.id })
+                    })
+                    .then(() => setInteractionTypes(types => Array.isArray(types) ? types.filter(t2 => t2.id !== type.id) : []))
+                    .catch(() => alert('Failed to delete type'))
+                  }
+                }}
+              >
+                Delete {type.name}
+              </button>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>
