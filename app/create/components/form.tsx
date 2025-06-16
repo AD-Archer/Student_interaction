@@ -35,7 +35,7 @@ import { useAIFunctionality } from "../hooks/useAIFunctionality"
 import { useEmailFunctionality } from "../hooks/useEmailFunctionality"
 import { useAuth } from "@/components/auth-wrapper"
 
-export function Form({ interactionId }: { interactionId?: number }) {
+export function Form({ interactionId, initialStudentId, initialStudentName }: { interactionId?: number, initialStudentId?: string, initialStudentName?: string }) {
   const router = useRouter()
   const { user } = useAuth()
 
@@ -47,7 +47,7 @@ export function Form({ interactionId }: { interactionId?: number }) {
   const {
     formData,
     updateFormData,
-  } = useFormData({ interactionId })
+  } = useFormData({ interactionId, initialStudentId, initialStudentName })
 
   // I handle AI summary and notes cleanup
   const {

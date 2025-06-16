@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { getPhaseForCohort } from "@/lib/utils"
 
 interface Student {
@@ -24,6 +24,7 @@ interface Interaction {
 
 export default function StudentPage() {
   const params = useParams<{ id: string }>()
+  const router = useRouter()
   const id = params?.id
   const [student, setStudent] = useState<Student | null>(null)
   const [interactions, setInteractions] = useState<Interaction[]>([])
@@ -158,7 +159,12 @@ export default function StudentPage() {
             </div>
           </div>
           {isAdmin && !editing && (
-            <button className="text-xs px-3 py-1 rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition" onClick={handleEdit}>Edit Student</button>
+            <button
+              className="text-xs px-3 py-1 rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition"
+              onClick={handleEdit}
+            >
+              Edit Student
+            </button>
           )}
         </div>
         {isAdmin && editing && editData && (
@@ -199,7 +205,12 @@ export default function StudentPage() {
       <section className="bg-white rounded-xl shadow p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Interactions</h2>
-          <button className="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 transition">New Interaction</button>
+          <button
+            className="px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 transition"
+            onClick={() => router.push(`/create?studentId=${student.id}&studentName=${encodeURIComponent(student.firstName + ' ' + student.lastName)}`)}
+          >
+            New Interaction
+          </button>
         </div>
         {interactions.length === 0 ? (
           <p className="text-gray-500">No interactions yet.</p>
@@ -209,7 +220,12 @@ export default function StudentPage() {
               <li key={interaction.id} className="border rounded-lg p-3 bg-blue-50/30">
                 <div className="flex justify-between items-center">
                   <div className="font-semibold text-blue-900">{interaction.type}</div>
-                  <button className="text-xs text-blue-600 hover:underline">Edit</button>
+                  <button
+                    className="text-xs text-blue-600 hover:underline"
+                    onClick={() => router.push(`/create?id=${interaction.id}`)}
+                  >
+                    Edit
+                  </button>
                 </div>
                 <div className="text-xs text-gray-600 mb-1">{interaction.date} • {interaction.staffMember}</div>
                 <div className="text-sm text-gray-800 mb-1">{interaction.reason}</div>
