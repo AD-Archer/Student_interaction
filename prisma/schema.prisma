@@ -122,11 +122,12 @@ model StaffNote {
   content   String
   timestamp String
   priority  String   // "high", "medium", "low"
-  
+
   // Relations
   userId Int
   user   User @relation(fields: [userId], references: [id])
-  
+  studentId String // Add this line to associate note with a student
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
