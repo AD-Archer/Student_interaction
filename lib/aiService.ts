@@ -49,51 +49,40 @@ async function summarizeWithPlaylab(message: string): Promise<string> {
     },
     body: JSON.stringify({ input: { message } }),
   })
-  const contentType = msgRes.headers.get('content-type') || ''
-  if (!contentType.includes('text/event-stream')) {
-    const text = await msgRes.text()
-    // Try to parse SSE-style lines if present
-    const lines = text.split(/\r?\n/)
-    const parsed = lines
-      .filter(line => line.startsWith('data: '))
-      .map(line => line.replace('data: ', '').trim())
-      .filter(payload => payload && payload !== '[DONE]')
-      .map(payload => {
+  if (!msgRes.ok) {
+    const errorText = await msgRes.text()
+    throw new Error(`Playlab API error: ${msgRes.status} - ${errorText}`)
+  }
+  
+  const text = await msgRes.text()
+  console.log('Playlab raw response:', text) // Debug log
+  
+  // Parse Server-Sent Events format
+  const lines = text.split(/\r?\n/)
+  let aiResponse = ''
+  
+  for (const line of lines) {
+    if (line.startsWith('data: ')) {
+      const payload = line.replace('data: ', '').trim()
+      if (payload && payload !== '[DONE]') {
         try {
           const json = JSON.parse(payload)
-          return json.delta ?? (json.source === 'provider' ? json.content : '')
-        } catch {
-          return ''
+          // Look for AI provider response, not user message
+          if (json.source === 'provider' && json.content) {
+            aiResponse += json.content
+          }
+        } catch (e) {
+          console.error('Failed to parse Playlab JSON:', e)
         }
-      })
-      .join('')
-    return parsed || text
-  }
-  // Streamed response (Node/Edge: ReadableStream is web standard)
-  // I use a type guard to check for getReader without 'any'
-  type MaybeReader = { getReader?: () => ReadableStreamDefaultReader<Uint8Array> }
-  const body = msgRes.body as MaybeReader | undefined
-  const reader = body?.getReader ? body.getReader() : undefined
-  if (!reader) throw new Error('Playlab: no response body')
-  const decoder = new TextDecoder('utf-8')
-  let result = ''
-  while (true) {
-    const { value, done } = await reader.read()
-    if (done) break
-    const chunk = decoder.decode(value, { stream: true })
-    for (const line of chunk.split(/\r?\n/)) {
-      if (!line.startsWith('data: ')) continue
-      const payload = line.replace('data: ', '').trim()
-      if (!payload || payload === '[DONE]') continue
-      try {
-        const parsed = JSON.parse(payload)
-        result += parsed.delta ?? parsed.content ?? ''
-      } catch {
-        result += payload
       }
     }
   }
-  return result
+  
+  if (!aiResponse) {
+    throw new Error('No AI response found in Playlab output')
+  }
+  
+  return aiResponse.trim()
 }
 
 /**
