@@ -513,9 +513,9 @@ export function StudentsSettings() {
               <Users className="h-4 w-5 text-blue-600" />
               <span>Current Students</span>
             </div>
-            <Button size="sm" variant={selectMode ? "default" : "outline"} onClick={() => setSelectMode(m => !m)}>
+            <div className="flex items-center"><Button size="sm" variant={selectMode ? "default" : "outline"} onClick={() => setSelectMode(m => !m)}>
               {selectMode ? "Exit Select Mode" : "Select Students"}
-            </Button>
+            </Button></div>
           </div>
           <CardDescription className="text-center sm:text-left">
             Manage existing students and promote foundations students to lightspeed status.
@@ -523,15 +523,15 @@ export function StudentsSettings() {
         </CardHeader>
         <CardContent>
           {/* Student Search Input */}
-          <div className="mb-4 flex flex-col items-center">
+          <div className="mb-4 flex flex-col items-stretch w-full">
             <Input
               type="text"
               placeholder="Search by name, email, or ID..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full max-w-md"
+              className="w-full"
             />
-            <div className="flex flex-wrap gap-2 mt-2 items-center justify-center">
+            <div className="flex flex-wrap gap-2 mt-2 items-center justify-start w-full">
               <span className="text-xs text-gray-600">Sort by:</span>
               <Button size="sm" variant={sortBy === 'id' ? 'default' : 'outline'} onClick={() => setSortBy('id')}>ID Number</Button>
               <Button size="sm" variant={sortBy === 'firstName' ? 'default' : 'outline'} onClick={() => setSortBy('firstName')}>First Name</Button>
@@ -541,7 +541,7 @@ export function StudentsSettings() {
               </Button>
             </div>
             {selectMode && (
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2 w-full">
                 <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} style={{ width: 28, height: 28 }} />
                 <span className="text-xs text-gray-600">Select All</span>
               </div>
@@ -565,19 +565,20 @@ export function StudentsSettings() {
                 filteredStudents.map(student => (
                   <div
                     key={student.id}
-                    className={`flex flex-col sm:flex-row sm:items-center justify-center gap-4 sm:gap-6 p-4 rounded-lg border bg-gray-50 ${selectMode ? '' : 'cursor-pointer hover:bg-blue-100 transition'}`}
+                    className={`flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 p-4 rounded-lg border bg-gray-50 w-full`}
+                    style={{ minWidth: 0 }}
                     onClick={() => { if (!selectMode) router.push(`/students/${student.id}`); }}
                   >
                     {selectMode && (
-                      <div className="flex items-center gap-2 justify-center sm:justify-start w-full sm:w-auto">
+                      <div className="flex items-center gap-2 w-full max-w-[40px]">
                         <input type="checkbox" checked={selectedIds.includes(student.id)} onChange={e => { e.stopPropagation(); toggleSelect(student.id); }} style={{ width: 28, height: 28 }} />
                       </div>
                     )}
-                    <div className="flex flex-col items-center sm:items-start min-w-[180px] w-full sm:w-auto">
-                      <div className="font-semibold text-lg text-center sm:text-left">{student.firstName} {student.lastName}</div>
-                      <div className="text-xs text-gray-600 text-center sm:text-left">ID: {student.id} • Program: {getPhaseForCohort(student.cohort)} • Email: {student.email || 'N/A'}</div>
+                    <div className="flex flex-col items-start min-w-[180px] w-full">
+                      <div className="font-semibold text-lg text-left">{student.firstName} {student.lastName}</div>
+                      <div className="text-xs text-gray-600 text-left">ID: {student.id} • Program: {getPhaseForCohort(student.cohort)} • Email: {student.email || 'N/A'}</div>
                     </div>
-                    <div className="flex items-center gap-2 justify-center sm:justify-end w-full sm:w-auto" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center gap-2 justify-end w-full max-w-xs" onClick={e => e.stopPropagation()}>
                       <Button
                         size="sm"
                         variant="outline"
