@@ -200,15 +200,26 @@ export default function Page() {
     setShowAiInsights(true);
   }
 
-  // Only include interactions for the current user (staff)
+  // Only include interactions for the current user (staff) for hero section
   const userFullName = activeUser ? `${activeUser.firstName} ${activeUser.lastName}` : null;
   const userInteractions = userFullName
     ? processedInteractions.filter(i => i.staffMember === userFullName)
     : [];
 
-  // Calculate stats using recalculated overdue, but only for current user
-  const overdueCount = userInteractions.filter((i) => i.followUp.overdue).length;
-  const pendingCount = userInteractions.filter((i) => i.followUp.required && !i.followUp.overdue).length;
+  // Calculate stats using recalculated overdue for ALL interactions (not just current user)
+  const overdueCount = processedInteractions.filter((i) => i.followUp.overdue).length;
+  const pendingCount = processedInteractions.filter((i) => i.followUp.required && !i.followUp.overdue).length;
+  
+  // Debug logging
+  console.log('Debug overdue calculation:');
+  console.log('Total interactions:', processedInteractions.length);
+  console.log('Overdue interactions:', processedInteractions.filter((i) => i.followUp.overdue));
+  console.log('Overdue count:', overdueCount);
+  console.log('Pending count:', pendingCount);
+  
+  // User-specific counts for hero section
+  const userOverdueCount = userInteractions.filter((i) => i.followUp.overdue).length;
+  const userPendingCount = userInteractions.filter((i) => i.followUp.required && !i.followUp.overdue).length;
 
   // Archive/unarchive handler for dashboard
   const handleArchive = async (id: string, archive: boolean) => {
@@ -244,8 +255,8 @@ export default function Page() {
             {/* Hero Section */}
             <HeroSection 
               userName={activeUser ? `${activeUser.firstName} ${activeUser.lastName}` : "User"}
-              overdueCount={overdueCount}
-              pendingCount={pendingCount}
+              overdueCount={userOverdueCount}
+              pendingCount={userPendingCount}
               loading={loading}
             />
 

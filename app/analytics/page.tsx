@@ -25,6 +25,7 @@ interface AnalyticsData {
     studentsNeedingInteraction: number
     followUpsRequired: number
     overdueFollowUps: number
+    overdueInteractions: number
     recentInteractions: number
   }
   breakdown: {
@@ -173,13 +174,34 @@ export default function AnalyticsPage() {
     return studentName.includes(query) || student.id.includes(query)
   })
 
-  // Get required follow-ups (not overdue)
+  // Get required follow-ups (not overdue, using same logic as dashboard)
   const getRequiredFollowUps = (): FollowUpRecord[] => {
-    return followUpRecords.filter((record: FollowUpRecord) => !record.isOverdue)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    return followUpRecords.filter((record: FollowUpRecord) => {
+      if (!record.followUpDate) return false
+      const followUpDate = new Date(record.followUpDate)
+      followUpDate.setHours(0, 0, 0, 0)
+      return followUpDate >= today
+    })
   }
 
-  // Get overdue follow-ups
+  // Get overdue follow-ups (follow-up appointments that are past due)
   const getOverdueFollowUps = (): FollowUpRecord[] => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    return followUpRecords.filter((record: FollowUpRecord) => {
+      if (!record.followUpDate) return false
+      const followUpDate = new Date(record.followUpDate)
+      followUpDate.setHours(0, 0, 0, 0)
+      return followUpDate < today
+    })
+  }
+
+  // Get overdue interactions (students who haven't had an interaction in too long)
+  const getOverdueInteractions = (): FollowUpRecord[] => {
     return followUpRecords.filter((record: FollowUpRecord) => record.isOverdue)
   }
 
@@ -364,9 +386,22 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-red-100 mb-2">
                   <AlertCircle className="h-6 w-6 text-red-500" />
                 </div>
-                <p className="text-xs sm:text-sm font-semibold text-red-700">Overdue</p>
+                <p className="text-xs sm:text-sm font-semibold text-red-700">Overdue Follow-ups</p>
                 <p className="text-2xl sm:text-3xl font-bold text-red-900">
-                  {analyticsData.overview.overdueFollowUps}
+                  {getOverdueFollowUps().length}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Overdue Interactions */}
+            <Card className="bg-white/70 border border-orange-100 rounded-2xl shadow-md">
+              <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
+                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-orange-100 mb-2">
+                  <Clock className="h-6 w-6 text-orange-500" />
+                </div>
+                <p className="text-xs sm:text-sm font-semibold text-orange-700">Overdue Interactions</p>
+                <p className="text-2xl sm:text-3xl font-bold text-orange-900">
+                  {getOverdueInteractions().length}
                 </p>
               </CardContent>
             </Card>
@@ -380,19 +415,6 @@ export default function AnalyticsPage() {
                 <p className="text-xs sm:text-sm font-semibold text-green-700">Total Interactions</p>
                 <p className="text-2xl sm:text-3xl font-bold text-green-900">
                   {analyticsData.overview.totalInteractions}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Recent Interactions */}
-            <Card className="bg-white/70 border border-purple-100 rounded-2xl shadow-md">
-              <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
-                <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-purple-100 mb-2">
-                  <TrendingUp className="h-6 w-6 text-purple-500" />
-                </div>
-                <p className="text-xs sm:text-sm font-semibold text-purple-700">Recent ({dateRange}d)</p>
-                <p className="text-2xl sm:text-3xl font-bold text-purple-900">
-                  {analyticsData.overview.recentInteractions}
                 </p>
               </CardContent>
             </Card>
