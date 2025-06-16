@@ -16,7 +16,8 @@ function getUserFromJWT(request: NextRequest) {
 }
 
 // GET /api/students/[id]/personal-notes - Get personal notes for a student by the current staff
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function GET(request: NextRequest, { params }: any) {
   const user = getUserFromJWT(request)
   if (!user || typeof user !== 'object' || !('userId' in user) || !('email' in user)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -39,7 +40,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // POST /api/students/[id]/personal-notes - Save personal note for a student by the current staff
-export async function POST(request: NextRequest, context: { params: { id: string } }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function POST(request: NextRequest, { params }: any) {
   const user = getUserFromJWT(request)
   if (!user || typeof user !== 'object' || !('userId' in user) || !('email' in user)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -49,8 +51,6 @@ export async function POST(request: NextRequest, context: { params: { id: string
     if (!content) {
       return NextResponse.json({ error: 'Missing content' }, { status: 400 })
     }
-    // Await context.params to avoid Next.js dynamic API error
-    const params = await context.params
     const note = await db.staffNote.create({
       data: {
         userId: Number(user.userId),

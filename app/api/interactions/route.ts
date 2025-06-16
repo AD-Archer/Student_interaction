@@ -15,6 +15,7 @@
 // PATCH for archiving is handled in /api/interactions/[id]/route.ts. If you add new fields to the Interaction model, update the queries and response formatting here.
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { Prisma } from "@prisma/client"
 
 // Build CORS headers per request to support credentials
 function buildCorsHeaders(request: NextRequest) {
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
     const followUpRequired = searchParams.get('followUpRequired')
 
     // Build where clause for filtering
-    const where: any = {}
+    const where: Prisma.InteractionWhereInput = {}
     if (cohort && cohort !== 'all') {
       where.student = { cohort: parseInt(cohort) }
     }

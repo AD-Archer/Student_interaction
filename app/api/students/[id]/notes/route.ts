@@ -16,8 +16,9 @@ function getUserFromJWT(request: NextRequest) {
 }
 
 // GET /api/students/[id]/notes - Get all notes for a student
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id: studentId } = params;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function GET(request: NextRequest, { params }: any) {
+  const studentId = params.id;
   try {
     const notes = await db.staffNote.findMany({
       where: { studentId },
@@ -31,8 +32,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // POST /api/students/[id]/notes - Add a new note for a student
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id: studentId } = params;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function POST(request: NextRequest, { params }: any) {
+  const studentId = params.id;
   const user = getUserFromJWT(request)
   if (!user || typeof user !== 'object' || !('userId' in user) || !('email' in user)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
