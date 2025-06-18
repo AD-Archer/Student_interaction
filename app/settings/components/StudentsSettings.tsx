@@ -32,6 +32,8 @@ interface Student {
   altSchoolEmail?: string | null
   personalEmail?: string | null
   phone?: string | null
+  isLightspeed?: boolean // Lightspeed toggle
+  isPIP?: boolean // PIP toggle
 }
 
 interface CohortPhaseMap {
@@ -55,7 +57,9 @@ export function StudentsSettings() {
     personalEmail: "",
     phone: "",
     cohort: "",
-    program: "foundations"
+    program: "foundations",
+    isLightspeed: false,
+    isPIP: false
   })
   const [creating, setCreating] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -147,7 +151,7 @@ export function StudentsSettings() {
       }
       const created = await res.json()
       setStudents(prev => [...prev, created])
-      setNewStudent({ id: "", firstName: "", lastName: "", email: "", launchpadEmail: "", altSchoolEmail: "", personalEmail: "", phone: "", cohort: "", program: "foundations" })
+      setNewStudent({ id: "", firstName: "", lastName: "", email: "", launchpadEmail: "", altSchoolEmail: "", personalEmail: "", phone: "", cohort: "", program: "foundations", isLightspeed: false, isPIP: false })
       setSaveResult({ success: true, message: "Student created successfully" })
       setTimeout(() => setSaveResult(null), 3000)
     } catch (err) {

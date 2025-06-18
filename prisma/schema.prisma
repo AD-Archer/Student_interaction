@@ -57,7 +57,8 @@ model Student {
 
   // Lightspeed program toggle
   isLightspeed   Boolean @default(false) // True if student is in lightspeed program
-  
+  // PIP program toggle
+  isPIP          Boolean @default(false) // True if student is in Performance Improvement Plan
   // Relations
   interactions Interaction[]
   
@@ -176,6 +177,7 @@ model SystemSettings {
   foundationsInteractionDays Int    @default(14) // Days for foundations program students
   liftoffInteractionDays    Int     @default(21) // Days for liftoff program students
   lightspeedInteractionDays Int     @default(7)  // Days for lightspeed program students
+  pipInteractionDays        Int     @default(7)  // Days for PIP students
   program101InteractionDays Int     @default(30) // Days for 101 program students
   
   // Priority escalation settings

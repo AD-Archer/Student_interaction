@@ -22,6 +22,7 @@ interface InteractionSettings {
   foundationsInteractionDays: number
   liftoffInteractionDays: number
   lightspeedInteractionDays: number
+  pipInteractionDays: number // Custom timer for PIP
   program101InteractionDays: number
   priorityEscalationDays: number
   enablePriorityEscalation: boolean
@@ -35,6 +36,7 @@ export const InteractionFrequencySettings = () => {
     foundationsInteractionDays: 14,
     liftoffInteractionDays: 21,
     lightspeedInteractionDays: 7,
+    pipInteractionDays: 7, // Default for PIP
     program101InteractionDays: 30,
     priorityEscalationDays: 7,
     enablePriorityEscalation: true,
@@ -61,6 +63,7 @@ export const InteractionFrequencySettings = () => {
           foundationsInteractionDays: data.foundationsInteractionDays || 14,
           liftoffInteractionDays: data.liftoffInteractionDays || 21,
           lightspeedInteractionDays: data.lightspeedInteractionDays || 7,
+          pipInteractionDays: data.pipInteractionDays || 7,
           program101InteractionDays: data.program101InteractionDays || 30,
           priorityEscalationDays: data.priorityEscalationDays || 7,
           enablePriorityEscalation: data.enablePriorityEscalation ?? true,
@@ -201,6 +204,18 @@ export const InteractionFrequencySettings = () => {
               className="w-full max-w-xs"
             />
             <p className="text-sm text-gray-600">Used for programs not specifically configured above</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="pipInteractionDays">PIP (Performance Improvement Plan) (days)</Label>
+            <Input
+              id="pipInteractionDays"
+              type="number"
+              min="1"
+              value={settings.pipInteractionDays}
+              onChange={(e) => handleInputChange('pipInteractionDays', parseInt(e.target.value) || 1)}
+              className="w-full"
+            />
           </div>
         </div>
 

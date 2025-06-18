@@ -14,6 +14,8 @@ interface Student {
   altSchoolEmail?: string | null
   personalEmail?: string | null
   phone?: string | null
+  isLightspeed?: boolean // Lightspeed toggle
+  isPIP?: boolean // PIP toggle
 }
 
 interface Interaction {
@@ -100,7 +102,11 @@ export default function StudentPage() {
     setSaveSuccess(false)
   }
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditData(prev => prev ? { ...prev, [e.target.name]: e.target.value } : prev)
+    const { name, value, type, checked } = e.target;
+    setEditData(prev => prev ? {
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    } : prev)
   }
   const handleSave = async () => {
     if (!student || !editData) return
@@ -283,6 +289,16 @@ export default function StudentPage() {
             <div>
               <label className="block text-xs font-medium mb-1">Program</label>
               <input name="program" value={program || ""} className="w-full rounded border border-gray-200 px-2 py-1 text-sm bg-gray-100 cursor-not-allowed" disabled readOnly />
+            </div>
+            <div className="flex gap-2">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="isLightspeed" checked={!!editData.isLightspeed} onChange={handleChange} />
+                Lightspeed
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="isPIP" checked={!!editData.isPIP} onChange={handleChange} />
+                PIP
+              </label>
             </div>
             {saveError && <div className="text-xs text-red-600">{saveError}</div>}
             {saveSuccess && <div className="text-xs text-green-600">Student updated!</div>}
