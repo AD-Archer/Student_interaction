@@ -27,6 +27,10 @@ interface CSVStudent {
   firstName: string
   lastName: string
   email: string
+  launchpadEmail?: string
+  altSchoolEmail?: string
+  personalEmail?: string
+  phone?: string
   cohort: string
   studentId: string
 }
@@ -117,6 +121,12 @@ function parseCSV(csvText: string): CSVStudent[] {
     throw new Error(`Missing required columns: ${missingColumns.join(', ')}`)
   }
 
+  // Add new field indices
+  const launchpadEmailIndex = header.findIndex(h => h === 'launchpademail' || h === 'launchpad email')
+  const altSchoolEmailIndex = header.findIndex(h => h === 'altschoolemail' || h === 'alternative school email' || h === 'alt school email')
+  const personalEmailIndex = header.findIndex(h => h === 'personalemail' || h === 'personal email')
+  const phoneIndex = header.findIndex(h => h === 'phone' || h === 'phonenumber' || h === 'phone number')
+
   // Parse data rows
   for (let i = 1; i < lines.length; i++) {
     // Use CSV-aware splitting for data rows
@@ -152,6 +162,10 @@ function parseCSV(csvText: string): CSVStudent[] {
       firstName: values[firstNameIndex] || '',
       lastName: values[lastNameIndex] || '',
       email: emailIndex !== -1 ? values[emailIndex] || '' : '',
+      launchpadEmail: launchpadEmailIndex !== -1 ? values[launchpadEmailIndex] || '' : undefined,
+      altSchoolEmail: altSchoolEmailIndex !== -1 ? values[altSchoolEmailIndex] || '' : undefined,
+      personalEmail: personalEmailIndex !== -1 ? values[personalEmailIndex] || '' : undefined,
+      phone: phoneIndex !== -1 ? values[phoneIndex] || '' : undefined,
       cohort: cohort, // always a string, will be parsed to int or null below
       studentId: values[studentIdIndex] || ''
     }
@@ -232,6 +246,10 @@ async function importStudents(students: CSVStudent[]): Promise<ImportResult> {
             firstName: student.firstName,
             lastName: student.lastName,
             email: email,
+            launchpadEmail: student.launchpadEmail !== undefined ? student.launchpadEmail : null,
+            altSchoolEmail: student.altSchoolEmail !== undefined ? student.altSchoolEmail : null,
+            personalEmail: student.personalEmail !== undefined ? student.personalEmail : null,
+            phone: student.phone || null,
             cohort: cohortNumber // always int or null
           }
         })

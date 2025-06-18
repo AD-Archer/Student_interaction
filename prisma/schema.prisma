@@ -48,6 +48,15 @@ model Student {
   email     String? // Student email address
   cohort    Int?    // Cohort number (1, 2, 3, etc.)
   status    String @default("active") // "active" or "archived"
+
+  // New fields for multiple emails and phone
+  launchpadEmail String? // Launchpad email address
+  altSchoolEmail String? // Alternative school email address
+  personalEmail  String? // Personal email address
+  phone          String? // Student phone number
+
+  // Lightspeed program toggle
+  isLightspeed   Boolean @default(false) // True if student is in lightspeed program
   
   // Relations
   interactions Interaction[]

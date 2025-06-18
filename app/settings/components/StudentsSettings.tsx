@@ -28,6 +28,10 @@ interface Student {
   email?: string | null
   program: string
   cohort?: number | null
+  launchpadEmail?: string | null
+  altSchoolEmail?: string | null
+  personalEmail?: string | null
+  phone?: string | null
 }
 
 interface CohortPhaseMap {
@@ -46,6 +50,10 @@ export function StudentsSettings() {
     firstName: "",
     lastName: "",
     email: "",
+    launchpadEmail: "",
+    altSchoolEmail: "",
+    personalEmail: "",
+    phone: "",
     cohort: "",
     program: "foundations"
   })
@@ -139,7 +147,7 @@ export function StudentsSettings() {
       }
       const created = await res.json()
       setStudents(prev => [...prev, created])
-      setNewStudent({ id: "", firstName: "", lastName: "", email: "", cohort: "", program: "foundations" })
+      setNewStudent({ id: "", firstName: "", lastName: "", email: "", launchpadEmail: "", altSchoolEmail: "", personalEmail: "", phone: "", cohort: "", program: "foundations" })
       setSaveResult({ success: true, message: "Student created successfully" })
       setTimeout(() => setSaveResult(null), 3000)
     } catch (err) {
@@ -351,7 +359,46 @@ export function StudentsSettings() {
                   placeholder="student@example.com"
                   value={newStudent.email || ""}
                   onChange={e => setNewStudent(s => ({ ...s, email: e.target.value }))}
-                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="launchpad-email">Launchpad Email</Label>
+                <Input
+                  id="launchpad-email"
+                  type="email"
+                  placeholder="launchpad@school.org"
+                  value={newStudent.launchpadEmail || ""}
+                  onChange={e => setNewStudent(s => ({ ...s, launchpadEmail: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="alt-school-email">Alternative School Email</Label>
+                <Input
+                  id="alt-school-email"
+                  type="email"
+                  placeholder="alt@school.org"
+                  value={newStudent.altSchoolEmail || ""}
+                  onChange={e => setNewStudent(s => ({ ...s, altSchoolEmail: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="personal-email">Personal Email</Label>
+                <Input
+                  id="personal-email"
+                  type="email"
+                  placeholder="personal@email.com"
+                  value={newStudent.personalEmail || ""}
+                  onChange={e => setNewStudent(s => ({ ...s, personalEmail: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  type="text"
+                  placeholder="(555) 555-5555"
+                  value={newStudent.phone || ""}
+                  onChange={e => setNewStudent(s => ({ ...s, phone: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
@@ -577,7 +624,13 @@ export function StudentsSettings() {
                     )}
                     <div className="flex flex-col items-start min-w-[180px] w-full">
                       <div className="font-semibold text-lg text-left">{student.firstName} {student.lastName}</div>
-                      <div className="text-xs text-gray-600 text-left">ID: {student.id} • Program: {getPhaseForCohort(student.cohort)} • Email: {student.email || 'N/A'}</div>
+                      <div className="text-xs text-gray-600 text-left">
+                        ID: {student.id} • Program: {getPhaseForCohort(student.cohort)} • Email: {student.email || 'N/A'}
+                        {student.launchpadEmail && (<><br/>Launchpad Email: {student.launchpadEmail}</>)}
+                        {student.altSchoolEmail && (<><br/>Alt School Email: {student.altSchoolEmail}</>)}
+                        {student.personalEmail && (<><br/>Personal Email: {student.personalEmail}</>)}
+                        {student.phone && (<><br/>Phone: {student.phone}</>)}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 justify-end w-full max-w-xs" onClick={e => e.stopPropagation()}>
                       <Button

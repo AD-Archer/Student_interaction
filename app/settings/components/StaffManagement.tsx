@@ -397,6 +397,7 @@ export default function StaffManagement() {
                             size="sm" 
                             className="flex-1 sm:flex-none min-w-0 sm:min-w-[100px] border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-colors shadow-sm text-xs sm:text-sm py-2"
                             onClick={() => handleEdit(staff)}
+                            title="Edit this staff member's name, email, role, or permissions"
                           >
                             <Edit className="h-4 w-4 mr-1" />
                             <span className="hidden xs:inline">Edit</span>
@@ -406,6 +407,7 @@ export default function StaffManagement() {
                             size="sm"
                             className="flex-1 sm:flex-none min-w-0 sm:min-w-[110px] border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-colors shadow-sm text-xs sm:text-sm py-2"
                             onClick={() => handlePasswordReset(staff)}
+                            title="Reset this staff member's password to @Changeme2 and notify them to change it after login"
                           >
                             <RotateCcw className="h-4 w-4 mr-1" />
                             <span className="hidden xs:inline">Reset</span>

@@ -10,6 +10,10 @@ interface Student {
   email?: string | null
   program?: string | null
   cohort?: number | null
+  launchpadEmail?: string | null
+  altSchoolEmail?: string | null
+  personalEmail?: string | null
+  phone?: string | null
 }
 
 interface Interaction {
@@ -255,6 +259,22 @@ export default function StudentPage() {
             <div>
               <label className="block text-xs font-medium mb-1">Email</label>
               <input name="email" value={editData.email || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1">Launchpad Email</label>
+              <input name="launchpadEmail" value={editData.launchpadEmail || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1">Alternative School Email</label>
+              <input name="altSchoolEmail" value={editData.altSchoolEmail || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1">Personal Email</label>
+              <input name="personalEmail" value={editData.personalEmail || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1">Phone</label>
+              <input name="phone" value={editData.phone || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
             </div>
             <div>
               <label className="block text-xs font-medium mb-1">Cohort</label>
