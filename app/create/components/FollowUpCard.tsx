@@ -153,7 +153,7 @@ export function FollowUpCard({
                       </span>
                     </div>
                     {studentEmail && (
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 mt-2 sm:mt-0 sm:flex-nowrap">
                         <Button
                           type="button"
                           size="sm"
@@ -200,7 +200,7 @@ export function FollowUpCard({
                       </span>
                     </div>
                     {formData.staffEmail && (
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 mt-2 sm:mt-0 sm:flex-nowrap">
                         <Button
                           type="button"
                           size="sm"

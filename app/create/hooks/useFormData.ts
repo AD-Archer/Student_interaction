@@ -40,13 +40,16 @@ export function useFormData({ interactionId, initialStudentId, initialStudentNam
 
   // Update follow-up date when checkboxes change
   useEffect(() => {
+    // Only set default if enabling follow-up and no date is set
     if ((followUpStudent || followUpStaff) && !formData.followUpDate) {
       setFormData((prev) => ({ ...prev, followUpDate: twoWeeksFromToday }))
     }
+    // Only clear if disabling both and a date is set
     if (!followUpStudent && !followUpStaff && formData.followUpDate) {
       setFormData((prev) => ({ ...prev, followUpDate: "" }))
     }
-  }, [followUpStudent, followUpStaff, formData.followUpDate, twoWeeksFromToday])
+    // Do NOT overwrite the date if user has set it
+  }, [followUpStudent, followUpStaff])
 
   // Load existing interaction data if editing
   useEffect(() => {
