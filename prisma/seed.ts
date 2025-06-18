@@ -57,10 +57,10 @@ async function main() {
 
   // Create students
   const students = [
-    { id: "0001", firstName: "Micheal", lastName: "Newman", program: "foundations" },
-    { id: "0002", firstName: "Amira", lastName: "Wilson", program: "101" },
-    { id: "0003", firstName: "Koleona", lastName: "Chrek", program: "lightspeed" },
-    { id: "0004", firstName: "Zaire", lastName: "DeBose", program: "liftoff" },
+    { id: "0001", firstName: "Micheal", lastName: "Newman" },
+    { id: "0002", firstName: "Amira", lastName: "Wilson" },
+    { id: "0003", firstName: "Koleona", lastName: "Chrek" },
+    { id: "0004", firstName: "Zaire", lastName: "DeBose" },
   ]
 
   console.log('Creating students...')
@@ -99,7 +99,6 @@ async function main() {
         studentId: "0001",
         studentFirstName: "Micheal",
         studentLastName: "Newman",
-        program: "foundations",
         type: "Coaching",
         reason: "Interview preparation and confidence building",
         notes: "Worked on interview techniques, body language, and answering common questions. Student showed improvement in confidence levels.",
@@ -117,7 +116,6 @@ async function main() {
         studentId: "0002", 
         studentFirstName: "Amira",
         studentLastName: "Johnson",
-        program: "101",
         type: "Academic Support",
         reason: "Course planning assistance",
         notes: "Reviewed current course load, discussed upcoming semester options, identified areas needing additional support.",
@@ -135,7 +133,6 @@ async function main() {
         studentId: "0003",
         studentFirstName: "Koleona",
         studentLastName: "Smith", 
-        program: "lightspeed",
         type: "Career Counseling",
         reason: "Industry networking and job search strategies",
         notes: "Discussed networking strategies, updated LinkedIn profile, identified target companies and roles in tech industry.",

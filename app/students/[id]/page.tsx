@@ -375,7 +375,9 @@ export default function StudentPage() {
             {filteredInteractions.map(interaction => (
               <li key={interaction.id} className="border rounded-lg p-3 bg-blue-50/30">
                 <div className="flex justify-between items-center">
-                  <div className="font-semibold text-blue-900">{interaction.type}</div>
+                  <div className="font-semibold text-blue-900">
+                    {typeof interaction.type === "string" ? interaction.type : (interaction.type as { name: string })?.name}
+                  </div>
                   <button
                     className="text-xs text-blue-600 hover:underline"
                     onClick={() => router.push(`/create?id=${interaction.id}`)}

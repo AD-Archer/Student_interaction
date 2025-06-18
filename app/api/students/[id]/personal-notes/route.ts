@@ -17,10 +17,15 @@ function getUserFromJWT(request: NextRequest) {
 
 // GET /api/students/[id]/personal-notes - Get personal notes for a student by the current staff
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function GET(request: NextRequest, { params }: any) {
+export async function GET(request: NextRequest, context: any) {
   const user = getUserFromJWT(request)
   if (!user || typeof user !== 'object' || !('userId' in user) || !('email' in user)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  // Await params if it is a Promise (App Router convention)
+  let params = context.params
+  if (typeof params?.then === 'function') {
+    params = await params
   }
   try {
     const note = await db.staffNote.findFirst({
