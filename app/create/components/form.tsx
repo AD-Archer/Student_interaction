@@ -23,8 +23,8 @@
 
 "use client"
 
-import React, { useState } from "react"
-import { useRouter } from "next/navigation"
+import React, { useState, useEffect, useRef } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import { StudentSelectionCard } from "./StudentSelectionCard"
 import { InteractionDetailsCard } from "./InteractionDetailsCard"
 import { FollowUpCard } from "./FollowUpCard"
@@ -37,6 +37,7 @@ import { useAuth } from "@/components/auth-wrapper"
 
 export function Form({ interactionId, initialStudentId, initialStudentName }: { interactionId?: number, initialStudentId?: string, initialStudentName?: string }) {
   const router = useRouter()
+  const pathname = usePathname()
   const { user } = useAuth()
 
   // Restore two booleans for follow-up recipients
@@ -153,6 +154,72 @@ export function Form({ interactionId, initialStudentId, initialStudentName }: { 
   const handlePerformAIAction = async (action: import('../hooks/useAIFunctionality').AIActionType, content: string) => {
     return await performAIAction(action, content)
   }
+
+  const isDirty = useRef(false)
+
+  // Watch for changes to formData to set dirty flag
+  useEffect(() => {
+    // If any field is filled, mark as dirty
+    isDirty.current = !!(
+      formData.studentName ||
+      formData.studentId ||
+      formData.interactionType ||
+      formData.reason ||
+      formData.notes ||
+      formData.followUpDate ||
+      formData.staffEmail
+    )
+  }, [formData])
+
+  // Warn on page unload if dirty
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty.current) {
+        e.preventDefault()
+        e.returnValue = "You have unsaved changes. Are you sure you want to leave?"
+        return e.returnValue
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload)
+  }, [])
+
+  // Block navigation if dirty (Next.js back/forward and in-app links)
+  useEffect(() => {
+    // Block browser back/forward
+    const unblock = (event: PopStateEvent) => {
+      if (isDirty.current) {
+        const confirmLeave = window.confirm("You have unsaved changes. Are you sure you want to leave this page?")
+        if (!confirmLeave) {
+          event.preventDefault?.()
+          window.history.pushState(null, '', window.location.href)
+          return false
+        }
+      }
+      return true
+    }
+    window.addEventListener('popstate', unblock)
+
+    // Intercept all <a> clicks for in-app navigation
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.tagName === 'A') {
+        const href = (target as HTMLAnchorElement).getAttribute('href')
+        if (href && !href.startsWith('#') && isDirty.current && href !== window.location.pathname) {
+          const confirmLeave = window.confirm("You have unsaved changes. Are you sure you want to leave this page?")
+          if (!confirmLeave) {
+            e.preventDefault()
+            return false
+          }
+        }
+      }
+    }
+    document.addEventListener('click', handleLinkClick)
+    return () => {
+      window.removeEventListener('popstate', unblock)
+      document.removeEventListener('click', handleLinkClick)
+    }
+  }, [])
 
   return (
     <div className="space-y-8 sm:space-y-10">
