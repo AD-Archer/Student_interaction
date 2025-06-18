@@ -67,6 +67,11 @@ interface FollowUpRecord {
   isOverdue: boolean
 }
 
+// Extend StudentRecord locally to include isPIP for PIP filtering
+interface StudentWithPIP extends StudentRecord {
+  isPIP?: boolean;
+}
+
 /**
  * Helper to format a date string as MM/DD/YYYY (US format).
  * Returns 'Invalid date' if input is not a valid date.
@@ -80,23 +85,21 @@ const formatDateUS = (dateStr: string | null | undefined): string => {
 }
 
 // Helper to render cohort safely
-const renderCohort = (cohort: any) => {
+const renderCohort = (cohort: string | number | { name?: string; id?: string } | null | undefined): string => {
   if (!cohort) return 'Unassigned'
   if (typeof cohort === 'object') {
-    // Try to render .name or .id, fallback to JSON string
-    return cohort.name || cohort.id || JSON.stringify(cohort)
+    return (cohort as { name?: string; id?: string }).name || (cohort as { name?: string; id?: string }).id || JSON.stringify(cohort)
   }
-  return cohort
+  return String(cohort)
 }
 
 // Helper to render interaction type safely
-const renderInteractionType = (type: any) => {
+const renderInteractionType = (type: string | { name?: string; id?: string } | null | undefined): string => {
   if (!type) return ''
   if (typeof type === 'object') {
-    // Try to render .name or .id, fallback to JSON string
-    return type.name || type.id || JSON.stringify(type)
+    return (type as { name?: string; id?: string }).name || (type as { name?: string; id?: string }).id || JSON.stringify(type)
   }
-  return type
+  return String(type)
 }
 
 export default function AnalyticsPage() {
@@ -110,6 +113,7 @@ export default function AnalyticsPage() {
   const [studentsNeedingInteraction, setStudentsNeedingInteraction] = useState<StudentRecord[]>([])
   const [followUpRecords, setFollowUpRecords] = useState<FollowUpRecord[]>([])
   const [cohortPhaseMap, setCohortPhaseMap] = useState<Record<string, string>>({})
+  const [allStudents, setAllStudents] = useState<StudentRecord[]>([])
 
   // Fetch cohortPhaseMap on mount
   useEffect(() => {
@@ -125,6 +129,22 @@ export default function AnalyticsPage() {
       }
     }
     fetchCohortPhaseMap()
+  }, [])
+
+  // Fetch all students for PIP section
+  useEffect(() => {
+    const fetchAllStudents = async () => {
+      try {
+        const response = await fetch('/api/students')
+        if (response.ok) {
+          const students = await response.json()
+          setAllStudents(students)
+        }
+      } catch (error) {
+        console.error('Error fetching all students:', error)
+      }
+    }
+    fetchAllStudents()
   }, [])
 
   // Memoize fetchers to avoid stale closures and satisfy exhaustive-deps
@@ -393,6 +413,44 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
+          {/* PIP Students Section - always above metrics */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Students on PIP <span className="ml-2 px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white animate-pulse">PIP</span></CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const pipStudents = Array.isArray(allStudents) ? (allStudents as StudentWithPIP[]).filter((s) => s.isPIP) : [];
+                return pipStudents.length > 0 ? (
+                  <div className="border rounded-md divide-y">
+                    {pipStudents.map((student, index) => (
+                      <div key={index} className="p-4 flex items-center">
+                        <div className="flex-1">
+                          <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(student.id)}>
+                            {student.firstName} {student.lastName}
+                            <span className="ml-2 px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white animate-pulse cursor-help" title="This student is currently on a Performance Improvement Plan (PIP)">PIP</span>
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            ID: {student.id} • Cohort: {renderCohort(student.cohort)} • Phase: {getPhaseForCohort(student.cohort, student.program)}
+                          </p>
+                          {student.lastInteraction && (
+                            <p className="text-xs text-gray-400">
+                              Last interaction: {formatDateUS(student.lastInteraction)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center py-8 text-gray-500">
+                    No students are currently on a PIP in this cohort.
+                  </p>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
           {/* Key Metrics Dashboard */}
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-6">
             {/* Total Students */}
@@ -581,32 +639,45 @@ export default function AnalyticsPage() {
                       <h3 className="font-semibold text-red-600 mb-2">Overdue for Interaction (7+ days)</h3>
                       <div className="border rounded-md divide-y">
                         {getStudentsOverdueInteraction().map((student, index) => (
-                          <div key={index} className="p-4 bg-red-50">
-                            <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(student.id)}>
-                              {student.firstName} {student.lastName}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              ID: {student.id} • Cohort: {renderCohort(student.cohort)} • Phase: {getPhaseForCohort(student.cohort, student.program)}
-                            </p>
-                            <p className="text-sm text-red-500">
-                              {student.daysSinceLastInteraction} days since last interaction
-                            </p>
-                            {student.lastInteraction && (
-                              <p className="text-xs text-gray-400">
-                                Last interaction: {formatDateUS(student.lastInteraction)}
+                          <div key={index} className="p-4 bg-red-50 flex items-center">
+                            <div className="flex-1">
+                              <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(student.id)}>
+                                {student.firstName} {student.lastName}
+                                {(student as StudentWithPIP).isPIP && (
+                                  <span className="ml-2 px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white animate-pulse cursor-help" title="This student is currently on a Performance Improvement Plan (PIP)">
+                                    PIP
+                                  </span>
+                                )}
                               </p>
-                            )}
+                              <p className="text-sm text-gray-500">
+                                ID: {student.id} • Cohort: {renderCohort(student.cohort)} • Phase: {getPhaseForCohort(student.cohort, student.program)}
+                              </p>
+                              <p className="text-sm text-red-500">
+                                {student.daysSinceLastInteraction} days since last interaction
+                              </p>
+                              {student.lastInteraction && (
+                                <p className="text-xs text-gray-400">
+                                  Last interaction: {formatDateUS(student.lastInteraction)}
+                                </p>
+                              )}
+                            </div>
+                            {/* BADGE: Show PIP/Lightspeed status in student lists */}
+                            <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700" 
+                              style={{ display: (student as unknown as { isLightspeed?: boolean }).isLightspeed ? 'inline-flex' : 'none' }}
+                            >
+                              Lightspeed
+                            </span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
                   {/* Not overdue (less than 7 days) */}
-                  {filteredStudents.filter(s => !s.daysSinceLastInteraction || s.daysSinceLastInteraction < 7).length > 0 && (
+                  {filteredStudents.filter((s: StudentWithPIP) => !s.daysSinceLastInteraction || s.daysSinceLastInteraction < 7).length > 0 && (
                     <div>
                       <h3 className="font-semibold text-gray-700 mb-2">Upcoming/Recent</h3>
                       <div className="border rounded-md divide-y">
-                        {filteredStudents.filter(s => !s.daysSinceLastInteraction || s.daysSinceLastInteraction < 7).map((student, index) => (
+                        {filteredStudents.filter((s: StudentWithPIP) => !s.daysSinceLastInteraction || s.daysSinceLastInteraction < 7).map((student, index) => (
                           <div key={index} className="p-4 flex justify-between items-center">
                             <div>
                               <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(student.id)}>
@@ -627,11 +698,6 @@ export default function AnalyticsPage() {
                               )}
                             </div>
                             {/* BADGE: Show PIP/Lightspeed status in student lists */}
-                            <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700" 
-                              style={{ display: (student as unknown as { isPIP?: boolean }).isPIP ? 'inline-flex' : 'none' }}
-                            >
-                              PIP
-                            </span>
                             <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700" 
                               style={{ display: (student as unknown as { isLightspeed?: boolean }).isLightspeed ? 'inline-flex' : 'none' }}
                             >
@@ -665,35 +731,22 @@ export default function AnalyticsPage() {
                         {getFollowUpsOverdueByWeek().map((record, index) => {
                           const student = studentsNeedingInteraction.find(s => s.id === record.studentId) || filteredStudents.find(s => s.id === record.studentId);
                           return (
-                            <div key={index} className="p-4 bg-red-50">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(record.studentId)}>
-                                    {record.studentFirstName} {record.studentLastName}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    ID: {record.studentId} • Cohort: {renderCohort(record.cohort)} • Phase: {getPhaseForCohort(record.cohort, record.program)}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    Staff: {record.staffMember}
-                                  </p>
-                                  {student && typeof student.daysSinceLastInteraction === 'number' && (
-                                    <p className="text-sm text-red-500">
-                                      {student.daysSinceLastInteraction} days since last interaction
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="mt-2">
-                                <p className="text-sm">
-                                  <span className="font-medium">Follow-up:</span> {formatDateUS(record.followUpDate)}
+                            <div key={index} className="p-4 bg-red-50 flex items-center">
+                              <div className="flex-1">
+                                <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(record.studentId)}>
+                                  {record.studentFirstName} {record.studentLastName}
                                 </p>
-                                <p className="text-sm">
-                                  <span className="font-medium">Type:</span> {renderInteractionType(record.type)}
+                                <p className="text-sm text-gray-500">
+                                  ID: {record.studentId} • Cohort: {renderCohort(record.cohort)} • Phase: {getPhaseForCohort(record.cohort, record.program)}
                                 </p>
-                                <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                                  {record.notes}
+                                <p className="text-sm text-gray-500">
+                                  Staff: {record.staffMember}
                                 </p>
+                                {student && typeof student.daysSinceLastInteraction === 'number' && (
+                                  <p className="text-sm text-red-500">
+                                    {student.daysSinceLastInteraction} days since last interaction
+                                  </p>
+                                )}
                               </div>
                             </div>
                           )
@@ -709,35 +762,22 @@ export default function AnalyticsPage() {
                         {getFollowUpsOverdueMoreThanWeek().map((record, index) => {
                           const student = studentsNeedingInteraction.find(s => s.id === record.studentId) || filteredStudents.find(s => s.id === record.studentId);
                           return (
-                            <div key={index} className="p-4 bg-red-100">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(record.studentId)}>
-                                    {record.studentFirstName} {record.studentLastName}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    ID: {record.studentId} • Cohort: {renderCohort(record.cohort)} • Phase: {getPhaseForCohort(record.cohort, record.program)}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    Staff: {record.staffMember}
-                                  </p>
-                                  {student && typeof student.daysSinceLastInteraction === 'number' && (
-                                    <p className="text-sm text-red-500">
-                                      {student.daysSinceLastInteraction} days since last interaction
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="mt-2">
-                                <p className="text-sm">
-                                  <span className="font-medium">Follow-up:</span> {formatDateUS(record.followUpDate)}
+                            <div key={index} className="p-4 bg-red-100 flex items-center">
+                              <div className="flex-1">
+                                <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(record.studentId)}>
+                                  {record.studentFirstName} {record.studentLastName}
                                 </p>
-                                <p className="text-sm">
-                                  <span className="font-medium">Type:</span> {renderInteractionType(record.type)}
+                                <p className="text-sm text-gray-500">
+                                  ID: {record.studentId} • Cohort: {renderCohort(record.cohort)} • Phase: {getPhaseForCohort(record.cohort, record.program)}
                                 </p>
-                                <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                                  {record.notes}
+                                <p className="text-sm text-gray-500">
+                                  Staff: {record.staffMember}
                                 </p>
+                                {student && typeof student.daysSinceLastInteraction === 'number' && (
+                                  <p className="text-sm text-red-500">
+                                    {student.daysSinceLastInteraction} days since last interaction
+                                  </p>
+                                )}
                               </div>
                             </div>
                           )
@@ -753,35 +793,22 @@ export default function AnalyticsPage() {
                         {getRequiredFollowUps().filter(f => getDaysOverdue(f.followUpDate) < 7).map((record, index) => {
                           const student = studentsNeedingInteraction.find(s => s.id === record.studentId) || filteredStudents.find(s => s.id === record.studentId);
                           return (
-                            <div key={index} className="p-4">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(record.studentId)}>
-                                    {record.studentFirstName} {record.studentLastName}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    ID: {record.studentId} • Cohort: {renderCohort(record.cohort)} • Phase: {getPhaseForCohort(record.cohort, record.program)}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    Staff: {record.staffMember}
-                                  </p>
-                                  {student && typeof student.daysSinceLastInteraction === 'number' && (
-                                    <p className="text-sm text-orange-500">
-                                      {student.daysSinceLastInteraction} days since last interaction
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="mt-2">
-                                <p className="text-sm">
-                                  <span className="font-medium">Follow-up:</span> {formatDateUS(record.followUpDate)}
+                            <div key={index} className="p-4 flex">
+                              <div className="flex-1">
+                                <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(record.studentId)}>
+                                  {record.studentFirstName} {record.studentLastName}
                                 </p>
-                                <p className="text-sm">
-                                  <span className="font-medium">Type:</span> {renderInteractionType(record.type)}
+                                <p className="text-sm text-gray-500">
+                                  ID: {record.studentId} • Cohort: {renderCohort(record.cohort)} • Phase: {getPhaseForCohort(record.cohort, record.program)}
                                 </p>
-                                <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                                  {record.notes}
+                                <p className="text-sm text-gray-500">
+                                  Staff: {record.staffMember}
                                 </p>
+                                {student && typeof student.daysSinceLastInteraction === 'number' && (
+                                  <p className="text-sm text-orange-500">
+                                    {student.daysSinceLastInteraction} days since last interaction
+                                  </p>
+                                )}
                               </div>
                             </div>
                           )
@@ -803,7 +830,6 @@ export default function AnalyticsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Overdue Follow-ups
-                    {/* I use &apos; for apostrophe in the tooltip for proper escaping */}
                     <span className="ml-2 cursor-help text-gray-400" title="A follow-up is &apos;overdue&apos; if its scheduled date has passed and no action has been taken.">
                       (What does &apos;overdue&apos; mean?)
                     </span>
@@ -860,51 +886,7 @@ export default function AnalyticsPage() {
             </TabsContent>
           </Tabs>
 
-          {/* Staff Performance Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Staff Performance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {analyticsData.breakdown.staffPerformance.slice(0, 6).map((staff, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    <p className="font-medium">{staff.staffMember}</p>
-                    <p className="text-2xl font-bold text-blue-600">{staff.interactions}</p>
-                    <p className="text-sm text-gray-500">interactions</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Monthly Trends */}
-          {analyticsData.trends.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly Trends</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {analyticsData.trends.map((trend, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <span className="font-medium">{trend.month}</span>
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <p className="text-sm text-gray-500">Interactions</p>
-                          <p className="font-bold">{trend.interactions}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm text-gray-500">Follow-ups</p>
-                          <p className="font-bold">{trend.followUps}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          
         </div>
       </main>
     </div>

@@ -305,6 +305,7 @@ export default function Page() {
                   isArchived: i.isArchived ?? false,
                   cohort: i.cohort,
                   phase: i.phase,
+                  isPIP: (i as unknown as { isPIP?: boolean }).isPIP ?? false, // Only use isPIP if it exists directly
                 }))}
                 showAiInsights={showAiInsights}
                 setShowAiInsights={setShowAiInsights}

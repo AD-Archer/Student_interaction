@@ -17,6 +17,7 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
   const [cohortPhaseMap, setCohortPhaseMap] = useState<Record<string, string> | null>(null)
+  const [showOnlyPIP, setShowOnlyPIP] = useState(false)
 
   useEffect(() => {
     (async () => {
@@ -35,14 +36,16 @@ export default function StudentsPage() {
       .then(data => setCohortPhaseMap(data?.cohortPhaseMap || null))
   }, [])
 
-  const filtered = search
-    ? students.filter(s =>
-        s.firstName.toLowerCase().includes(search) ||
-        s.lastName.toLowerCase().includes(search) ||
-        (s.email?.toLowerCase().includes(search) ?? false) ||
-        s.id.toLowerCase().includes(search)
-      )
-    : students
+  const filtered = students.filter(s => {
+    if (showOnlyPIP && !s.isPIP) return false;
+    if (!search) return true;
+    return (
+      s.firstName.toLowerCase().includes(search) ||
+      s.lastName.toLowerCase().includes(search) ||
+      (s.email?.toLowerCase().includes(search) ?? false) ||
+      s.id.toLowerCase().includes(search)
+    );
+  })
 
   return (
     <main className="min-h-screen w-full bg-gray-50">
@@ -61,6 +64,17 @@ export default function StudentsPage() {
             className="w-full max-w-xs rounded-xl border border-blue-200 px-3 py-2 text-sm bg-white shadow-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-200"
           />
         </form>
+        <div className="mb-4 flex items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={showOnlyPIP}
+              onChange={e => setShowOnlyPIP(e.target.checked)}
+              className="accent-red-600 h-4 w-4 rounded border-gray-300"
+            />
+            <span className="text-sm font-semibold text-red-700">Show only students on PIP</span>
+          </label>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {loading ? (
             <p className="text-gray-500 text-center py-2 col-span-full">Loading…</p>

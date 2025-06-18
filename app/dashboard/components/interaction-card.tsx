@@ -158,7 +158,9 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
                     {interaction.studentName}
                   </Link>
                   {interaction.isPIP && (
-                    <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700">PIP</span>
+                    <span className="ml-2 px-2 py-0.5 rounded text-xs font-bold bg-red-600 text-white animate-pulse cursor-help" title="This student is currently on a Performance Improvement Plan (PIP)">
+                      PIP
+                    </span>
                   )}
                 </h3>
               </div>

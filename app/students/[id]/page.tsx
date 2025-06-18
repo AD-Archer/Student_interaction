@@ -218,46 +218,27 @@ export default function StudentPage() {
   }
 
   // Helper to render interaction type safely
-  const renderInteractionType = (type: any) => {
+  const renderInteractionType = (type: string | { name?: string; id?: string } | null | undefined): string => {
     if (!type) return ''
     if (typeof type === 'object') {
-      // Try to render .name or .id, fallback to JSON string
-      return type.name || type.id || JSON.stringify(type)
+      return (type as { name?: string; id?: string }).name || (type as { name?: string; id?: string }).id || JSON.stringify(type)
     }
-    return type
+    return String(type)
   }
-
-  // Helper to display student data
-  const studentDetailsMain = [
-    { label: 'ID', value: student.id },
-    { label: 'First Name', value: student.firstName },
-    { label: 'Last Name', value: student.lastName },
-    { label: 'Status', value: student.status || 'active' },
-    { label: 'Cohort', value: student.cohort ?? 'Unassigned' },
-    { label: 'Program', value: program || 'N/A' },
-  ];
-  const studentDetailsContact = [
-    { label: 'Email', value: student.email || 'N/A' },
-    { label: 'Launchpad Email', value: student.launchpadEmail || 'N/A' },
-    { label: 'Alt School Email', value: student.altSchoolEmail || 'N/A' },
-    { label: 'Personal Email', value: student.personalEmail || 'N/A' },
-    { label: 'Phone', value: student.phone || 'N/A' },
-  ];
-  const studentDetailsFlags = [
-    { label: 'Lightspeed', value: student.isLightspeed ? 'Yes' : 'No' },
-    { label: 'PIP', value: student.isPIP ? 'Yes' : 'No' },
-  ];
-  const studentDetailsDates = [
-    { label: 'Created At', value: student.createdAt ? new Date(student.createdAt).toLocaleString() : 'N/A' },
-    { label: 'Updated At', value: student.updatedAt ? new Date(student.updatedAt).toLocaleString() : 'N/A' },
-  ];
 
   return (
     <main className="max-w-2xl mx-auto py-10 px-4 space-y-8">
       {/* Student Details Section */}
       <section className="bg-white rounded-xl shadow p-6 mb-4">
         <div className="flex flex-col items-start mb-4">
-          <h1 className="text-4xl font-extrabold text-gray-900 leading-tight mb-1">{student.firstName} {student.lastName}</h1>
+          <h1 className="text-4xl font-extrabold text-gray-900 leading-tight mb-1 flex items-center gap-3">
+            {student.firstName} {student.lastName}
+            {student.isPIP && (
+              <span className="ml-2 px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white animate-pulse cursor-help" title="This student is currently on a Performance Improvement Plan (PIP)">
+                PIP
+              </span>
+            )}
+          </h1>
           <div className="text-base text-gray-600 mb-1">{student.email || 'N/A'}</div>
           <div className="text-base text-blue-700 font-semibold mb-2">{program || 'N/A'}</div>
         </div>

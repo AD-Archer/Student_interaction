@@ -1,7 +1,8 @@
 /**
  * app/api/admin/flush-db/route.ts
- * API route to flush (delete) all data from the database: students, users, interactions, and related tables.
- * Only accessible by admin users. After flush, the admin will be prompted to create a new account.
+ * API route to flush (delete) core data: students, interactions, staff notes, and sessions.
+ * Leaves users (staff), system settings, and integrations intact for a 'fresh' but not empty site.
+ * Only accessible by admin users. After flush, the admin can continue using the site.
  * WARNING: This action is irreversible and should be protected in production.
  */
 
@@ -12,21 +13,21 @@ export async function POST() {
   // NOTE: You should add authentication/authorization here in production
 
   try {
-    // I delete all data in the correct order to avoid FK constraint errors
+    // Delete in order to avoid FK constraint errors
     await db.interaction.deleteMany({})
-    await db.student.deleteMany({})
-    await db.user.deleteMany({})
     await db.staffNote.deleteMany({})
     await db.session.deleteMany({})
-    // Add more tables as needed (e.g., cohorts, settings, etc.)
-    // await db.cohort.deleteMany({})
+    await db.student.deleteMany({})
+    // DO NOT delete users, systemSettings, or integrations
+    // await db.user.deleteMany({})
     // await db.systemSettings.deleteMany({})
+    // await db.systemIntegrationStatus.deleteMany({})
 
-    console.log('Database flushed successfully')
+    console.log('Database flushed: students, interactions, staff notes, sessions')
 
     return NextResponse.json({ 
       success: true, 
-      message: "Database flushed successfully. You can now create a new admin account."
+      message: "Database flushed: students, interactions, staff notes, and sessions. Settings and staff accounts remain."
     })
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 })
