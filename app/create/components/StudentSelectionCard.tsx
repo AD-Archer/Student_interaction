@@ -329,6 +329,38 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
             ))}
           </div>
         </div>
+        {formData.studentId && (
+          <div className="flex justify-end mt-2">
+            <a
+              href={`/students/${formData.studentId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline text-sm font-medium px-2 py-1 rounded border border-blue-100 bg-blue-50 hover:bg-blue-100 transition"
+              onClick={e => {
+                // Check for unsaved changes in the form
+                const form = document.querySelector('form')
+                let isDirty = false
+                if (form) {
+                  const inputs = form.querySelectorAll('input,textarea,select')
+                  for (const input of inputs) {
+                    if ((input as HTMLInputElement).value) {
+                      isDirty = true
+                      break
+                    }
+                  }
+                }
+                if (isDirty) {
+                  const confirmLeave = window.confirm('You have unsaved changes. Open the student page in a new tab? This tab will remain open.')
+                  if (!confirmLeave) {
+                    e.preventDefault()
+                  }
+                }
+              }}
+            >
+              View Student Page ↗
+            </a>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
