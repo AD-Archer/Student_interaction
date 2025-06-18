@@ -79,6 +79,26 @@ const formatDateUS = (dateStr: string | null | undefined): string => {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })
 }
 
+// Helper to render cohort safely
+const renderCohort = (cohort: any) => {
+  if (!cohort) return 'Unassigned'
+  if (typeof cohort === 'object') {
+    // Try to render .name or .id, fallback to JSON string
+    return cohort.name || cohort.id || JSON.stringify(cohort)
+  }
+  return cohort
+}
+
+// Helper to render interaction type safely
+const renderInteractionType = (type: any) => {
+  if (!type) return ''
+  if (typeof type === 'object') {
+    // Try to render .name or .id, fallback to JSON string
+    return type.name || type.id || JSON.stringify(type)
+  }
+  return type
+}
+
 export default function AnalyticsPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
@@ -306,6 +326,11 @@ export default function AnalyticsPage() {
     }
   }
 
+  // Add a click handler to go to student profile
+  const handleStudentClick = (studentId: string) => {
+    router.push(`/students/${studentId}`)
+  }
+
   if (isLoading || !analyticsData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
@@ -338,7 +363,7 @@ export default function AnalyticsPage() {
                   placeholder="Search students by name or ID"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-white/70 focus:border-blue-400"
+                  className="w-full rounded-xl border border-gray-200 bg-white/70"
                 />
               </div>
               <Select value={selectedCohort} onValueChange={setSelectedCohort}>
@@ -544,6 +569,12 @@ export default function AnalyticsPage() {
                   <CardTitle>Students Needing Interaction</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <Input
+                    placeholder="Search students by name or ID"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 bg-white/70 mb-4"
+                  />
                   {/* Overdue by 1 week or more */}
                   {getStudentsOverdueInteraction().length > 0 && (
                     <div className="mb-6">
@@ -551,9 +582,11 @@ export default function AnalyticsPage() {
                       <div className="border rounded-md divide-y">
                         {getStudentsOverdueInteraction().map((student, index) => (
                           <div key={index} className="p-4 bg-red-50">
-                            <p className="font-medium">{student.firstName} {student.lastName}</p>
+                            <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(student.id)}>
+                              {student.firstName} {student.lastName}
+                            </p>
                             <p className="text-sm text-gray-500">
-                              ID: {student.id} • Cohort: {student.cohort || 'Unassigned'} • Phase: {getPhaseForCohort(student.cohort, student.program)}
+                              ID: {student.id} • Cohort: {renderCohort(student.cohort)} • Phase: {getPhaseForCohort(student.cohort, student.program)}
                             </p>
                             <p className="text-sm text-red-500">
                               {student.daysSinceLastInteraction} days since last interaction
@@ -576,9 +609,11 @@ export default function AnalyticsPage() {
                         {filteredStudents.filter(s => !s.daysSinceLastInteraction || s.daysSinceLastInteraction < 7).map((student, index) => (
                           <div key={index} className="p-4 flex justify-between items-center">
                             <div>
-                              <p className="font-medium">{student.firstName} {student.lastName}</p>
+                              <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(student.id)}>
+                                {student.firstName} {student.lastName}
+                              </p>
                               <p className="text-sm text-gray-500">
-                                ID: {student.id} • Cohort: {student.cohort || 'Unassigned'} • Phase: {getPhaseForCohort(student.cohort, student.program)}
+                                ID: {student.id} • Cohort: {renderCohort(student.cohort)} • Phase: {getPhaseForCohort(student.cohort, student.program)}
                               </p>
                               {student.daysSinceLastInteraction && (
                                 <p className="text-sm text-orange-500">
@@ -633,9 +668,11 @@ export default function AnalyticsPage() {
                             <div key={index} className="p-4 bg-red-50">
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <p className="font-medium">{record.studentFirstName} {record.studentLastName}</p>
+                                  <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(record.studentId)}>
+                                    {record.studentFirstName} {record.studentLastName}
+                                  </p>
                                   <p className="text-sm text-gray-500">
-                                    ID: {record.studentId} • Cohort: {record.cohort || 'Unassigned'} • Phase: {getPhaseForCohort(record.cohort, record.program)}
+                                    ID: {record.studentId} • Cohort: {renderCohort(record.cohort)} • Phase: {getPhaseForCohort(record.cohort, record.program)}
                                   </p>
                                   <p className="text-sm text-gray-500">
                                     Staff: {record.staffMember}
@@ -652,7 +689,7 @@ export default function AnalyticsPage() {
                                   <span className="font-medium">Follow-up:</span> {formatDateUS(record.followUpDate)}
                                 </p>
                                 <p className="text-sm">
-                                  <span className="font-medium">Type:</span> {record.type}
+                                  <span className="font-medium">Type:</span> {renderInteractionType(record.type)}
                                 </p>
                                 <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                                   {record.notes}
@@ -675,9 +712,11 @@ export default function AnalyticsPage() {
                             <div key={index} className="p-4 bg-red-100">
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <p className="font-medium">{record.studentFirstName} {record.studentLastName}</p>
+                                  <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(record.studentId)}>
+                                    {record.studentFirstName} {record.studentLastName}
+                                  </p>
                                   <p className="text-sm text-gray-500">
-                                    ID: {record.studentId} • Cohort: {record.cohort || 'Unassigned'} • Phase: {getPhaseForCohort(record.cohort, record.program)}
+                                    ID: {record.studentId} • Cohort: {renderCohort(record.cohort)} • Phase: {getPhaseForCohort(record.cohort, record.program)}
                                   </p>
                                   <p className="text-sm text-gray-500">
                                     Staff: {record.staffMember}
@@ -694,7 +733,7 @@ export default function AnalyticsPage() {
                                   <span className="font-medium">Follow-up:</span> {formatDateUS(record.followUpDate)}
                                 </p>
                                 <p className="text-sm">
-                                  <span className="font-medium">Type:</span> {record.type}
+                                  <span className="font-medium">Type:</span> {renderInteractionType(record.type)}
                                 </p>
                                 <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                                   {record.notes}
@@ -717,9 +756,11 @@ export default function AnalyticsPage() {
                             <div key={index} className="p-4">
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <p className="font-medium">{record.studentFirstName} {record.studentLastName}</p>
+                                  <p className="font-medium text-blue-700 hover:underline cursor-pointer" onClick={() => handleStudentClick(record.studentId)}>
+                                    {record.studentFirstName} {record.studentLastName}
+                                  </p>
                                   <p className="text-sm text-gray-500">
-                                    ID: {record.studentId} • Cohort: {record.cohort || 'Unassigned'} • Phase: {getPhaseForCohort(record.cohort, record.program)}
+                                    ID: {record.studentId} • Cohort: {renderCohort(record.cohort)} • Phase: {getPhaseForCohort(record.cohort, record.program)}
                                   </p>
                                   <p className="text-sm text-gray-500">
                                     Staff: {record.staffMember}
@@ -736,7 +777,7 @@ export default function AnalyticsPage() {
                                   <span className="font-medium">Follow-up:</span> {formatDateUS(record.followUpDate)}
                                 </p>
                                 <p className="text-sm">
-                                  <span className="font-medium">Type:</span> {record.type}
+                                  <span className="font-medium">Type:</span> {renderInteractionType(record.type)}
                                 </p>
                                 <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                                   {record.notes}
@@ -780,7 +821,7 @@ export default function AnalyticsPage() {
                                 <p className="font-medium">{record.studentFirstName} {record.studentLastName}</p>
                               </div>
                               <p className="text-sm text-gray-500">
-                                ID: {record.studentId} • Cohort: {record.cohort || 'Unassigned'} • Program: {record.program}
+                                ID: {record.studentId} • Cohort: {renderCohort(record.cohort)} • Program: {record.program}
                               </p>
                               <p className="text-sm text-gray-500">
                                 Staff: {record.staffMember}
@@ -800,7 +841,7 @@ export default function AnalyticsPage() {
                               Overdue means the follow-up date has passed and action is still required. This is determined by the backend: if <code>isOverdue</code> is true, the follow-up is overdue.
                             </p>
                             <p className="text-sm">
-                              <span className="font-medium">Type:</span> {record.type}
+                              <span className="font-medium">Type:</span> {renderInteractionType(record.type)}
                             </p>
                             <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                               {record.notes}

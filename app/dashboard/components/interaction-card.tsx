@@ -15,7 +15,7 @@ import { AlertCircle, Clock, User, Eye, Edit, Mail, ArchiveRestore, Archive, Ale
 import { format, formatDistanceToNow } from "date-fns"
 import { useEmailFunctionality } from "@/app/create/hooks/useEmailFunctionality"
 import { useState } from "react"
-// import { students, staffMembers } from "@/lib/data" // <-- removed, fetch from API instead
+import Link from "next/link"
 
 interface Interaction {
   id: string
@@ -34,10 +34,11 @@ interface Interaction {
     date: string
   }
   isArchived?: boolean
-  studentEmail?: string // add for email functionality
-  staffEmail?: string   // add for email functionality
   cohort?: string | number // Add cohort for dashboard display
   phase?: string // Add phase for dashboard display
+  isPIP?: boolean // Add isPIP for PIP badge
+  studentEmail?: string // Add for email functionality
+  staffEmail?: string   // Add for email functionality
 }
 
 interface InteractionCardProps {
@@ -152,8 +153,13 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
                 <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-blue-100">
                   <User className="h-5 w-5 text-blue-500" />
                 </div>
-                <h3 className="font-bold text-lg text-gray-900 truncate">
-                  {interaction.studentName}
+                <h3 className="font-bold text-lg text-gray-900 truncate flex items-center gap-2">
+                  <Link href={`/students/${interaction.studentId}`} className="hover:underline text-blue-700">
+                    {interaction.studentName}
+                  </Link>
+                  {interaction.isPIP && (
+                    <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700">PIP</span>
+                  )}
                 </h3>
               </div>
               <div className="flex flex-wrap items-center gap-2">

@@ -217,6 +217,16 @@ export default function StudentPage() {
     )
   }
 
+  // Helper to render interaction type safely
+  const renderInteractionType = (type: any) => {
+    if (!type) return ''
+    if (typeof type === 'object') {
+      // Try to render .name or .id, fallback to JSON string
+      return type.name || type.id || JSON.stringify(type)
+    }
+    return type
+  }
+
   // Helper to display student data
   const studentDetailsMain = [
     { label: 'ID', value: student.id },
@@ -406,7 +416,7 @@ export default function StudentPage() {
               <li key={interaction.id} className="border rounded-lg p-3 bg-blue-50/30">
                 <div className="flex justify-between items-center">
                   <div className="font-semibold text-blue-900">
-                    {typeof interaction.type === "string" ? interaction.type : (interaction.type as { name: string })?.name}
+                    {renderInteractionType(interaction.type)}
                   </div>
                   <button
                     className="text-xs text-blue-600 hover:underline"
@@ -477,7 +487,7 @@ export default function StudentPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1">Program</label>
-                <input name="program" value={program || ""} className="w-full rounded border border-gray-200 px-2 py-1 text-sm bg-gray-100 cursor-not-allowed" disabled readOnly />
+                <input name="program" value={cohortPhaseMap && editData.cohort != null ? getPhaseForCohort(cohortPhaseMap, editData.cohort) : editData.program || 'N/A'} className="w-full rounded border border-gray-200 px-2 py-1 text-sm bg-gray-100 cursor-not-allowed" disabled readOnly />
               </div>
               <div className="flex gap-2">
                 <label className="flex items-center gap-2">

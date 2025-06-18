@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect } from "react"
+import { getPhaseForCohort } from "@/lib/utils"
 
 interface Student {
   id: string
@@ -8,12 +9,14 @@ interface Student {
   email?: string | null
   program?: string | null
   cohort?: number | null
+  isPIP?: boolean // Add isPIP for badge
 }
 
 export default function StudentsPage() {
   const [search, setSearch] = useState("")
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
+  const [cohortPhaseMap, setCohortPhaseMap] = useState<Record<string, string> | null>(null)
 
   useEffect(() => {
     (async () => {
@@ -24,6 +27,12 @@ export default function StudentsPage() {
       }
       setLoading(false)
     })()
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/settings/system')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setCohortPhaseMap(data?.cohortPhaseMap || null))
   }, [])
 
   const filtered = search
@@ -58,23 +67,33 @@ export default function StudentsPage() {
           ) : filtered.length === 0 ? (
             <p className="text-gray-500 text-center py-2 col-span-full">No students found</p>
           ) : (
-            filtered.map(student => (
-              <a
-                key={student.id}
-                href={`/students/${student.id}`}
-                className="block p-4 rounded-2xl border border-blue-100 bg-white/80 hover:bg-blue-50 transition shadow-sm hover:shadow-md group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-blue-100 rounded-full h-10 w-10 flex items-center justify-center text-blue-700 font-bold text-lg group-hover:bg-blue-200 transition">
-                    {student.firstName.charAt(0)}{student.lastName.charAt(0)}
+            filtered.map(student => {
+              const program = cohortPhaseMap && student.cohort != null
+                ? getPhaseForCohort(cohortPhaseMap, student.cohort)
+                : student.program || 'N/A';
+              return (
+                <a
+                  key={student.id}
+                  href={`/students/${student.id}`}
+                  className="block p-4 rounded-2xl border border-blue-100 bg-white/80 hover:bg-blue-50 transition shadow-sm hover:shadow-md group"
+                >
+                  <div className="flex flex-col items-start gap-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="bg-blue-100 rounded-full h-12 w-12 flex items-center justify-center text-blue-700 font-extrabold text-2xl group-hover:bg-blue-200 transition">
+                        {student.firstName.charAt(0)}{student.lastName.charAt(0)}
+                      </div>
+                      {student.isPIP && (
+                        <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700">PIP</span>
+                      )}
+                    </div>
+                    <div className="font-bold text-blue-900 text-xl leading-tight">{student.firstName} {student.lastName}</div>
+                    <div className="text-sm text-gray-600">{student.email || 'N/A'}</div>
+                    <div className="text-sm text-blue-700 font-semibold">{program}</div>
+                    <div className="text-xs text-gray-500 mt-1">ID: {student.id}</div>
                   </div>
-                  <div>
-                    <div className="font-semibold text-blue-900 text-base">{student.firstName} {student.lastName}</div>
-                    <div className="text-xs text-gray-600 mt-0.5">ID: {student.id} • Program: {student.program || 'N/A'} • Email: {student.email || 'N/A'}</div>
-                  </div>
-                </div>
-              </a>
-            ))
+                </a>
+              )
+            })
           )}
         </div>
       </div>
