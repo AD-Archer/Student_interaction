@@ -196,11 +196,11 @@ export async function GET(request: NextRequest) {
     const systemSettings = await db.systemSettings.findFirst({ orderBy: { updatedAt: 'desc' } })
     const cohortPhaseMap = systemSettings?.cohortPhaseMap || {}
     // Helper to get phase for a student
-    function getPhase(student: any): string {
+    function getPhase(student: { isPIP?: boolean; isLightspeed?: boolean; cohort?: number | null; }): string {
       if (student.isPIP) return 'PIP'
       if (student.isLightspeed) return 'Lightspeed'
       // Map cohort to phase
-      const cohortStr = student.cohort ? String(student.cohort) : null
+      const cohortStr = student.cohort !== null ? String(student.cohort) : null
       const foundPhase = Object.entries(cohortPhaseMap).find(([, v]) => v === cohortStr)?.[0]
       return foundPhase || 'Unassigned'
     }

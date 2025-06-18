@@ -33,7 +33,7 @@ interface CSVStudent {
   phone?: string
   cohort: string
   studentId: string
-  meta?: Record<string, any>
+  meta?: Record<string, unknown>
 }
 
 interface ImportResult {
@@ -149,7 +149,7 @@ function parseCSV(csvText: string): CSVStudent[] {
 
     // Build meta with all extra fields
     const knownIndexes = [studentIdIndex, firstNameIndex, lastNameIndex, emailIndex, launchpadEmailIndex, altSchoolEmailIndex, personalEmailIndex, phoneIndex, cohortIndex, fallbackCohortIndex]
-    const meta: Record<string, any> = {}
+    const meta: Record<string, unknown> = {}
     for (let j = 0; j < values.length; j++) {
       if (!knownIndexes.includes(j) && rawHeader[j]) {
         const key = rawHeader[j].toLowerCase()
@@ -226,7 +226,6 @@ async function importStudents(students: CSVStudent[]): Promise<ImportResult> {
       // Always robustly parse cohort: treat empty/non-numeric as null, else store as integer
       let cohortNumber: number | null = null
       const cohortRaw = typeof student.cohort === 'string' ? student.cohort.trim() : ''
-      let resolvedCohort = cohortRaw
       if (/^\d+$/.test(cohortRaw)) {
         cohortNumber = parseInt(cohortRaw, 10)
       } else if (cohortRaw) {
@@ -234,13 +233,12 @@ async function importStudents(students: CSVStudent[]): Promise<ImportResult> {
         const mapped = phaseToCohort[cohortRaw.toLowerCase()]
         if (mapped && /^\d+$/.test(mapped)) {
           cohortNumber = parseInt(mapped, 10)
-          resolvedCohort = mapped
         } else {
           cohortNumber = null
         }
       }
       const email = student.email ? String(student.email) : null
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         firstName: student.firstName,
         lastName: student.lastName,
         email: email,
@@ -261,6 +259,8 @@ async function importStudents(students: CSVStudent[]): Promise<ImportResult> {
         await prisma.student.create({
           data: {
             id: student.studentId,
+            firstName: student.firstName,
+            lastName: student.lastName,
             ...updateData
           }
         })

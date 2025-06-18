@@ -52,9 +52,6 @@ export function FollowUpCard({
   const handleFollowUpDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFormDataChange({ followUpDate: e.target.value })
   }
-  const handleStaffEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFormDataChange({ staffEmail: e.target.value })
-  }
 
   // Helper to build the email preview (mimics useEmailFunctionality logic)
   function buildEmailPreview(type: 'student' | 'staff') {
@@ -120,7 +117,7 @@ export function FollowUpCard({
       <CardContent className="space-y-4">
         {(followUpStudent || followUpStaff) && (
           <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded p-2 mb-2">
-            Follow-ups will appear in analytics under <b>"Follow-Up"</b>.
+            Follow-ups will appear in analytics under <b>&quot;Follow-Up&quot;</b>.
           </div>
         )}
         <div className="flex flex-col sm:flex-row gap-4">

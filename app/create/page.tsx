@@ -34,7 +34,7 @@ export default function CreateInteractionPage() {
         initialStudentName={studentName || undefined}
       />
     )
-  } catch (err) {
+  } catch {
     formContent = (
       <div className="p-6 text-center text-red-600">
         <p className="font-semibold">Something went wrong loading the form.</p>

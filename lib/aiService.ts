@@ -75,7 +75,7 @@ async function summarizeWithPlaylab(message: string): Promise<string> {
           if (typeof json.delta === 'string') {
             aiResponse += json.delta
           }
-        } catch (e) {
+        } catch {
           // Not JSON, treat as raw string
           aiResponse += payload
         }
@@ -92,7 +92,7 @@ async function summarizeWithPlaylab(message: string): Promise<string> {
           if (json.source === 'provider' && json.content) {
             aiResponse += json.content
           }
-        } catch (e) {
+        } catch {
           // ignore
         }
       }

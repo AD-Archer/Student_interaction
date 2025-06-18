@@ -306,15 +306,6 @@ export default function AnalyticsPage() {
     }
   }
 
-  // BADGE: Show PIP/Lightspeed status in student lists
-  const getStudentPhase = (student: StudentRecord) => {
-    if ((student as any).isPIP) return 'PIP'
-    if ((student as any).isLightspeed) return 'Lightspeed'
-    const cohortStr = student.cohort ? String(student.cohort) : null
-    const foundPhase = Object.entries(cohortPhaseMap).find(([, v]) => v === cohortStr)?.[0]
-    return foundPhase || student.program
-  }
-
   if (isLoading || !analyticsData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
@@ -602,12 +593,12 @@ export default function AnalyticsPage() {
                             </div>
                             {/* BADGE: Show PIP/Lightspeed status in student lists */}
                             <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700" 
-                              style={{ display: (student as any).isPIP ? 'inline-flex' : 'none' }}
+                              style={{ display: (student as unknown as { isPIP?: boolean }).isPIP ? 'inline-flex' : 'none' }}
                             >
                               PIP
                             </span>
                             <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700" 
-                              style={{ display: (student as any).isLightspeed ? 'inline-flex' : 'none' }}
+                              style={{ display: (student as unknown as { isLightspeed?: boolean }).isLightspeed ? 'inline-flex' : 'none' }}
                             >
                               Lightspeed
                             </span>

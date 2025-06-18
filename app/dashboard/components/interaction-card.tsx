@@ -159,16 +159,22 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
               <div className="flex flex-wrap items-center gap-2">
                 {interaction.cohort && (
                   <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 rounded-full px-3 py-1 text-xs font-semibold">
-                    Cohort: {interaction.cohort}
+                    Cohort: {typeof interaction.cohort === 'object' ? ('name' in interaction.cohort ? (interaction.cohort as { name: string }).name : JSON.stringify(interaction.cohort)) : interaction.cohort}
                   </Badge>
                 )}
                 {interaction.phase && (
                   <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 rounded-full px-3 py-1 text-xs font-semibold">
-                    Phase: {interaction.phase}
+                    Phase: {typeof interaction.phase === 'object' ? ('name' in interaction.phase ? (interaction.phase as { name: string }).name : JSON.stringify(interaction.phase)) : interaction.phase}
                   </Badge>
                 )}
-                <Badge className={getTypeColor(interaction.type) + " rounded-full px-3 py-1 text-xs font-semibold"}>
-                  {interaction.type}
+                <Badge className={getTypeColor(
+                  typeof interaction.type === 'object' && interaction.type !== null && 'name' in interaction.type
+                    ? (interaction.type as { name: string }).name
+                    : String(interaction.type)
+                ) + " rounded-full px-3 py-1 text-xs font-semibold"}>
+                  {typeof interaction.type === 'object' && interaction.type !== null && 'name' in interaction.type
+                    ? (interaction.type as { name: string }).name
+                    : String(interaction.type)}
                 </Badge>
               </div>
             </div>
@@ -205,7 +211,7 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div>
                 <p className="font-semibold text-gray-700">Staff</p>
-                <p className="text-gray-700">{interaction.staffMember}</p>
+                <p className="text-gray-700">{typeof interaction.staffMember === 'object' ? ('name' in interaction.staffMember ? (interaction.staffMember as { name: string }).name : JSON.stringify(interaction.staffMember)) : interaction.staffMember}</p>
               </div>
               <div>
                 <p className="font-semibold text-gray-700">Date</p>

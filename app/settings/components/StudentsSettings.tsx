@@ -62,10 +62,7 @@ export function StudentsSettings() {
     isPIP: false
   })
   const [creating, setCreating] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [updating, setUpdating] = useState(false)
   const [search, setSearch] = useState("")
 
   // Mass edit state
@@ -184,7 +181,7 @@ export function StudentsSettings() {
     e.preventDefault()
     if (!editingStudent) return
     
-    setUpdating(true)
+    setCreating(true)
     setError(null)
     try {
       const res = await fetch(`/api/students/${editingStudent.id}`, {
@@ -204,7 +201,7 @@ export function StudentsSettings() {
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setUpdating(false)
+      setCreating(false)
     }
   }
 
@@ -213,7 +210,7 @@ export function StudentsSettings() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handlePromoteToLightspeed = async () => {
     if (!editingStudent) return
-    setUpdating(true)
+    setCreating(true)
     setError(null)
     try {
       const updatedStudent = { ...editingStudent, program: "lightspeed" }
@@ -234,7 +231,7 @@ export function StudentsSettings() {
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setUpdating(false)
+      setCreating(false)
     }
   }
 

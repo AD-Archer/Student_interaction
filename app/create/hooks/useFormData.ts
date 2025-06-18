@@ -49,7 +49,7 @@ export function useFormData({ interactionId, initialStudentId, initialStudentNam
       setFormData((prev) => ({ ...prev, followUpDate: "" }))
     }
     // Do NOT overwrite the date if user has set it
-  }, [followUpStudent, followUpStaff])
+  }, [followUpStudent, followUpStaff, formData.followUpDate, twoWeeksFromToday])
 
   // Load existing interaction data if editing
   useEffect(() => {

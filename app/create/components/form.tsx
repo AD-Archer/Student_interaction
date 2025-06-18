@@ -24,7 +24,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { StudentSelectionCard } from "./StudentSelectionCard"
 import { InteractionDetailsCard } from "./InteractionDetailsCard"
 import { FollowUpCard } from "./FollowUpCard"
@@ -37,7 +37,6 @@ import { useAuth } from "@/components/auth-wrapper"
 
 export function Form({ interactionId, initialStudentId, initialStudentName }: { interactionId?: number, initialStudentId?: string, initialStudentName?: string }) {
   const router = useRouter()
-  const pathname = usePathname()
   const { user } = useAuth()
 
   // Restore two booleans for follow-up recipients
