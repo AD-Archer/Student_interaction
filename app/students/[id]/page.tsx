@@ -16,6 +16,10 @@ interface Student {
   phone?: string | null
   isLightspeed?: boolean // Lightspeed toggle
   isPIP?: boolean // PIP toggle
+  status?: string // Added from schema
+  meta?: Record<string, unknown> // Added from schema
+  createdAt?: string // Added from schema
+  updatedAt?: string // Added from schema
 }
 
 interface Interaction {
@@ -51,6 +55,7 @@ export default function StudentPage() {
   const [notesError, setNotesError] = useState<string | null>(null)
   const [savingPersonalNotes, setSavingPersonalNotes] = useState(false);
   const [personalNotesError, setPersonalNotesError] = useState<string | null>(null);
+  const [showMeta, setShowMeta] = useState(false);
   // TODO: Replace with real user/auth context
   const isAdmin = true
 
@@ -212,35 +217,100 @@ export default function StudentPage() {
     )
   }
 
+  // Helper to display student data
+  const studentDetailsMain = [
+    { label: 'ID', value: student.id },
+    { label: 'First Name', value: student.firstName },
+    { label: 'Last Name', value: student.lastName },
+    { label: 'Status', value: student.status || 'active' },
+    { label: 'Cohort', value: student.cohort ?? 'Unassigned' },
+    { label: 'Program', value: program || 'N/A' },
+  ];
+  const studentDetailsContact = [
+    { label: 'Email', value: student.email || 'N/A' },
+    { label: 'Launchpad Email', value: student.launchpadEmail || 'N/A' },
+    { label: 'Alt School Email', value: student.altSchoolEmail || 'N/A' },
+    { label: 'Personal Email', value: student.personalEmail || 'N/A' },
+    { label: 'Phone', value: student.phone || 'N/A' },
+  ];
+  const studentDetailsFlags = [
+    { label: 'Lightspeed', value: student.isLightspeed ? 'Yes' : 'No' },
+    { label: 'PIP', value: student.isPIP ? 'Yes' : 'No' },
+  ];
+  const studentDetailsDates = [
+    { label: 'Created At', value: student.createdAt ? new Date(student.createdAt).toLocaleString() : 'N/A' },
+    { label: 'Updated At', value: student.updatedAt ? new Date(student.updatedAt).toLocaleString() : 'N/A' },
+  ];
+
   return (
     <main className="max-w-2xl mx-auto py-10 px-4 space-y-8">
-      <div className="bg-white rounded-xl shadow p-6 space-y-2">
-        <div className="flex justify-between items-center">
+      {/* Student Details Section */}
+      <section className="bg-white rounded-xl shadow p-6 mb-4">
+        <div className="flex flex-col items-start mb-4">
+          <h1 className="text-4xl font-extrabold text-gray-900 leading-tight mb-1">{student.firstName} {student.lastName}</h1>
+          <div className="text-base text-gray-600 mb-1">{student.email || 'N/A'}</div>
+          <div className="text-base text-blue-700 font-semibold mb-2">{program || 'N/A'}</div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 mb-4">
           <div>
-            <h1 className="text-2xl font-bold mb-1">{student.firstName} {student.lastName}</h1>
-            <div className="text-gray-700 text-sm">
-              ID: {student.id} •
-              <span
-                className="cursor-help relative group inline-block"
-                title="Program/phase is automatically set based on the student's cohort, as configured in Settings > Phase-to-Cohort Mapping. To change a student's program, update the cohort mapping in settings."
-              >
-                Program: {program || 'N/A'}
-                <span className="absolute left-0 mt-1 w-64 bg-black text-white text-xs rounded p-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg">
-                  Program/phase is set automatically based on the student&apos;s cohort, as configured in <b>Settings &rarr; Phase-to-Cohort Mapping</b>. To change a student&apos;s program, update the cohort mapping in settings.
-                </span>
-              </span>
-              • Email: {student.email || 'N/A'} •
-              <span
-                className="cursor-help relative group inline-block"
-                title="Program/phase is automatically set based on the student's cohort, as configured in Settings > Phase-to-Cohort Mapping. To change a student's program, update the cohort mapping in settings."
-              >
-                Cohort: {student.cohort || 'Unassigned'}
-                <span className="absolute left-0 mt-1 w-64 bg-black text-white text-xs rounded p-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10 shadow-lg">
-                  Program/phase is set automatically based on the student&apos;s cohort, as configured in <b>Settings &rarr; Phase-to-Cohort Mapping</b>. To change a student&apos;s program, update the cohort mapping in settings.
-                </span>
-              </span>
-            </div>
+            <span className="text-xs text-gray-500">Status</span>
+            <div className="text-sm text-gray-900">{student.status || 'active'}</div>
           </div>
+          <div>
+            <span className="text-xs text-gray-500">Cohort</span>
+            <div className="text-sm text-gray-900">{student.cohort ?? 'Unassigned'}</div>
+          </div>
+          <div>
+            <span className="text-xs text-gray-500">Launchpad Email</span>
+            <div className="text-sm text-gray-900">{student.launchpadEmail || 'N/A'}</div>
+          </div>
+          <div>
+            <span className="text-xs text-gray-500">Alt School Email</span>
+            <div className="text-sm text-gray-900">{student.altSchoolEmail || 'N/A'}</div>
+          </div>
+          <div>
+            <span className="text-xs text-gray-500">Personal Email</span>
+            <div className="text-sm text-gray-900">{student.personalEmail || 'N/A'}</div>
+          </div>
+          <div>
+            <span className="text-xs text-gray-500">Phone</span>
+            <div className="text-sm text-gray-900">{student.phone || 'N/A'}</div>
+          </div>
+          <div>
+            <span className="text-xs text-gray-500">Lightspeed</span>
+            <div className="text-sm text-gray-900">{student.isLightspeed ? 'Yes' : 'No'}</div>
+          </div>
+          <div>
+            <span className="text-xs text-gray-500">PIP</span>
+            <div className="text-sm text-gray-900">{student.isPIP ? 'Yes' : 'No'}</div>
+          </div>
+          <div>
+            <span className="text-xs text-gray-500">Created At</span>
+            <div className="text-sm text-gray-900">{student.createdAt ? new Date(student.createdAt).toLocaleString() : 'N/A'}</div>
+          </div>
+          <div>
+            <span className="text-xs text-gray-500">Updated At</span>
+            <div className="text-sm text-gray-900">{student.updatedAt ? new Date(student.updatedAt).toLocaleString() : 'N/A'}</div>
+          </div>
+        </div>
+        {/* Meta Data Toggle for Admins */}
+        {isAdmin && student.meta && (
+          <div className="mt-4">
+            <button
+              className="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs hover:bg-gray-300 transition mb-2"
+              onClick={() => setShowMeta(v => !v)}
+              type="button"
+            >
+              {showMeta ? 'Hide Meta Data' : 'Show Meta Data'}
+            </button>
+            {showMeta && (
+              <pre className="bg-gray-900 text-green-200 text-xs rounded p-3 overflow-x-auto whitespace-pre-wrap border border-gray-300">
+                {JSON.stringify(student.meta, null, 2)}
+              </pre>
+            )}
+          </div>
+        )}
+        <div className="flex justify-end mt-2">
           {isAdmin && !editing && (
             <button
               className="text-xs px-3 py-1 rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition"
@@ -250,65 +320,25 @@ export default function StudentPage() {
             </button>
           )}
         </div>
-        {isAdmin && editing && editData && (
-          <form className="mt-4 space-y-3 bg-blue-50/50 p-4 rounded-xl" onSubmit={e => { e.preventDefault(); handleSave(); }}>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="block text-xs font-medium mb-1">First Name</label>
-                <input name="firstName" value={editData.firstName || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
-              </div>
-              <div className="flex-1">
-                <label className="block text-xs font-medium mb-1">Last Name</label>
-                <input name="lastName" value={editData.lastName || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium mb-1">Email</label>
-              <input name="email" value={editData.email || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium mb-1">Launchpad Email</label>
-              <input name="launchpadEmail" value={editData.launchpadEmail || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium mb-1">Alternative School Email</label>
-              <input name="altSchoolEmail" value={editData.altSchoolEmail || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium mb-1">Personal Email</label>
-              <input name="personalEmail" value={editData.personalEmail || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium mb-1">Phone</label>
-              <input name="phone" value={editData.phone || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium mb-1">Cohort</label>
-              <input name="cohort" value={editData.cohort || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium mb-1">Program</label>
-              <input name="program" value={program || ""} className="w-full rounded border border-gray-200 px-2 py-1 text-sm bg-gray-100 cursor-not-allowed" disabled readOnly />
-            </div>
-            <div className="flex gap-2">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="isLightspeed" checked={!!editData.isLightspeed} onChange={handleChange} />
-                Lightspeed
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="isPIP" checked={!!editData.isPIP} onChange={handleChange} />
-                PIP
-              </label>
-            </div>
-            {saveError && <div className="text-xs text-red-600">{saveError}</div>}
-            {saveSuccess && <div className="text-xs text-green-600">Student updated!</div>}
-            <div className="flex gap-2 mt-2">
-              <button type="submit" className="px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 transition" disabled={saving}>{saving ? "Saving..." : "Save"}</button>
-              <button type="button" className="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs hover:bg-gray-300 transition" onClick={handleCancel} disabled={saving}>Cancel</button>
-            </div>
-          </form>
+      </section>
+
+      {/* AI Ideas Section - moved above interactions */}
+      <section className="bg-white rounded-xl shadow p-4">
+        <h3 className="font-semibold mb-2">AI Insights & Ideas</h3>
+        <button
+          className="mb-3 px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 transition"
+          onClick={handleAISummary}
+          disabled={aiLoading}
+        >
+          {aiLoading ? "Generating..." : "Generate AI Summary"}
+        </button>
+        {aiError && <div className="text-xs text-red-600 mb-2">{aiError}</div>}
+        {aiSummary ? (
+          <div className="text-sm text-gray-700 whitespace-pre-line border rounded p-2 bg-blue-50/50">{aiSummary}</div>
+        ) : (
+          <div className="text-sm text-gray-700">(AI-generated ideas and summaries will appear here.)</div>
         )}
-      </div>
+      </section>
 
       {/* Notes Section */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -397,23 +427,78 @@ export default function StudentPage() {
         )}
       </section>
 
-      {/* AI Ideas Section */}
-      <section className="bg-white rounded-xl shadow p-4">
-        <h3 className="font-semibold mb-2">AI Insights & Ideas</h3>
-        <button
-          className="mb-3 px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 transition"
-          onClick={handleAISummary}
-          disabled={aiLoading}
-        >
-          {aiLoading ? "Generating..." : "Generate AI Summary"}
-        </button>
-        {aiError && <div className="text-xs text-red-600 mb-2">{aiError}</div>}
-        {aiSummary ? (
-          <div className="text-sm text-gray-700 whitespace-pre-line border rounded p-2 bg-blue-50/50">{aiSummary}</div>
-        ) : (
-          <div className="text-sm text-gray-700">(AI-generated ideas and summaries will appear here.)</div>
-        )}
-      </section>
+      {/* Edit Student Modal (if editing) */}
+      {isAdmin && editing && editData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl font-bold"
+              onClick={handleCancel}
+              aria-label="Close"
+              type="button"
+            >
+              ×
+            </button>
+            <h3 className="text-lg font-semibold mb-4">Edit Student</h3>
+            <form className="space-y-3" onSubmit={e => { e.preventDefault(); handleSave(); }}>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium mb-1">First Name</label>
+                  <input name="firstName" value={editData.firstName || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-medium mb-1">Last Name</label>
+                  <input name="lastName" value={editData.lastName || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Email</label>
+                <input name="email" value={editData.email || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Launchpad Email</label>
+                <input name="launchpadEmail" value={editData.launchpadEmail || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Alternative School Email</label>
+                <input name="altSchoolEmail" value={editData.altSchoolEmail || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Personal Email</label>
+                <input name="personalEmail" value={editData.personalEmail || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Phone</label>
+                <input name="phone" value={editData.phone || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Cohort</label>
+                <input name="cohort" value={editData.cohort || ""} onChange={handleChange} className="w-full rounded border border-gray-200 px-2 py-1 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1">Program</label>
+                <input name="program" value={program || ""} className="w-full rounded border border-gray-200 px-2 py-1 text-sm bg-gray-100 cursor-not-allowed" disabled readOnly />
+              </div>
+              <div className="flex gap-2">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="isLightspeed" checked={!!editData.isLightspeed} onChange={handleChange} />
+                  Lightspeed
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="isPIP" checked={!!editData.isPIP} onChange={handleChange} />
+                  PIP
+                </label>
+              </div>
+              {saveError && <div className="text-xs text-red-600">{saveError}</div>}
+              {saveSuccess && <div className="text-xs text-green-600">Student updated!</div>}
+              <div className="flex gap-2 mt-2">
+                <button type="submit" className="px-3 py-1 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 transition" disabled={saving}>{saving ? "Saving..." : "Save"}</button>
+                <button type="button" className="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs hover:bg-gray-300 transition" onClick={handleCancel} disabled={saving}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
