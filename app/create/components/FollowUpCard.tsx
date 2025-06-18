@@ -43,6 +43,8 @@ export function FollowUpCard({
   const [loading, setLoading] = useState<'student' | 'staff' | 'both' | false>(false)
   const [showTemplateEditor, setShowTemplateEditor] = useState<false | 'student' | 'staff'>(false)
   const [editedEmail, setEditedEmail] = useState<{subject: string, body: string} | null>(null)
+  // Track if a follow-up email was just sent (without editing the template)
+  const [justSent, setJustSent] = useState<null | 'student' | 'staff' | 'both'>(null)
   
   // I use the student email from formData which is populated by StudentSelectionCard from the database
   const studentEmail = formData.studentEmail || ""
@@ -70,6 +72,11 @@ export function FollowUpCard({
   // Send follow-up to selected recipients
   const handleSendFollowUp = async () => {
     setFeedback(null)
+    // Prevent sending again if just sent and template wasn't edited
+    if (justSent && !editedEmail) {
+      setFeedback('You have already sent a follow-up email. Please edit the template before sending again.')
+      return
+    }
     const sentTo: string[] = []
     setLoading(
       followUpStudent && followUpStaff ? 'both' : followUpStudent ? 'student' : 'staff'
@@ -87,6 +94,7 @@ export function FollowUpCard({
         setFeedback('No valid email address for selected recipients.')
       } else {
         setFeedback(`Follow-up email sent to: ${sentTo.join(' and ')}`)
+        setJustSent(followUpStudent && followUpStaff ? 'both' : followUpStudent ? 'student' : 'staff')
       }
     } catch {
       setFeedback('Failed to send follow-up email. Please try again.')
@@ -94,6 +102,11 @@ export function FollowUpCard({
       setLoading(false)
     }
   }
+
+  // Reset justSent if template is edited
+  React.useEffect(() => {
+    if (editedEmail) setJustSent(null)
+  }, [editedEmail])
 
   return (
     <Card className="shadow-md border-green-100 bg-white/80">
