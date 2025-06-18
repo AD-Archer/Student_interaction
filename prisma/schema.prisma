@@ -55,6 +55,9 @@ model Student {
   personalEmail  String? // Personal email address
   phone          String? // Student phone number
 
+  // Flexible meta field for extra CSV columns
+  meta           Json?
+
   // Lightspeed program toggle
   isLightspeed   Boolean @default(false) // True if student is in lightspeed program
   // PIP program toggle

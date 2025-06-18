@@ -33,6 +33,7 @@ interface CSVStudent {
   phone?: string
   cohort: string
   studentId: string
+  meta?: Record<string, any>
 }
 
 interface ImportResult {
@@ -77,7 +78,6 @@ function parseCSV(csvText: string): CSVStudent[] {
     throw new Error('CSV must contain at least a header row and one data row')
   }
 
-  // Use proper CSV splitting for header
   const rawHeader = splitCSVLine(lines[0]).map(h => h.trim())
   const header = rawHeader.map(h => h.toLowerCase().replace(/\s+/g, ''))
   const students: CSVStudent[] = []
@@ -147,16 +147,30 @@ function parseCSV(csvText: string): CSVStudent[] {
     cohortRaw = cohortRaw.trim()
     const cohort = cohortRaw
 
-    console.log(`[IMPORT] Row ${i}:`, {
-      studentId: values[studentIdIndex],
-      firstName: values[firstNameIndex],
-      lastName: values[lastNameIndex],
-      email: emailIndex !== -1 ? values[emailIndex] : '',
-      cohortRaw,
-      cohort,
-      cohortIndex,
-      fallbackCohortIndex
-    })
+    // Build meta with all extra fields
+    const knownIndexes = [studentIdIndex, firstNameIndex, lastNameIndex, emailIndex, launchpadEmailIndex, altSchoolEmailIndex, personalEmailIndex, phoneIndex, cohortIndex, fallbackCohortIndex]
+    const meta: Record<string, any> = {}
+    for (let j = 0; j < values.length; j++) {
+      if (!knownIndexes.includes(j) && rawHeader[j]) {
+        const key = rawHeader[j].toLowerCase()
+        const val = values[j]
+        // Filter out SSN fields by key or value
+        if (
+          key.includes('ssn') ||
+          key.includes('socialsecurity') ||
+          isLikelySSN(val)
+        ) {
+          continue
+        }
+        meta[rawHeader[j]] = val
+      }
+    }
+
+    // Placeholder function for checking if a value is likely an SSN
+    function isLikelySSN(value: string): boolean {
+      // Matches patterns like 123-45-6789 or 123456789
+      return /^(\d{3}-?\d{2}-?\d{4})$/.test(value)
+    }
 
     const student: CSVStudent = {
       firstName: values[firstNameIndex] || '',
@@ -166,8 +180,9 @@ function parseCSV(csvText: string): CSVStudent[] {
       altSchoolEmail: altSchoolEmailIndex !== -1 ? values[altSchoolEmailIndex] || '' : undefined,
       personalEmail: personalEmailIndex !== -1 ? values[personalEmailIndex] || '' : undefined,
       phone: phoneIndex !== -1 ? values[phoneIndex] || '' : undefined,
-      cohort: cohort, // always a string, will be parsed to int or null below
-      studentId: values[studentIdIndex] || ''
+      cohort: cohort,
+      studentId: values[studentIdIndex] || '',
+      meta: Object.keys(meta).length > 0 ? meta : undefined
     }
     // Validate required fields
     if (student.firstName && student.lastName && student.studentId) {
@@ -225,32 +240,28 @@ async function importStudents(students: CSVStudent[]): Promise<ImportResult> {
         }
       }
       const email = student.email ? String(student.email) : null
-
-      console.log(`[IMPORT] Creating student:`, {
-        id: student.studentId,
+      const updateData: any = {
         firstName: student.firstName,
         lastName: student.lastName,
-        email,
-        cohortRaw,
-        resolvedCohort,
-        cohortNumber
-      })
-
+        email: email,
+        launchpadEmail: student.launchpadEmail !== undefined ? student.launchpadEmail : null,
+        altSchoolEmail: student.altSchoolEmail !== undefined ? student.altSchoolEmail : null,
+        personalEmail: student.personalEmail !== undefined ? student.personalEmail : null,
+        phone: student.phone || null,
+        cohort: cohortNumber,
+        meta: student.meta || null
+      }
       if (existingStudent) {
-        result.details.skipped++
-        continue
+        await prisma.student.update({
+          where: { id: student.studentId },
+          data: updateData
+        })
+        result.details.successfulImports++
       } else {
         await prisma.student.create({
           data: {
             id: student.studentId,
-            firstName: student.firstName,
-            lastName: student.lastName,
-            email: email,
-            launchpadEmail: student.launchpadEmail !== undefined ? student.launchpadEmail : null,
-            altSchoolEmail: student.altSchoolEmail !== undefined ? student.altSchoolEmail : null,
-            personalEmail: student.personalEmail !== undefined ? student.personalEmail : null,
-            phone: student.phone || null,
-            cohort: cohortNumber // always int or null
+            ...updateData
           }
         })
         result.details.successfulImports++
