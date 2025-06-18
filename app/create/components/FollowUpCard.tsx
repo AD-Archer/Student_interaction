@@ -118,6 +118,11 @@ export function FollowUpCard({
       </CardHeader>
       <hr className="my-2 border-gray-200" />
       <CardContent className="space-y-4">
+        {(followUpStudent || followUpStaff) && (
+          <div className="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded p-2 mb-2">
+            Follow-ups will appear in analytics under <b>"Follow-Up"</b>.
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex items-center space-x-2">
             <input

@@ -59,25 +59,46 @@ async function summarizeWithPlaylab(message: string): Promise<string> {
   
   // Parse Server-Sent Events format
   const lines = text.split(/\r?\n/)
+  // --- Improved: Collect all streamed/chunked responses from Playlab ---
   let aiResponse = ''
-  
+  let inAppend = false
   for (const line of lines) {
+    if (line.startsWith('event: append')) {
+      inAppend = true
+      continue
+    }
+    if (inAppend && line.startsWith('data: ')) {
+      const payload = line.replace('data: ', '').trim()
+      if (payload && payload !== '[DONE]') {
+        try {
+          const json = JSON.parse(payload)
+          if (typeof json.delta === 'string') {
+            aiResponse += json.delta
+          }
+        } catch (e) {
+          // Not JSON, treat as raw string
+          aiResponse += payload
+        }
+      }
+      inAppend = false
+      continue
+    }
+    // Fallback: original logic for single complete response
     if (line.startsWith('data: ')) {
       const payload = line.replace('data: ', '').trim()
       if (payload && payload !== '[DONE]') {
         try {
           const json = JSON.parse(payload)
-          // Look for AI provider response, not user message
           if (json.source === 'provider' && json.content) {
             aiResponse += json.content
           }
         } catch (e) {
-          console.error('Failed to parse Playlab JSON:', e)
+          // ignore
         }
       }
     }
   }
-  
+  // --- End improved chunk handling ---
   if (!aiResponse) {
     throw new Error('No AI response found in Playlab output')
   }

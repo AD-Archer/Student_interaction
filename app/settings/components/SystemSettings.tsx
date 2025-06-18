@@ -305,6 +305,9 @@ export const SystemSettings = () => {
             <Button onClick={handleTestAI} disabled={aiTestLoading} variant="outline">
               {aiTestLoading ? "Testing..." : "Test AI Provider"}
             </Button>
+            <Button onClick={() => handleProviderChange(aiProvider)} variant="default" className="ml-2">
+              Save
+            </Button>
             {aiTestProvider && (
               <span className="text-xs text-gray-600">Provider: <b>{aiTestProvider}</b></span>
             )}

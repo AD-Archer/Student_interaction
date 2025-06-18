@@ -224,7 +224,7 @@ export const InteractionFrequencySettings = () => {
           
           {settings.enablePriorityEscalation && (
             <div className="space-y-2 ml-6">
-              <Label htmlFor="priorityEscalationDays">Additional days before marking as high priority</Label>
+              <Label htmlFor="priorityEscalationDays">Days before marking as high priority</Label>
               <Input
                 id="priorityEscalationDays"
                 type="number"
@@ -234,7 +234,7 @@ export const InteractionFrequencySettings = () => {
                 className="w-full max-w-xs"
               />
               <p className="text-sm text-gray-600">
-                Students become high priority after (interaction interval + this value) days
+                Students become high priority if they have not had an interaction in the last <b>{settings.priorityEscalationDays}</b> days (e.g., 7 days → overdue).
               </p>
             </div>
           )}

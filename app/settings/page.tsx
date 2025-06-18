@@ -130,6 +130,10 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <main className="px-2 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
         <div className="max-w-full mx-auto space-y-6 sm:space-y-8">
+          {/* Global settings note */}
+          <div className="rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-sm p-3 mb-2">
+            <b>Note:</b> All settings on this page are global and affect all users and programs.
+          </div>
           {/* Header */}
           <div className="rounded-2xl bg-white/70 backdrop-blur-xl border border-blue-100 shadow-md p-6 flex items-center gap-4">
             <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-blue-100">
