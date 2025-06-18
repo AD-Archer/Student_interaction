@@ -31,6 +31,7 @@ interface AnalyticsData {
   }
   breakdown: {
     studentsByCohort: Array<{ cohort: string | number; _count: { id: number } }>
+    studentsByPhase: Array<{ phase: string; count: number }>
     interactionTypes: Array<{ type: string; count: number; percentage: number }>
     staffPerformance: Array<{ staffMember: string; interactions: number }>
   }
@@ -305,6 +306,15 @@ export default function AnalyticsPage() {
     }
   }
 
+  // BADGE: Show PIP/Lightspeed status in student lists
+  const getStudentPhase = (student: StudentRecord) => {
+    if ((student as any).isPIP) return 'PIP'
+    if ((student as any).isLightspeed) return 'Lightspeed'
+    const cohortStr = student.cohort ? String(student.cohort) : null
+    const foundPhase = Object.entries(cohortPhaseMap).find(([, v]) => v === cohortStr)?.[0]
+    return foundPhase || student.program
+  }
+
   if (isLoading || !analyticsData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
@@ -471,25 +481,25 @@ export default function AnalyticsPage() {
             {/* Cohort Breakdown */}
             <Card>
               <CardHeader>
-                <CardTitle>Students by Cohort</CardTitle>
+                <CardTitle>Students by Phase</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {analyticsData.breakdown.studentsByCohort.map((cohortData, index) => (
+                  {analyticsData.breakdown.studentsByPhase.map((phaseData, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <span className="font-medium">
-                        {cohortData.cohort === 'Unassigned' ? 'Unassigned' : `Cohort ${cohortData.cohort}`}
+                        {phaseData.phase}
                       </span>
                       <div className="flex items-center gap-2">
                         <div className="w-24 bg-gray-200 rounded-full h-2">
                           <div 
                             className="bg-blue-600 h-2 rounded-full" 
                             style={{ 
-                              width: `${(cohortData._count.id / analyticsData.overview.totalStudents) * 100}%` 
+                              width: `${(phaseData.count / analyticsData.overview.totalStudents) * 100}%` 
                             }}
                           />
                         </div>
-                        <span className="font-bold">{cohortData._count.id}</span>
+                        <span className="font-bold">{phaseData.count}</span>
                       </div>
                     </div>
                   ))}
@@ -590,6 +600,17 @@ export default function AnalyticsPage() {
                                 </p>
                               )}
                             </div>
+                            {/* BADGE: Show PIP/Lightspeed status in student lists */}
+                            <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700" 
+                              style={{ display: (student as any).isPIP ? 'inline-flex' : 'none' }}
+                            >
+                              PIP
+                            </span>
+                            <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700" 
+                              style={{ display: (student as any).isLightspeed ? 'inline-flex' : 'none' }}
+                            >
+                              Lightspeed
+                            </span>
                           </div>
                         ))}
                       </div>

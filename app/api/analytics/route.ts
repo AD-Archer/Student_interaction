@@ -190,6 +190,29 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Get all students for phase grouping
+    const allStudents = await db.student.findMany({})
+    // Fetch cohortPhaseMap from system settings
+    const systemSettings = await db.systemSettings.findFirst({ orderBy: { updatedAt: 'desc' } })
+    const cohortPhaseMap = systemSettings?.cohortPhaseMap || {}
+    // Helper to get phase for a student
+    function getPhase(student: any): string {
+      if (student.isPIP) return 'PIP'
+      if (student.isLightspeed) return 'Lightspeed'
+      // Map cohort to phase
+      const cohortStr = student.cohort ? String(student.cohort) : null
+      const foundPhase = Object.entries(cohortPhaseMap).find(([, v]) => v === cohortStr)?.[0]
+      return foundPhase || 'Unassigned'
+    }
+    // Group students by phase
+    const studentsByPhaseMap: Record<string, number> = {}
+    for (const student of allStudents) {
+      const phase = getPhase(student)
+      if (!studentsByPhaseMap[phase]) studentsByPhaseMap[phase] = 0
+      studentsByPhaseMap[phase]++
+    }
+    const studentsByPhase = Object.entries(studentsByPhaseMap).map(([phase, count]) => ({ phase, count }))
+
     return NextResponse.json({
       overview: {
         totalStudents,
@@ -200,6 +223,7 @@ export async function GET(request: NextRequest) {
         recentInteractions
       },
       breakdown: {
+        studentsByPhase, // NEW: students by phase
         studentsByCohort: studentsByCohort.map(cohortData => ({
           cohort: cohortData.cohort || 'Unassigned',
           _count: cohortData._count
