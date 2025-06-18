@@ -16,6 +16,13 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { User, Loader2 } from "lucide-react"
 import { FormData } from "@/lib/data"
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue
+} from "@/components/ui/select"
 
 interface Student {
   id: string
@@ -250,21 +257,24 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
         <div className="space-y-2">
           <Label htmlFor="interactionType">Interaction Type</Label>
           <div className="flex gap-2 items-center">
-            <select
-              id="interactionType"
+            <Select
               value={formData.interactionType}
-              onChange={e => onFormDataChange({ interactionType: e.target.value })}
-              className="w-full px-2 py-2 rounded border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white"
-              disabled={typeLoading}
+              onValueChange={value => onFormDataChange({ interactionType: value })}
+              disabled={typeLoading && interactionTypes.length === 0}
             >
-              <option value="" disabled>Select interaction type</option>
-              {Array.isArray(interactionTypes) &&
-                // Show default types first, then custom types
-                [...interactionTypes.filter(t => t.isDefault), ...interactionTypes.filter(t => !t.isDefault)]
-                  .map((type, idx) => (
-                    <option key={type.id + '-' + type.name + '-' + idx} value={type.name}>{type.name}</option>
-                  ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select interaction type" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.isArray(interactionTypes) &&
+                  [...interactionTypes.filter(t => t.isDefault), ...interactionTypes.filter(t => !t.isDefault)]
+                    .map((type, idx) => (
+                      <SelectItem key={type.id + '-' + type.name + '-' + idx} value={type.name}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+              </SelectContent>
+            </Select>
             {/* Add custom type button */}
             <button
               type="button"

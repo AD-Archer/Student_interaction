@@ -15,6 +15,10 @@ import { Input } from "@/components/ui/input"
 import { User, Send, CalendarDays } from "lucide-react"
 import { FormData } from "@/lib/data"
 import { useEmailFunctionality } from "../hooks/useEmailFunctionality"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Info } from "lucide-react"
+import { useAuth } from "@/components/auth-wrapper"
 
 interface FollowUpCardProps {
   formData: FormData
@@ -34,8 +38,11 @@ export function FollowUpCard({
   onFollowUpStaffChange
 }: FollowUpCardProps) {
   const { sendTestEmailWithNotes } = useEmailFunctionality()
+  const { user } = useAuth()
   const [feedback, setFeedback] = useState<string | null>(null)
   const [loading, setLoading] = useState<'student' | 'staff' | 'both' | false>(false)
+  const [showTemplateEditor, setShowTemplateEditor] = useState<false | 'student' | 'staff'>(false)
+  const [editedEmail, setEditedEmail] = useState<{subject: string, body: string} | null>(null)
   
   // I use the student email from formData which is populated by StudentSelectionCard from the database
   const studentEmail = formData.studentEmail || ""
@@ -45,6 +52,19 @@ export function FollowUpCard({
   }
   const handleStaffEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFormDataChange({ staffEmail: e.target.value })
+  }
+
+  // Helper to build the email preview (mimics useEmailFunctionality logic)
+  function buildEmailPreview(type: 'student' | 'staff') {
+    const studentName = formData.studentName || 'Student'
+    const staffName = user ? `${user.firstName} ${user.lastName}` : 'Staff Member'
+    const subject = type === 'student'
+      ? `Follow-up: ${formData.interactionType || 'Interaction'} Session`
+      : `Follow-up Reminder: ${studentName}`
+    const body = type === 'student'
+      ? `Hi ${studentName.split(' ')[0]},\n\nI hope you're doing well! This is a follow-up from our ${formData.interactionType || 'interaction'} session${formData.reason ? ` regarding ${formData.reason}` : ''}.\n\n**Session Summary:**\n${formData.notes || 'No notes available yet.'}\n\n**Next Steps:**\n${formData.followUpDate ? `We have scheduled a follow-up for ${formData.followUpDate}. Please let me know if you have any questions or if you need to reschedule.` : 'We will be in touch soon regarding next steps.'}\n\nBest regards,\n${staffName}\n${formData.staffEmail || ''}`
+      : `Hi ${staffName},\n\nThis is a reminder about your scheduled follow-up with ${studentName}${formData.followUpDate ? ` on ${formData.followUpDate}` : ''}.\n\n**Original Session Details:**\n- Type: ${formData.interactionType || 'Not specified'}\n- Student: ${studentName}\n${formData.reason ? `- Reason: ${formData.reason}` : ''}\n\n**Session Notes:**\n${formData.notes || 'No notes available yet.'}\n\nPlease reach out to the student to confirm the follow-up appointment.\n\nBest regards,\nStudent Services System`
+    return { subject, body }
   }
 
   // Send follow-up to selected recipients
@@ -133,50 +153,80 @@ export function FollowUpCard({
                       </span>
                     </div>
                     {studentEmail && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={async () => {
-                          setLoading('student')
-                          await sendTestEmailWithNotes(studentEmail, 'student', formData)
-                          setLoading(false)
-                        }}
-                        disabled={loading === 'student' || loading === 'both'}
-                      >
-                        <Send className="h-3 w-3 mr-1" />
-                        Test Email
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditedEmail(buildEmailPreview('student'))
+                            setShowTemplateEditor('student')
+                          }}
+                        >
+                          Preview/Edit Email
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            setLoading('student')
+                            await sendTestEmailWithNotes(studentEmail, 'student', formData)
+                            setLoading(false)
+                          }}
+                          disabled={loading === 'student' || loading === 'both'}
+                        >
+                          <Send className="h-3 w-3 mr-1" />
+                          Test Email
+                        </Button>
+                      </div>
                     )}
                   </div>
                 )}
                 {followUpStaff && (
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-2">
                     <div className="flex items-center space-x-2">
                       <User className="h-4 w-4 text-green-600" />
                       <span className="text-sm font-medium">Staff:</span>
                       <Input
-                        placeholder="Staff email"
+                        placeholder="Staff email(s), comma separated"
                         value={formData.staffEmail}
-                        onChange={handleStaffEmailChange}
+                        onChange={e => onFormDataChange({ staffEmail: e.target.value })}
                         className="flex-1 max-w-xs text-sm"
                       />
+                      <span className="text-xs text-gray-500 flex items-center gap-1">
+                        <Info className="h-3 w-3" />
+                        Separate multiple emails with commas
+                      </span>
                     </div>
                     {formData.staffEmail && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={async () => {
-                          setLoading('staff')
-                          await sendTestEmailWithNotes(formData.staffEmail!, 'staff', formData)
-                          setLoading(false)
-                        }}
-                        disabled={loading === 'staff' || loading === 'both'}
-                      >
-                        <Send className="h-3 w-3 mr-1" />
-                        Test Email
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditedEmail(buildEmailPreview('staff'))
+                            setShowTemplateEditor('staff')
+                          }}
+                        >
+                          Preview/Edit Email
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            setLoading('staff')
+                            await sendTestEmailWithNotes(formData.staffEmail!, 'staff', formData)
+                            setLoading(false)
+                          }}
+                          disabled={loading === 'staff' || loading === 'both'}
+                        >
+                          <Send className="h-3 w-3 mr-1" />
+                          Test Email
+                        </Button>
+                      </div>
                     )}
                   </div>
                 )}
@@ -207,6 +257,45 @@ export function FollowUpCard({
             {feedback}
           </div>
         )}
+        <Dialog open={!!showTemplateEditor} onOpenChange={() => setShowTemplateEditor(false)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Email Template ({showTemplateEditor === 'student' ? 'Student' : 'Staff'})</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label>Subject</Label>
+              <Input
+                value={editedEmail?.subject || ''}
+                onChange={e => setEditedEmail(prev => prev ? { ...prev, subject: e.target.value } : null)}
+              />
+              <Label>Body</Label>
+              <Textarea
+                rows={8}
+                value={editedEmail?.body || ''}
+                onChange={e => setEditedEmail(prev => prev ? { ...prev, body: e.target.value } : null)}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowTemplateEditor(false)}>Cancel</Button>
+              <Button
+                onClick={async () => {
+                  setShowTemplateEditor(false)
+                  setLoading(showTemplateEditor as 'student' | 'staff')
+                  await sendTestEmailWithNotes(
+                    showTemplateEditor === 'student' ? studentEmail : formData.staffEmail!,
+                    showTemplateEditor as 'student' | 'staff',
+                    formData,
+                    { subject: editedEmail?.subject || '', body: editedEmail?.body || '' }
+                  )
+                  setLoading(false)
+                }}
+                disabled={!editedEmail?.subject || !editedEmail?.body}
+              >
+                Send This Email
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   )

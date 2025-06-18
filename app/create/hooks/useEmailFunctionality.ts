@@ -13,13 +13,13 @@ export function useEmailFunctionality() {
   const sendTestEmailWithNotes = async (
     email: string, 
     recipientType: 'student' | 'staff',
-    formData: FormData
+    formData: FormData,
+    overrides?: { subject?: string; body?: string }
   ) => {
     try {
       // I use the student name from formData which comes from the database-driven StudentSelectionCard
       const studentName = formData.studentName || 'Student'
       const staffName = user ? `${user.firstName} ${user.lastName}` : "Staff Member"
-      
       let emailSubject = ""
       let emailBody = ""
 
@@ -57,6 +57,10 @@ Please reach out to the student to confirm the follow-up appointment.
 Best regards,
 Student Services System`
       }
+
+      // Apply overrides if provided
+      if (overrides?.subject) emailSubject = overrides.subject
+      if (overrides?.body) emailBody = overrides.body
 
       const response = await fetch('/api/email/test', {
         method: 'POST',
