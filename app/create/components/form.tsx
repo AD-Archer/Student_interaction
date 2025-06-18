@@ -42,6 +42,7 @@ export function Form({ interactionId, initialStudentId, initialStudentName }: { 
   // Restore two booleans for follow-up recipients
   const [followUpStudent, setFollowUpStudent] = useState(false)
   const [followUpStaff, setFollowUpStaff] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   // I manage all form state and updates
   const {
@@ -67,6 +68,12 @@ export function Form({ interactionId, initialStudentId, initialStudentName }: { 
   // I handle the form submission and orchestrate saving the interaction
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
+    setFormError(null)
+    // Client-side validation for required fields
+    if (!formData.studentName || !formData.studentId || !formData.interactionType || !formData.reason || !formData.notes) {
+      setFormError("Please fill out all required fields before saving.")
+      return
+    }
     await generateAISummaryAfterSubmit({
       studentName: formData.studentName,
       type: formData.interactionType,
@@ -149,6 +156,11 @@ export function Form({ interactionId, initialStudentId, initialStudentName }: { 
 
   return (
     <div className="space-y-8 sm:space-y-10">
+      {formError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 text-sm font-medium">
+          {formError}
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-8 sm:space-y-10">
         {/* Student and interaction type selection */}
         <StudentSelectionCard
@@ -180,6 +192,13 @@ export function Form({ interactionId, initialStudentId, initialStudentName }: { 
         <FormActions
           isSubmitting={notesLoading}
           onSubmit={handleSubmit}
+          disableSubmit={
+            !formData.studentName ||
+            !formData.studentId ||
+            !formData.interactionType ||
+            !formData.reason ||
+            !formData.notes
+          }
         />
       </form>
 

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import React from "react"
 
 
 export default function CreateInteractionPage() {
@@ -23,6 +24,24 @@ export default function CreateInteractionPage() {
   const id = searchParams?.get("id")
   const studentId = searchParams?.get("studentId")
   const studentName = searchParams?.get("studentName")
+
+  let formContent: React.ReactNode = null
+  try {
+    formContent = (
+      <Form
+        interactionId={id ? Number(id) : undefined}
+        initialStudentId={studentId || undefined}
+        initialStudentName={studentName || undefined}
+      />
+    )
+  } catch (err) {
+    formContent = (
+      <div className="p-6 text-center text-red-600">
+        <p className="font-semibold">Something went wrong loading the form.</p>
+        <p className="text-sm mt-2">Please try refreshing the page or contact support if the problem persists.</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -42,12 +61,7 @@ export default function CreateInteractionPage() {
               <CardDescription>Fill out all required fields to log the student interaction</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Pass id for edit, and studentId/studentName for preselect */}
-              <Form
-                interactionId={id ? Number(id) : undefined}
-                initialStudentId={studentId || undefined}
-                initialStudentName={studentName || undefined}
-              />
+              {formContent}
             </CardContent>
           </Card>
         </div>

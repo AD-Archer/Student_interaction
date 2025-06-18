@@ -243,7 +243,15 @@ export function FollowUpCard({
             size="sm"
             variant="outline"
             onClick={handleSendFollowUp}
-            disabled={!!loading || (!followUpStudent && !followUpStaff)}
+            disabled={
+              !!loading ||
+              (!followUpStudent && !followUpStaff) ||
+              !formData.studentName ||
+              !formData.studentId ||
+              !formData.interactionType ||
+              !formData.reason ||
+              !formData.notes
+            }
             className="bg-fuchsia-600 text-white shadow-[0_0_0_0_rgba(0,0,0,0)] hover:bg-fuchsia-700 hover:shadow-[0_0_12px_2px_rgba(236,72,153,0.7)] focus:ring-2 focus:ring-fuchsia-400 focus:ring-offset-2 transition-all flex items-center gap-2 px-4 py-2"
           >
             <Send className="h-3.5 w-3.5" />

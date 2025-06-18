@@ -11,9 +11,10 @@ import { useRouter } from "next/navigation"
 interface FormActionsProps {
   isSubmitting: boolean
   onSubmit: (e: React.FormEvent) => void
+  disableSubmit?: boolean
 }
 
-export function FormActions({ isSubmitting, onSubmit }: FormActionsProps) {
+export function FormActions({ isSubmitting, onSubmit, disableSubmit }: FormActionsProps) {
   const router = useRouter()
 
   return (
@@ -29,7 +30,7 @@ export function FormActions({ isSubmitting, onSubmit }: FormActionsProps) {
       </Button>
       <Button 
         type="submit" 
-        disabled={isSubmitting} 
+        disabled={isSubmitting || disableSubmit} 
         className="flex-1 bg-blue-600 hover:bg-blue-700"
         onClick={onSubmit}
       >
