@@ -25,7 +25,7 @@ RUN pnpm prisma generate
 RUN apk add --no-cache dumb-init curl bash busybox-suid
 
 # Add crontab file
-COPY scripts/cronjob /etc/crontabs/root
+# COPY scripts/cronjob /etc/crontabs/root
 
 # Make sure script is executable
 RUN chmod +x /app/scripts/send-scheduled-followups-docker.js
