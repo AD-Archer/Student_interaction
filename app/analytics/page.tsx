@@ -24,6 +24,7 @@ interface AnalyticsData {
   overview: {
     totalStudents: number
     totalInteractions: number
+    openInteractions: number
     studentsNeedingInteraction: number
     followUpsRequired: number
     overdueFollowUps: number
@@ -335,9 +336,9 @@ export default function AnalyticsPage() {
           }
         }, 100)
         break
-      case 'totalInteractions':
-        // Could navigate to a detailed interactions view or just provide feedback
-        console.log('Total Interactions clicked')
+      case 'openInteractions':
+        // Could navigate to a detailed open interactions view or just provide feedback
+        console.log('Open Interactions clicked')
         break
       case 'followupsNeeded':
         setActiveTab('followUps')
@@ -562,18 +563,18 @@ export default function AnalyticsPage() {
               </CardContent>
             </Card>
 
-            {/* Total Interactions */}
+            {/* Open Interactions */}
             <Card 
               className="bg-white/70 border border-green-100 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105"
-              onClick={() => handleCardClick('totalInteractions')}
+              onClick={() => handleCardClick('openInteractions')}
             >
               <CardContent className="p-4 sm:p-6 flex flex-col items-center justify-center gap-2">
                 <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-green-100 mb-2">
                   <BarChart3 className="h-6 w-6 text-green-500" />
                 </div>
-                <p className="text-xs sm:text-sm font-semibold text-green-700">Total Interactions</p>
+                <p className="text-xs sm:text-sm font-semibold text-green-700">Open Interactions</p>
                 <p className="text-2xl sm:text-3xl font-bold text-green-900">
-                  {analyticsData.overview.totalInteractions}
+                  {analyticsData.overview.openInteractions}
                 </p>
               </CardContent>
             </Card>

@@ -65,6 +65,14 @@ export async function GET(request: NextRequest) {
       where: interactionWhere
     })
 
+    // Get open interactions (status = "open")
+    const openInteractions = await db.interaction.count({
+      where: {
+        ...interactionWhere,
+        status: "open"
+      }
+    })
+
     // Get interactions needing follow-up (required but not sent)
     const followUpsRequired = await db.interaction.count({
       where: {
@@ -228,6 +236,7 @@ export async function GET(request: NextRequest) {
       overview: {
         totalStudents,
         totalInteractions,
+        openInteractions,
         studentsNeedingInteraction,
         followUpsRequired,
         overdueFollowUps,
