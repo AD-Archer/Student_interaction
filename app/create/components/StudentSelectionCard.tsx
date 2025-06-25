@@ -45,6 +45,7 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
   const [search, setSearch] = useState("")
   const [cohortFilter, setCohortFilter] = useState<string>("")
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false)
   const [highlightedIdx, setHighlightedIdx] = useState<number>(-1)
   const [interactionTypes, setInteractionTypes] = useState<{ id: number, name: string, isDefault: boolean }[]>([])
   const [typeLoading, setTypeLoading] = useState(true)
@@ -171,6 +172,19 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
     loadTypes()
   }, [])
 
+  // I close the type dropdown if user clicks outside
+  useEffect(() => {
+    if (!typeDropdownOpen) return
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as Element
+      if (!target.closest('[data-type-dropdown]')) {
+        setTypeDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [typeDropdownOpen])
+
   return (
     <Card className="shadow-md border-blue-100 bg-white/80">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -257,39 +271,89 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
         <div className="space-y-2">
           <Label htmlFor="interactionType">Interaction Type</Label>
           <div className="flex gap-2 items-center">
-            <Select
-              value={formData.interactionType}
-              onValueChange={value => onFormDataChange({ interactionType: value })}
-              disabled={typeLoading && interactionTypes.length === 0}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select interaction type" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.isArray(interactionTypes) &&
-                  interactionTypes
-                    // Remove duplicates by name first
-                    .filter((type, index, array) => 
-                      array.findIndex(t => t.name === type.name) === index
-                    )
-                    .sort((a, b) => {
-                      // Sort by isDefault first (true values first), then by name
-                      if (a.isDefault !== b.isDefault) {
-                        return a.isDefault ? -1 : 1;
-                      }
-                      return a.name.localeCompare(b.name);
-                    })
-                    .map((type) => (
-                      <SelectItem key={`interaction-type-${type.id}`} value={type.name}>
-                        {type.name}
-                      </SelectItem>
-                    ))}
-              </SelectContent>
-            </Select>
+            {/* Custom dropdown for interaction types with delete functionality */}
+            <div className="relative w-full" data-type-dropdown>
+              <button
+                type="button"
+                className="w-full px-3 py-2 text-left bg-white border border-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onClick={() => setTypeDropdownOpen(prev => !prev)}
+                disabled={typeLoading && interactionTypes.length === 0}
+              >
+                <span className="block truncate">
+                  {formData.interactionType || "Select interaction type"}
+                </span>
+                <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </span>
+              </button>
+              
+              {typeDropdownOpen && (
+                <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {Array.isArray(interactionTypes) &&
+                    interactionTypes
+                      // Remove duplicates by name first
+                      .filter((type, index, array) => 
+                        array.findIndex(t => t.name === type.name) === index
+                      )
+                      .sort((a, b) => {
+                        // Sort by isDefault first (true values first), then by name
+                        if (a.isDefault !== b.isDefault) {
+                          return a.isDefault ? -1 : 1;
+                        }
+                        return a.name.localeCompare(b.name);
+                      })
+                      .map((type) => (
+                        <div
+                          key={`interaction-type-${type.id}`}
+                          className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        >
+                          <button
+                            type="button"
+                            className="flex-1 text-left text-sm"
+                            onClick={() => {
+                              onFormDataChange({ interactionType: type.name })
+                              setTypeDropdownOpen(false)
+                            }}
+                          >
+                            {type.name}
+                          </button>
+                          {!type.isDefault && (
+                            <button
+                              type="button"
+                              className="ml-2 px-2 py-1 text-xs bg-red-100 text-red-700 border border-red-200 rounded hover:bg-red-200"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (window.confirm(`Delete custom type '${type.name}'?`)) {
+                                  fetch('/api/interaction-types', {
+                                    method: 'DELETE',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ id: type.id })
+                                  })
+                                  .then(() => {
+                                    setInteractionTypes(types => Array.isArray(types) ? types.filter(t2 => t2.id !== type.id) : [])
+                                    // Clear selection if deleted type was selected
+                                    if (formData.interactionType === type.name) {
+                                      onFormDataChange({ interactionType: "" })
+                                    }
+                                  })
+                                  .catch(() => alert('Failed to delete type'))
+                                }
+                              }}
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                </div>
+              )}
+            </div>
             {/* Add custom type button */}
             <button
               type="button"
-              className="ml-2 px-2 py-1 rounded bg-blue-100 text-blue-700 border border-blue-200 text-xs"
+              className="ml-2 px-2 py-1 rounded bg-blue-100 text-blue-700 border border-blue-200 text-xs whitespace-nowrap"
               onClick={() => {
                 const name = prompt('Enter new interaction type:')?.trim()
                 if (name) {
@@ -315,36 +379,6 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
             >
               + Add
             </button>
-          </div>
-          {/* Show delete button for custom types */}
-          <div className="flex flex-wrap gap-2 mt-2">
-            {Array.isArray(interactionTypes) && 
-              interactionTypes
-                .filter(t => !t.isDefault)
-                // Remove duplicates by name
-                .filter((type, index, array) => 
-                  array.findIndex(t => t.name === type.name) === index
-                )
-                .map((type) => (
-                  <button
-                    key={`delete-type-${type.id}`}
-                    type="button"
-                    className="px-2 py-1 rounded bg-red-100 text-red-700 border border-red-200 text-xs"
-                    onClick={() => {
-                      if (window.confirm(`Delete custom type '${type.name}'?`)) {
-                        fetch('/api/interaction-types', {
-                          method: 'DELETE',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ id: type.id })
-                        })
-                        .then(() => setInteractionTypes(types => Array.isArray(types) ? types.filter(t2 => t2.id !== type.id) : []))
-                        .catch(() => alert('Failed to delete type'))
-                      }
-                    }}
-                  >
-                    Delete {type.name}
-                  </button>
-                ))}
           </div>
         </div>
         {formData.studentId && (
