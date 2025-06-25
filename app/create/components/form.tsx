@@ -84,6 +84,7 @@ export function Form({ interactionId, initialStudentId, initialStudentName }: { 
     const payload = {
       ...formData,
       type: formData.interactionType,
+      status: formData.status || "open", // Ensure status is included
       staffMember: user ? `${user.firstName} ${user.lastName}` : "",
       staffMemberId: user ? (user as unknown as { id: number }).id : null,
       followUp: {

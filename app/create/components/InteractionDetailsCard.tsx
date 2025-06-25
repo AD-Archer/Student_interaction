@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sparkles, Wand2, FileText, TrendingUp, Target, Loader2 } from "lucide-react"
 import { FormData } from "@/lib/data"
 import { AIActionType } from "@/app/create/hooks/useAIFunctionality"
@@ -38,6 +39,10 @@ export function InteractionDetailsCard({
 
   const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onFormDataChange({ notes: e.target.value })
+  }
+
+  const handleStatusChange = (value: string) => {
+    onFormDataChange({ status: value })
   }
 
   // I handle AI action button clicks
@@ -74,6 +79,38 @@ export function InteractionDetailsCard({
             onChange={handleReasonChange}
             className="border-gray-200 focus:border-gray-400"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="status">Interaction Status</Label>
+          <Select value={formData.status || "open"} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="open">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  Open
+                </div>
+              </SelectItem>
+              <SelectItem value="closed">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  Closed
+                </div>
+              </SelectItem>
+              <SelectItem value="completed">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                  Completed
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-500">
+            Status helps track the lifecycle of this interaction. New interactions start as &quot;Open&quot;.
+          </p>
         </div>
 
         <div className="space-y-2">

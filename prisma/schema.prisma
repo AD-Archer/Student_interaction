@@ -98,7 +98,7 @@ model Interaction {
   date         String   // Keeping as string to match current format
   time         String   // Keeping as string to match current format
   staffMember  String   // Staff member name
-  status       String   @default("completed")
+  status       String   @default("open") // "open", "closed", "completed"
   aiSummary    String?  // AI-generated summary
   
   // Follow-up information

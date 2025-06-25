@@ -59,6 +59,7 @@ export async function GET(
       id: interaction.id,
       studentName: `${interaction.studentFirstName} ${interaction.studentLastName}`,
       studentId: interaction.studentId,
+      studentEmail: interaction.followUpStudentEmail,
       program: interaction.program,
       type: interaction.type?.name ?? '',
       reason: interaction.reason,
@@ -108,8 +109,10 @@ export async function PUT(
       studentName,
       studentId,
       program,
+      type,
       reason,
       notes,
+      status,
       date,
       time,
       staffMember,
@@ -121,6 +124,15 @@ export async function PUT(
     const [studentFirstName, ...lastNameParts] = studentName?.split(' ') || ['', '']
     const studentLastName = lastNameParts.join(' ')
 
+    // Find the interaction type by name to get its ID
+    let typeId = null
+    if (type) {
+      const interactionType = await db.interactionType.findUnique({
+        where: { name: type }
+      })
+      typeId = interactionType?.id || null
+    }
+
     // Update the interaction
     const interaction = await db.interaction.update({
       where: { id },
@@ -129,16 +141,19 @@ export async function PUT(
         studentLastName,
         studentId,
         program,
-        // type: interaction.type, // REMOVE this line if present
+        ...(typeId && { typeId }), // Only update typeId if we found the type
         reason,
         notes,
+        status: status || "open", // Include status in update
         date,
         time,
         staffMember,
         aiSummary,
         followUpRequired: followUp?.required || false,
         followUpDate: followUp?.date || null,
-        followUpOverdue: followUp?.overdue || false
+        followUpOverdue: followUp?.overdue || false,
+        followUpStudentEmail: followUp?.studentEmail || null,
+        followUpStaffEmail: followUp?.staffEmail || null
       },
       include: {
         student: true,
@@ -186,7 +201,7 @@ export async function PUT(
   }
 }
 
-// PATCH /api/interactions/[id] - Archive/unarchive interaction
+// PATCH /api/interactions/[id] - Archive/unarchive interaction or update status
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -201,22 +216,42 @@ export async function PATCH(
       )
     }
     const data = await request.json()
-    // Only allow updating isArchived
-    if (typeof data.isArchived !== 'boolean') {
+    
+    // Build update data object
+    const updateData: { isArchived?: boolean; status?: string } = {}
+    
+    // Handle archive/unarchive
+    if (typeof data.isArchived === 'boolean') {
+      updateData.isArchived = data.isArchived
+    }
+    
+    // Handle status changes (open, closed, completed)
+    if (typeof data.status === 'string' && ['open', 'closed', 'completed'].includes(data.status)) {
+      updateData.status = data.status
+    }
+    
+    // Ensure at least one valid field is being updated
+    if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
-        { error: 'isArchived must be a boolean' },
+        { error: 'No valid fields to update. Supported fields: isArchived (boolean), status (open|closed|completed)' },
         { status: 400 }
       )
     }
+    
     const interaction = await db.interaction.update({
       where: { id },
-      data: { isArchived: data.isArchived },
+      data: updateData,
     })
-    return NextResponse.json({ success: true, isArchived: interaction.isArchived })
+    
+    return NextResponse.json({ 
+      success: true, 
+      isArchived: interaction.isArchived,
+      status: interaction.status
+    })
   } catch (error) {
-    console.error('Error archiving interaction:', error)
+    console.error('Error updating interaction:', error)
     return NextResponse.json(
-      { error: 'Failed to archive interaction' },
+      { error: 'Failed to update interaction' },
       { status: 500 }
     )
   }

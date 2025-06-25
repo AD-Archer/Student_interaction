@@ -208,14 +208,14 @@ export default function Page() {
 
   // Calculate stats using recalculated overdue for ALL interactions (not just current user)
   const overdueCount = processedInteractions.filter((i) => i.followUp.overdue).length;
-  const pendingCount = processedInteractions.filter((i) => i.followUp.required && !i.followUp.overdue).length;
+  const openCount = processedInteractions.filter((i) => i.status === "open").length;
   
   // Debug logging
   console.log('Debug overdue calculation:');
   console.log('Total interactions:', processedInteractions.length);
   console.log('Overdue interactions:', processedInteractions.filter((i) => i.followUp.overdue));
   console.log('Overdue count:', overdueCount);
-  console.log('Pending count:', pendingCount);
+  console.log('Open count:', openCount);
   
   // User-specific counts for hero section
   const userOverdueCount = userInteractions.filter((i) => i.followUp.overdue).length;
@@ -225,7 +225,29 @@ export default function Page() {
   const handleArchive = async (id: string, archive: boolean) => {
     try {
       // Always send id as a number for the API
-      const res = await fetch(`/api/interactions/${Number(id)}`, {
+      const interactionId = Number(id)
+      
+      if (archive) {
+        // Find the interaction to check its current status
+        const currentInteraction = processedInteractions.find(i => Number(i.id) === interactionId)
+        
+        // If archiving and the interaction is open, close it first
+        if (currentInteraction?.status === "open") {
+          const statusRes = await fetch(`/api/interactions/${interactionId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "closed" }),
+          })
+          if (!statusRes.ok) {
+            const err = await statusRes.json().catch(() => ({}))
+            alert(err.error || 'Failed to close interaction before archiving')
+            return
+          }
+        }
+      }
+      
+      // Now proceed with archiving/unarchiving
+      const res = await fetch(`/api/interactions/${interactionId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isArchived: archive }),
@@ -240,6 +262,28 @@ export default function Page() {
       setInteractions(updated)
     } catch {
       alert('Failed to archive interaction')
+    }
+  }
+
+  // Status change handler for dashboard
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      // Always send id as a number for the API
+      const res = await fetch(`/api/interactions/${Number(id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        alert(err.error || 'Failed to update interaction status')
+        return
+      }
+      // Refresh data after status change
+      const updated = await interactionsAPI.getAll()
+      setInteractions(updated)
+    } catch {
+      alert('Failed to update interaction status')
     }
   }
 
@@ -263,7 +307,7 @@ export default function Page() {
             {/* Stats Grid */}
             <StatsGrid 
               totalInteractions={analyticsData.totalInteractions}
-              pendingCount={pendingCount}
+              openCount={openCount}
               overdueCount={overdueCount}
               loading={loading}
               studentCount={analyticsData.totalStudents}
@@ -297,6 +341,7 @@ export default function Page() {
                 interactions={filteredInteractions.map(i => ({
                   ...i,
                   id: String(i.id),
+                  status: i.status || 'open', // Ensure status is included
                   followUp: {
                     ...i.followUp,
                     overdue: Boolean(i.followUp.overdue),
@@ -311,6 +356,7 @@ export default function Page() {
                 setShowAiInsights={setShowAiInsights}
                 onViewInsights={handleViewInsights}
                 onArchive={handleArchive}
+                onStatusChange={handleStatusChange}
               />
               
               {/* Sidebar for AI Insights, absolutely positioned */}

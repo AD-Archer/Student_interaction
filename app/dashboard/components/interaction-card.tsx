@@ -28,6 +28,7 @@ interface Interaction {
   date: string
   time: string
   notes: string
+  status: string // "open", "closed", "completed"
   followUp: {
     required: boolean
     overdue: boolean
@@ -45,10 +46,12 @@ interface InteractionCardProps {
   interaction: Interaction
   onViewInsights: (title: string, notes: string[]) => void
   onArchive?: (id: string, archive: boolean) => Promise<void>
+  onStatusChange?: (id: string, status: string) => Promise<void>
 }
 
-export function InteractionCard({ interaction, onViewInsights, onArchive }: InteractionCardProps) {
+export function InteractionCard({ interaction, onViewInsights, onArchive, onStatusChange }: InteractionCardProps) {
   const [archiving, setArchiving] = useState(false)
+  const [statusChanging, setStatusChanging] = useState(false)
   const [showConfirm, setShowConfirm] = useState<null | "archive" | "unarchive">(null)
   const [showEmailDialog, setShowEmailDialog] = useState(false)
   const [emailFeedback, setEmailFeedback] = useState<string | null>(null)
@@ -140,6 +143,35 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
   // Remove excessive fading for archived
   const archivedOpacity = interaction.isArchived ? "opacity-100" : ""
 
+  // Helper function to get status color and styling
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      "open": "bg-green-100 text-green-800 border-green-200",
+      "closed": "bg-blue-100 text-blue-800 border-blue-200", 
+      "completed": "bg-gray-100 text-gray-800 border-gray-200"
+    }
+    return colors[status] || "bg-gray-100 text-gray-800 border-gray-200"
+  }
+
+  // Helper function to get next status in the cycle
+  const getNextStatus = (currentStatus: string) => {
+    const statusCycle: Record<string, string> = {
+      "open": "closed",
+      "closed": "completed", 
+      "completed": "open"
+    }
+    return statusCycle[currentStatus] || "open"
+  }
+
+  // Status change handler
+  const handleStatusChange = async () => {
+    if (!onStatusChange) return
+    setStatusChanging(true)
+    const newStatus = getNextStatus(interaction.status)
+    await onStatusChange(interaction.id, newStatus)
+    setStatusChanging(false)
+  }
+
   return (
     <Card
       className={`rounded-2xl border border-gray-100 bg-white/70 backdrop-blur-xl shadow-md hover:shadow-lg transition-all duration-200 ${archivedOpacity}`}
@@ -175,6 +207,9 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
                     Phase: {typeof interaction.phase === 'object' ? ('name' in interaction.phase ? (interaction.phase as { name: string }).name : JSON.stringify(interaction.phase)) : interaction.phase}
                   </Badge>
                 )}
+                <Badge className={getStatusColor(interaction.status) + " rounded-full px-3 py-1 text-xs font-semibold border"}>
+                  {interaction.status.charAt(0).toUpperCase() + interaction.status.slice(1)}
+                </Badge>
                 <Badge className={getTypeColor(
                   typeof interaction.type === 'object' && interaction.type !== null && 'name' in interaction.type
                     ? (interaction.type as { name: string }).name
@@ -266,6 +301,18 @@ export function InteractionCard({ interaction, onViewInsights, onArchive }: Inte
                 <Edit className="h-4 w-4 mr-1 text-blue-700" />
                 Edit
               </Button>
+              {onStatusChange && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 bg-green-50 text-green-700 font-semibold rounded-xl border border-green-100 hover:bg-green-100 transition-all duration-150"
+                  onClick={handleStatusChange}
+                  disabled={interaction.isArchived || statusChanging}
+                >
+                  <Clock className="h-4 w-4 mr-1 text-green-700" />
+                  {statusChanging ? 'Updating...' : `Mark ${getNextStatus(interaction.status)}`}
+                </Button>
+              )}
               {interaction.followUp.required && (
                 <Button
                   variant="outline"

@@ -140,6 +140,7 @@ export interface FormData {
   interactionType: string
   reason: string
   notes: string
+  status?: string // "open", "closed", "completed"
   followUpEmail: boolean
   followUpDate: string
   staffEmail?: string // override staff email for follow-up

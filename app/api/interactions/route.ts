@@ -264,7 +264,7 @@ export async function POST(request: NextRequest) {
         time: time || new Date().toLocaleTimeString(),
         staffMember,
         staffMemberId: parseInt(staffMemberId),
-        status: 'completed',
+        status: 'open', // Start as open by default
         aiSummary: aiSummary || null,
         followUpRequired: followUp?.required || false,
         followUpDate: followUp?.date || null,

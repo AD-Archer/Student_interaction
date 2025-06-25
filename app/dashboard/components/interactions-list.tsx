@@ -23,6 +23,7 @@ interface Interaction {
   date: string
   time: string
   notes: string
+  status: string // Add status field
   followUp: {
     required: boolean
     overdue: boolean
@@ -39,6 +40,7 @@ interface InteractionsListProps {
   setShowAiInsights: (show: boolean) => void
   onViewInsights: (title: string, notes: string[]) => void
   onArchive?: (id: string, archive: boolean) => Promise<void>
+  onStatusChange?: (id: string, status: string) => Promise<void>
 }
 
 export function InteractionsList({ 
@@ -46,7 +48,8 @@ export function InteractionsList({
   showAiInsights, 
   setShowAiInsights, 
   onViewInsights,
-  onArchive
+  onArchive,
+  onStatusChange
 }: InteractionsListProps) {
   return (
     <div className="space-y-4">
@@ -70,6 +73,7 @@ export function InteractionsList({
           interaction={interaction} 
           onViewInsights={onViewInsights}
           onArchive={onArchive}
+          onStatusChange={onStatusChange}
         />
       ))}
 

@@ -16,13 +16,6 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { User, Loader2 } from "lucide-react"
 import { FormData } from "@/lib/data"
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue
-} from "@/components/ui/select"
 
 interface Student {
   id: string

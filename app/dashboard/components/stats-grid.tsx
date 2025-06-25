@@ -11,13 +11,13 @@ import { MessageSquare, Users, Clock, AlertCircle } from "lucide-react"
 
 interface StatsGridProps {
   totalInteractions: number
-  pendingCount: number
+  openCount: number
   overdueCount: number
   loading: boolean
   studentCount?: number
 }
 
-export function StatsGrid({ totalInteractions, pendingCount, overdueCount, loading, studentCount }: StatsGridProps) {
+export function StatsGrid({ totalInteractions, openCount, overdueCount, loading, studentCount }: StatsGridProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -60,14 +60,14 @@ export function StatsGrid({ totalInteractions, pendingCount, overdueCount, loadi
         </CardContent>
       </Card>
 
-      {/* Pending */}
+      {/* Open */}
       <Card className="bg-white/70 border border-yellow-100 rounded-2xl shadow-md">
         <CardContent className="p-6 flex flex-col items-center justify-center gap-2">
           <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-yellow-100 mb-2">
             <Clock className="h-6 w-6 text-yellow-500" />
           </div>
-          <div className="text-xs font-semibold text-yellow-700 tracking-wide uppercase">Pending</div>
-          <div className="text-2xl font-bold text-yellow-900">{pendingCount}</div>
+          <div className="text-xs font-semibold text-yellow-700 tracking-wide uppercase">Open</div>
+          <div className="text-2xl font-bold text-yellow-900">{openCount}</div>
         </CardContent>
       </Card>
 

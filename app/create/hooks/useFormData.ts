@@ -25,6 +25,7 @@ export function useFormData({ interactionId, initialStudentId, initialStudentNam
     interactionType: "",
     reason: "",
     notes: "",
+    status: "open", // Default to open for new interactions
     followUpEmail: false,
     followUpDate: "",
     staffEmail: user?.email ?? "",
@@ -64,6 +65,7 @@ export function useFormData({ interactionId, initialStudentId, initialStudentNam
             interactionType: interaction.type,
             reason: interaction.reason,
             notes: interaction.notes,
+            status: interaction.status || "open", // Load existing status or default to open
             followUpEmail: interaction.followUp.required,
             followUpDate: interaction.followUp.date || "",
             staffEmail: user?.email ?? "",
