@@ -244,6 +244,24 @@ export default function Page() {
       }
     });
 
+  // Calculate filtered stats for the StatsGrid
+  const filteredOpenCount = filteredInteractions.filter((i) => i.status === "open").length;
+  const filteredOverdueCount = filteredInteractions.filter((i) => i.followUp.overdue).length;
+
+  // Check if any filters are active (not default values)
+  // Note: Don't count selectedStaff as a filter if it's just set to currentUserId (default)
+  const hasActiveFilters = searchTerm !== "" || 
+                          selectedProgram !== "all" || 
+                          dateFrom !== "" || 
+                          dateTo !== "" || 
+                          showArchived || 
+                          (selectedStaff !== "all" && selectedStaff !== currentUserId) || 
+                          selectedType !== "all" || 
+                          selectedStatus !== "all";
+
+  // Only show filtered counts if filters are active
+  const shouldShowFilteredCounts = hasActiveFilters;
+
   const handleViewInsights = (title: string, notes: string[]) => {
     setAiPanelData({ title, notes });
     setShowAiInsights(true);
@@ -360,6 +378,9 @@ export default function Page() {
               overdueCount={overdueCount}
               loading={loading}
               studentCount={analyticsData.totalStudents}
+              filteredTotalInteractions={shouldShowFilteredCounts ? filteredInteractions.length : undefined}
+              filteredOpenCount={shouldShowFilteredCounts ? filteredOpenCount : undefined}
+              filteredOverdueCount={shouldShowFilteredCounts ? filteredOverdueCount : undefined}
             />
 
             {/* Search and Filters */}

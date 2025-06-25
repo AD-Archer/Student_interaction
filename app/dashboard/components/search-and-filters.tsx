@@ -150,9 +150,12 @@ export function SearchAndFilters({
                 Reset Filters
               </Button>
             </div>
-            <Badge variant="outline" className="text-gray-600">
-              {filteredCount} results
-            </Badge>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Showing:</span>
+              <Badge variant="outline" className="text-gray-700 font-semibold bg-blue-50 border-blue-200 px-3 py-1">
+                {filteredCount} {filteredCount === 1 ? 'result' : 'results'}
+              </Badge>
+            </div>
           </div>
 
           {/* Collapsible Filters */}

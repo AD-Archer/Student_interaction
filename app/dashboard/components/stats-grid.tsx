@@ -15,9 +15,21 @@ interface StatsGridProps {
   overdueCount: number
   loading: boolean
   studentCount?: number
+  filteredTotalInteractions?: number // Add filtered count
+  filteredOpenCount?: number // Add filtered open count
+  filteredOverdueCount?: number // Add filtered overdue count
 }
 
-export function StatsGrid({ totalInteractions, openCount, overdueCount, loading, studentCount }: StatsGridProps) {
+export function StatsGrid({ 
+  totalInteractions, 
+  openCount, 
+  overdueCount, 
+  loading, 
+  studentCount,
+  filteredTotalInteractions,
+  filteredOpenCount,
+  filteredOverdueCount
+}: StatsGridProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -44,8 +56,12 @@ export function StatsGrid({ totalInteractions, openCount, overdueCount, loading,
           <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-blue-100 mb-2">
             <MessageSquare className="h-6 w-6 text-blue-500" />
           </div>
-          <div className="text-xs font-semibold text-blue-700 tracking-wide uppercase">Total</div>
-          <div className="text-2xl font-bold text-blue-900">{totalInteractions}</div>
+          <div className="text-xs font-semibold text-blue-700 tracking-wide uppercase">
+            {filteredTotalInteractions !== undefined ? 'Showing' : 'Total'}
+          </div>
+          <div className="text-2xl font-bold text-blue-900">
+            {filteredTotalInteractions !== undefined ? filteredTotalInteractions : totalInteractions}
+          </div>
         </CardContent>
       </Card>
 
@@ -67,7 +83,9 @@ export function StatsGrid({ totalInteractions, openCount, overdueCount, loading,
             <Clock className="h-6 w-6 text-yellow-500" />
           </div>
           <div className="text-xs font-semibold text-yellow-700 tracking-wide uppercase">Open</div>
-          <div className="text-2xl font-bold text-yellow-900">{openCount}</div>
+          <div className="text-2xl font-bold text-yellow-900">
+            {filteredOpenCount !== undefined ? filteredOpenCount : openCount}
+          </div>
         </CardContent>
       </Card>
 
@@ -78,7 +96,9 @@ export function StatsGrid({ totalInteractions, openCount, overdueCount, loading,
             <AlertCircle className="h-6 w-6 text-pink-500" />
           </div>
           <div className="text-xs font-semibold text-pink-700 tracking-wide uppercase">Overdue</div>
-          <div className="text-2xl font-bold text-pink-900">{overdueCount}</div>
+          <div className="text-2xl font-bold text-pink-900">
+            {filteredOverdueCount !== undefined ? filteredOverdueCount : overdueCount}
+          </div>
         </CardContent>
       </Card>
     </div>
