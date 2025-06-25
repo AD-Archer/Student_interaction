@@ -24,20 +24,44 @@ export async function OPTIONS(request: NextRequest) {
 // GET /api/interaction-types - Fetch all available interaction types
 export async function GET(request: NextRequest) {
   try {
-    // Default interaction types (not persisted in DB)
-    const defaultTypes = [
-      { id: 'default-1', name: "Coaching | Job Readiness", isDefault: true },
-      { id: 'default-2', name: "Performance Improvement Plan (PIP)", isDefault: true },
-      { id: 'default-3', name: "Career Counseling", isDefault: true },
-      { id: 'default-4', name: "Academic Support", isDefault: true },
-      { id: 'default-5', name: "Behavioral Support", isDefault: true },
-    ]
-    // Fetch custom types from DB
-    const customTypes = await db.interactionType.findMany({ where: { isDefault: false }, orderBy: { name: 'asc' } })
-    // Merge and return
-    const types = [...defaultTypes, ...customTypes]
-    return NextResponse.json(types, { headers: buildCorsHeaders(request) })
-  } catch {
+    // Fetch all types from DB (both default and custom)
+    const allTypes = await db.interactionType.findMany({ 
+      orderBy: [
+        { isDefault: 'desc' }, // Default types first
+        { name: 'asc' }        // Then alphabetical
+      ]
+    })
+    
+    // If no types exist in DB, create the default ones
+    if (allTypes.length === 0) {
+      const defaultTypeNames = [
+        "Coaching | Job Readiness",
+        "Performance Improvement Plan (PIP)", 
+        "Career Counseling",
+        "Academic Support",
+        "Behavioral Support"
+      ]
+      
+      // Create default types in database
+      for (const name of defaultTypeNames) {
+        await db.interactionType.create({
+          data: { name, isDefault: true }
+        })
+      }
+      
+      // Fetch them back
+      const newTypes = await db.interactionType.findMany({ 
+        orderBy: [
+          { isDefault: 'desc' },
+          { name: 'asc' }
+        ]
+      })
+      return NextResponse.json(newTypes, { headers: buildCorsHeaders(request) })
+    }
+    
+    return NextResponse.json(allTypes, { headers: buildCorsHeaders(request) })
+  } catch (error) {
+    console.error('Error fetching interaction types:', error)
     return NextResponse.json(
       { error: 'Failed to fetch interaction types' },
       { status: 500, headers: buildCorsHeaders(request) }

@@ -267,9 +267,20 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
               </SelectTrigger>
               <SelectContent>
                 {Array.isArray(interactionTypes) &&
-                  [...interactionTypes.filter(t => t.isDefault), ...interactionTypes.filter(t => !t.isDefault)]
-                    .map((type, idx) => (
-                      <SelectItem key={type.id + '-' + type.name + '-' + idx} value={type.name}>
+                  interactionTypes
+                    // Remove duplicates by name first
+                    .filter((type, index, array) => 
+                      array.findIndex(t => t.name === type.name) === index
+                    )
+                    .sort((a, b) => {
+                      // Sort by isDefault first (true values first), then by name
+                      if (a.isDefault !== b.isDefault) {
+                        return a.isDefault ? -1 : 1;
+                      }
+                      return a.name.localeCompare(b.name);
+                    })
+                    .map((type) => (
+                      <SelectItem key={`interaction-type-${type.id}`} value={type.name}>
                         {type.name}
                       </SelectItem>
                     ))}
@@ -307,26 +318,33 @@ export function StudentSelectionCard({ formData, onFormDataChange }: StudentSele
           </div>
           {/* Show delete button for custom types */}
           <div className="flex flex-wrap gap-2 mt-2">
-            {Array.isArray(interactionTypes) && interactionTypes.filter(t => !t.isDefault).map((type, idx) => (
-              <button
-                key={type.id + '-' + type.name + '-' + idx}
-                type="button"
-                className="px-2 py-1 rounded bg-red-100 text-red-700 border border-red-200 text-xs"
-                onClick={() => {
-                  if (window.confirm(`Delete custom type '${type.name}'?`)) {
-                    fetch('/api/interaction-types', {
-                      method: 'DELETE',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ id: type.id })
-                    })
-                    .then(() => setInteractionTypes(types => Array.isArray(types) ? types.filter(t2 => t2.id !== type.id) : []))
-                    .catch(() => alert('Failed to delete type'))
-                  }
-                }}
-              >
-                Delete {type.name}
-              </button>
-            ))}
+            {Array.isArray(interactionTypes) && 
+              interactionTypes
+                .filter(t => !t.isDefault)
+                // Remove duplicates by name
+                .filter((type, index, array) => 
+                  array.findIndex(t => t.name === type.name) === index
+                )
+                .map((type) => (
+                  <button
+                    key={`delete-type-${type.id}`}
+                    type="button"
+                    className="px-2 py-1 rounded bg-red-100 text-red-700 border border-red-200 text-xs"
+                    onClick={() => {
+                      if (window.confirm(`Delete custom type '${type.name}'?`)) {
+                        fetch('/api/interaction-types', {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ id: type.id })
+                        })
+                        .then(() => setInteractionTypes(types => Array.isArray(types) ? types.filter(t2 => t2.id !== type.id) : []))
+                        .catch(() => alert('Failed to delete type'))
+                      }
+                    }}
+                  >
+                    Delete {type.name}
+                  </button>
+                ))}
           </div>
         </div>
         {formData.studentId && (

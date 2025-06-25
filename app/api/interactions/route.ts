@@ -226,6 +226,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Find or create the interaction type
+    let interactionType = await db.interactionType.findFirst({
+      where: { name: type }
+    })
+    
+    if (!interactionType) {
+      // Create new interaction type if it doesn't exist
+      interactionType = await db.interactionType.create({
+        data: { name: type, isDefault: false }
+      })
+    }
+
     // Get the student's cohort and derive the phase/program from cohortPhaseMap
     const student = await db.student.findUnique({ where: { id: studentId } })
     let program = 'default'
@@ -245,7 +257,7 @@ export async function POST(request: NextRequest) {
         studentFirstName,
         studentLastName,
         studentId,
-        type,
+        typeId: interactionType.id,
         reason,
         notes: notes || '',
         date: date || new Date().toLocaleDateString(),
@@ -267,7 +279,14 @@ export async function POST(request: NextRequest) {
         studentId: true,
         studentFirstName: true,
         studentLastName: true,
-        type: true,
+        typeId: true,
+        type: {
+          select: {
+            id: true,
+            name: true,
+            isDefault: true
+          }
+        },
         reason: true,
         notes: true,
         date: true,
