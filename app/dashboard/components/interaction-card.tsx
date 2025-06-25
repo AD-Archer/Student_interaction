@@ -155,16 +155,6 @@ export function InteractionCard({ interaction, onViewInsights, onArchive, onStat
     return colors[status] || "bg-gray-100 text-gray-800 border-gray-200"
   }
 
-  // Helper function to get next status in the cycle
-  const getNextStatus = (currentStatus: string) => {
-    const statusCycle: Record<string, string> = {
-      "open": "closed",
-      "closed": "completed", 
-      "completed": "open"
-    }
-    return statusCycle[currentStatus] || "open"
-  }
-
   // Helper function to get status button color and styling
   const getStatusButtonColor = (status: string) => {
     const colors: Record<string, string> = {

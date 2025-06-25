@@ -65,7 +65,6 @@ export function SearchAndFilters({
 }: SearchAndFiltersProps) {
   const [showFilters, setShowFilters] = useState(true)
   const [interactionTypes, setInteractionTypes] = useState<{ id: number, name: string, isDefault: boolean }[]>([])
-  const [hasLoadedFromStorage, setHasLoadedFromStorage] = useState(false)
 
   // Load filters from localStorage on mount
   useEffect(() => {
@@ -84,7 +83,6 @@ export function SearchAndFilters({
         if (parsed.selectedStatus !== undefined) setSelectedStatus(parsed.selectedStatus)
       } catch {}
     }
-    setHasLoadedFromStorage(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId])
 

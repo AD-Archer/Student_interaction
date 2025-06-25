@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const totalStudents = filteredStudents.length
 
     // Get students by cohort breakdown (from filtered list)
-    const studentsByCohort = filteredStudents.reduce((acc: any[], student) => {
+    const studentsByCohort = filteredStudents.reduce((acc: Array<{ cohort: number | null; _count: { id: number } }>, student) => {
       const existing = acc.find(item => item.cohort === student.cohort)
       if (existing) {
         existing._count.id++
