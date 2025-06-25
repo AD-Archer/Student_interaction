@@ -182,6 +182,7 @@ model SystemSettings {
   lightspeedInteractionDays Int     @default(7)  // Days for lightspeed program students
   pipInteractionDays        Int     @default(7)  // Days for PIP students
   program101InteractionDays Int     @default(30) // Days for 101 program students
+  alumniInteractionDays     Int     @default(90) // Days for alumni (graduated students)
   
   // Priority escalation settings
   enablePriorityEscalation  Boolean @default(true)

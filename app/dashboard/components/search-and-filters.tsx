@@ -175,6 +175,7 @@ export function SearchAndFilters({
                   <SelectItem value="101">101</SelectItem>
                   <SelectItem value="liftoff">Liftoff</SelectItem>
                   <SelectItem value="lightspeed">Lightspeed</SelectItem>
+                  <SelectItem value="alumni">Alumni</SelectItem>
                 </SelectContent>
               </Select>
 

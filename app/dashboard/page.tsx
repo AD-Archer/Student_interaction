@@ -16,6 +16,7 @@
 import { useEffect, useState } from "react"
 import { interactionsAPI, staffAPI } from "@/lib/api"
 import { useAuth } from "@/components/auth-wrapper"
+import { getStudentProgram } from "@/lib/utils"
 import { 
   HeroSection, 
   StatsGrid, 
@@ -182,8 +183,7 @@ export default function Page() {
   // Helper to get phase for a cohort number
   const getPhaseForCohort = (cohortNum: string | number | null | undefined, program: string) => {
     if (!cohortNum) return program;
-    const key = typeof cohortNum === 'number' ? String(cohortNum) : cohortNum;
-    return cohortPhaseMap[key] || program;
+    return getStudentProgram(cohortPhaseMap, cohortNum) || program;
   };
 
   // Helper to safely extract cohort from interaction

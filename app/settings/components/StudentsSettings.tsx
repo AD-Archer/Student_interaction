@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label"
 import { Users, Loader2, CheckCircle, AlertTriangle, Zap, Edit } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useRouter } from "next/navigation"
+import { getStudentProgram } from "@/lib/utils"
 
 // Student type matches the DB shape
 interface Student {
@@ -119,11 +120,7 @@ export function StudentsSettings() {
 
   // Helper to get phase/program for a given cohort number
   const getPhaseForCohort = (cohort: number | string | null | undefined): string => {
-    if (!cohort) return ''
-    const cohortStr = typeof cohort === 'number' ? String(cohort) : cohort
-    // cohortPhaseMap is phase -> cohortNum, so invert to cohortNum -> phase
-    const foundPhase = Object.entries(cohortPhaseMap).find(([, v]) => v === cohortStr)?.[0]
-    return foundPhase || ''
+    return getStudentProgram(cohortPhaseMap, cohort)
   }
 
   // I handle manual student creation
@@ -624,7 +621,12 @@ export function StudentsSettings() {
                       </div>
                     )}
                     <div className="flex flex-col items-start min-w-[180px] w-full">
-                      <div className="font-semibold text-lg text-left">{student.firstName} {student.lastName}</div>
+                      <div className="font-semibold text-lg text-left flex items-center gap-2">
+                        {student.firstName} {student.lastName}
+                        {getPhaseForCohort(student.cohort) === 'alumni' && (
+                          <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">Alumni</span>
+                        )}
+                      </div>
                       <div className="text-xs text-gray-600 text-left">
                         ID: {student.id} • Program: {getPhaseForCohort(student.cohort)} • Email: {student.email || 'N/A'}
                         {student.launchpadEmail && (<><br/>Launchpad Email: {student.launchpadEmail}</>)}

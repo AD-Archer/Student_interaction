@@ -11,7 +11,7 @@ import { useState, useEffect } from "react"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Users, Loader2, CheckCircle, AlertTriangle } from "lucide-react"
+import { Users, Loader2, CheckCircle, AlertTriangle, GraduationCap } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 const PHASES = [
@@ -95,6 +95,8 @@ export const CohortPhaseMappingSettings = () => {
         </CardTitle>
         <CardDescription>
           Assign the current cohort number for each Launchpad program phase. This controls interaction frequency and reporting everywhere in Launchpad.
+          <br /><br />
+          <strong>Alumni System:</strong> Students in cohorts lower than the current Liftoff cohort are automatically considered alumni (graduated students).
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -114,6 +116,26 @@ export const CohortPhaseMappingSettings = () => {
             </div>
           ))}
         </div>
+
+        {/* Alumni Information Display */}
+        {cohortPhaseMap.liftoff && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <GraduationCap className="h-5 w-5 text-blue-600" />
+              <h3 className="font-medium text-blue-900">Alumni System</h3>
+            </div>
+            <p className="text-sm text-blue-800">
+              {parseInt(cohortPhaseMap.liftoff) > 1 ? (
+                <>
+                  Students in cohorts <strong>1 to {parseInt(cohortPhaseMap.liftoff) - 1}</strong> are automatically considered <strong>alumni</strong> (graduated students).
+                </>
+              ) : (
+                <>No alumni cohorts yet. Alumni will be students in cohorts lower than the current Liftoff cohort.</>
+              )}
+            </p>
+          </div>
+        )}
+
         <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto mt-4">
           {isSaving ? (
             <>

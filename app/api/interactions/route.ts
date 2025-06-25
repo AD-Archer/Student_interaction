@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { Prisma } from "@prisma/client"
+import { getStudentProgram } from '@/lib/utils'
 
 // Build CORS headers per request to support credentials
 function buildCorsHeaders(request: NextRequest) {
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const cohort = searchParams.get('cohort')
+    const program = searchParams.get('program')
     const studentId = searchParams.get('studentId')
     const followUpRequired = searchParams.get('followUpRequired')
 
@@ -184,7 +186,16 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(formattedInteractions, { headers: buildCorsHeaders(request) })
+    // Filter by program if specified
+    let finalInteractions = formattedInteractions
+    if (program && program !== 'all') {
+      finalInteractions = formattedInteractions.filter(interaction => {
+        const studentProgram = getStudentProgram(cohortPhaseMap, interaction.cohort)
+        return studentProgram === program
+      })
+    }
+
+    return NextResponse.json(finalInteractions, { headers: buildCorsHeaders(request) })
 
   } catch (error) {
     console.error('Error fetching interactions:', error)

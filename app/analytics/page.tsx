@@ -17,6 +17,7 @@ import { Loader } from "@/components/ui/loader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
+import { getStudentProgram } from "@/lib/utils"
 
 // Types for analytics data
 interface AnalyticsData {
@@ -106,6 +107,7 @@ export default function AnalyticsPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [selectedCohort, setSelectedCohort] = useState("all")
+  const [selectedProgram, setSelectedProgram] = useState("all")
   const [dateRange, setDateRange] = useState("30")
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("needInteraction")
@@ -154,6 +156,9 @@ export default function AnalyticsPage() {
         cohort: selectedCohort,
         needsInteraction: 'true'
       })
+      if (selectedProgram !== 'all') {
+        params.set('program', selectedProgram)
+      }
       const response = await fetch(`/api/students?${params}`)
       if (response.ok) {
         const students = await response.json()
@@ -162,7 +167,7 @@ export default function AnalyticsPage() {
     } catch (error) {
       console.error('Error fetching students:', error)
     }
-  }, [selectedCohort])
+  }, [selectedCohort, selectedProgram])
 
   const fetchFollowUpRecords = useCallback(async () => {
     try {
@@ -170,6 +175,9 @@ export default function AnalyticsPage() {
         cohort: selectedCohort,
         followUpRequired: 'true'
       })
+      if (selectedProgram !== 'all') {
+        params.set('program', selectedProgram)
+      }
       const response = await fetch(`/api/interactions?${params}`)
       if (response.ok) {
         const interactions = await response.json()
@@ -178,7 +186,7 @@ export default function AnalyticsPage() {
     } catch (error) {
       console.error('Error fetching follow-ups:', error)
     }
-  }, [selectedCohort])
+  }, [selectedCohort, selectedProgram])
 
   // Fetch analytics data from API
   // I use useCallback to ensure stable reference for useEffect dependencies
@@ -205,7 +213,7 @@ export default function AnalyticsPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [selectedCohort, dateRange, fetchStudentsNeedingInteraction, fetchFollowUpRecords])
+  }, [selectedCohort, selectedProgram, dateRange, fetchStudentsNeedingInteraction, fetchFollowUpRecords])
 
   useEffect(() => {
     fetchAnalyticsData()
@@ -215,7 +223,15 @@ export default function AnalyticsPage() {
   const filteredStudents: StudentRecord[] = studentsNeedingInteraction.filter((student: StudentRecord) => {
     const query = searchQuery.toLowerCase()
     const studentName = `${student.firstName} ${student.lastName}`.toLowerCase()
-    return studentName.includes(query) || student.id.includes(query)
+    const matchesSearch = studentName.includes(query) || student.id.includes(query)
+    
+    // Program filtering
+    if (selectedProgram !== "all") {
+      const studentProgram = getStudentProgram(cohortPhaseMap, student.cohort) || student.program || 'N/A'
+      if (studentProgram !== selectedProgram) return false
+    }
+    
+    return matchesSearch
   })
 
   // Get required follow-ups (not overdue, using same logic as dashboard)
@@ -386,6 +402,19 @@ export default function AnalyticsPage() {
                   className="w-full rounded-xl border border-gray-200 bg-white/70"
                 />
               </div>
+              <Select value={selectedProgram} onValueChange={setSelectedProgram}>
+                <SelectTrigger className="w-full sm:w-40 rounded-xl border border-gray-200 bg-white/70">
+                  <SelectValue placeholder="Program" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Programs</SelectItem>
+                  <SelectItem value="foundations">Foundations</SelectItem>
+                  <SelectItem value="101">101</SelectItem>
+                  <SelectItem value="liftoff">Liftoff</SelectItem>
+                  <SelectItem value="lightspeed">Lightspeed</SelectItem>
+                  <SelectItem value="alumni">Alumni</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={selectedCohort} onValueChange={setSelectedCohort}>
                 <SelectTrigger className="w-full sm:w-40 rounded-xl border border-gray-200 bg-white/70">
                   <SelectValue placeholder="Cohort" />

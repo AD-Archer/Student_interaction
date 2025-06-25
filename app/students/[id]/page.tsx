@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { getPhaseForCohort } from "@/lib/utils"
+import { getStudentProgram } from "@/lib/utils"
 
 interface Student {
   id: string
@@ -193,7 +193,7 @@ export default function StudentPage() {
   };
 
   // Compute program/phase from cohortPhaseMap and student.cohort
-  const program = cohortPhaseMap && student?.cohort != null ? getPhaseForCohort(cohortPhaseMap, student.cohort) : student?.program || 'N/A'
+  const program = cohortPhaseMap && student?.cohort != null ? getStudentProgram(cohortPhaseMap, student.cohort) : student?.program || 'N/A'
 
   // Filter interactions based on search term
   const filteredInteractions = interactionSearch
@@ -236,6 +236,11 @@ export default function StudentPage() {
             {student.isPIP && (
               <span className="ml-2 px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white animate-pulse cursor-help" title="This student is currently on a Performance Improvement Plan (PIP)">
                 PIP
+              </span>
+            )}
+            {program === 'alumni' && (
+              <span className="ml-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-600 text-white cursor-help" title="This student is an alumni (graduated from the program)">
+                Alumni
               </span>
             )}
           </h1>
@@ -468,7 +473,7 @@ export default function StudentPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1">Program</label>
-                <input name="program" value={cohortPhaseMap && editData.cohort != null ? getPhaseForCohort(cohortPhaseMap, editData.cohort) : editData.program || 'N/A'} className="w-full rounded border border-gray-200 px-2 py-1 text-sm bg-gray-100 cursor-not-allowed" disabled readOnly />
+                <input name="program" value={cohortPhaseMap && editData.cohort != null ? getStudentProgram(cohortPhaseMap, editData.cohort) : editData.program || 'N/A'} className="w-full rounded border border-gray-200 px-2 py-1 text-sm bg-gray-100 cursor-not-allowed" disabled readOnly />
               </div>
               <div className="flex gap-2">
                 <label className="flex items-center gap-2">

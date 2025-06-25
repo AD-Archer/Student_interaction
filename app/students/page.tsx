@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from "react"
-import { getPhaseForCohort } from "@/lib/utils"
+import { getStudentProgram } from "@/lib/utils"
 
 interface Student {
   id: string
@@ -18,6 +18,7 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true)
   const [cohortPhaseMap, setCohortPhaseMap] = useState<Record<string, string> | null>(null)
   const [showOnlyPIP, setShowOnlyPIP] = useState(false)
+  const [selectedProgram, setSelectedProgram] = useState("all")
 
   useEffect(() => {
     (async () => {
@@ -38,6 +39,15 @@ export default function StudentsPage() {
 
   const filtered = students.filter(s => {
     if (showOnlyPIP && !s.isPIP) return false;
+    
+    // Program filtering
+    if (selectedProgram !== "all") {
+      const program = cohortPhaseMap && s.cohort != null
+        ? getStudentProgram(cohortPhaseMap, s.cohort)
+        : s.program || 'N/A';
+      if (program !== selectedProgram) return false;
+    }
+    
     if (!search) return true;
     return (
       s.firstName.toLowerCase().includes(search) ||
@@ -64,7 +74,7 @@ export default function StudentsPage() {
             className="w-full max-w-xs rounded-xl border border-blue-200 px-3 py-2 text-sm bg-white shadow-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-200"
           />
         </form>
-        <div className="mb-4 flex items-center gap-3">
+        <div className="mb-4 flex items-center gap-6">
           <label className="flex items-center gap-2 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -74,6 +84,23 @@ export default function StudentsPage() {
             />
             <span className="text-sm font-semibold text-red-700">Show only students on PIP</span>
           </label>
+          
+          <div className="flex items-center gap-2">
+            <label htmlFor="program-filter" className="text-sm font-medium text-gray-700">Program:</label>
+            <select
+              id="program-filter"
+              value={selectedProgram}
+              onChange={e => setSelectedProgram(e.target.value)}
+              className="rounded border border-gray-300 px-3 py-1 text-sm bg-white shadow-sm focus:border-blue-400 focus:ring-1 focus:ring-blue-200"
+            >
+              <option value="all">All Programs</option>
+              <option value="foundations">Foundations</option>
+              <option value="101">101</option>
+              <option value="liftoff">Liftoff</option>
+              <option value="lightspeed">Lightspeed</option>
+              <option value="alumni">Alumni</option>
+            </select>
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {loading ? (
@@ -83,7 +110,7 @@ export default function StudentsPage() {
           ) : (
             filtered.map(student => {
               const program = cohortPhaseMap && student.cohort != null
-                ? getPhaseForCohort(cohortPhaseMap, student.cohort)
+                ? getStudentProgram(cohortPhaseMap, student.cohort)
                 : student.program || 'N/A';
               return (
                 <a
@@ -98,6 +125,9 @@ export default function StudentsPage() {
                       </div>
                       {student.isPIP && (
                         <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700">PIP</span>
+                      )}
+                      {program === 'alumni' && (
+                        <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">Alumni</span>
                       )}
                     </div>
                     <div className="font-bold text-blue-900 text-xl leading-tight">{student.firstName} {student.lastName}</div>

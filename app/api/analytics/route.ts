@@ -6,35 +6,51 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getStudentProgram } from '@/lib/utils'
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const cohort = searchParams.get('cohort') || 'all'
+    const program = searchParams.get('program') || 'all'
     const dateRange = searchParams.get('dateRange') || '30' // days
 
     // Calculate date threshold for trends
     const dateThreshold = new Date()
     dateThreshold.setDate(dateThreshold.getDate() - parseInt(dateRange))
 
+    // Get cohortPhaseMap for program filtering
+    const systemSettings = await db.systemSettings.findFirst({ orderBy: { updatedAt: 'desc' } })
+    const cohortPhaseMap = systemSettings?.cohortPhaseMap || {}
+
     // Base where clause for cohort filtering
     const cohortFilter = cohort === 'all' ? {} : { cohort: parseInt(cohort) }
 
-    // Get total student counts by cohort
-    const totalStudents = await db.student.count({
+    // Get all students first, then filter by program if needed
+    const allStudentsForCounting = await db.student.findMany({
       where: cohortFilter
     })
 
-    // Get students by cohort breakdown
-    const studentsByCohort = await db.student.groupBy({
-      by: ['cohort'],
-      _count: {
-        id: true
-      },
-      orderBy: {
-        cohort: 'asc'
+    // Filter by program if specified
+    const filteredStudents = program === 'all' 
+      ? allStudentsForCounting
+      : allStudentsForCounting.filter(student => {
+          const studentProgram = getStudentProgram(cohortPhaseMap as Record<string, string>, student.cohort)
+          return studentProgram === program
+        })
+
+    const totalStudents = filteredStudents.length
+
+    // Get students by cohort breakdown (from filtered list)
+    const studentsByCohort = filteredStudents.reduce((acc: any[], student) => {
+      const existing = acc.find(item => item.cohort === student.cohort)
+      if (existing) {
+        existing._count.id++
+      } else {
+        acc.push({ cohort: student.cohort, _count: { id: 1 } })
       }
-    })
+      return acc
+    }, []).sort((a, b) => (a.cohort || 0) - (b.cohort || 0))
 
     // For interactions, we need to filter through the student relationship
     const interactionWhere = cohort === 'all' 
@@ -192,17 +208,12 @@ export async function GET(request: NextRequest) {
 
     // Get all students for phase grouping
     const allStudents = await db.student.findMany({})
-    // Fetch cohortPhaseMap from system settings
-    const systemSettings = await db.systemSettings.findFirst({ orderBy: { updatedAt: 'desc' } })
-    const cohortPhaseMap = systemSettings?.cohortPhaseMap || {}
-    // Helper to get phase for a student
+    // Helper to get phase for a student (reuse systemSettings and cohortPhaseMap from above)
     function getPhase(student: { isPIP?: boolean; isLightspeed?: boolean; cohort?: number | null; }): string {
       if (student.isPIP) return 'PIP'
       if (student.isLightspeed) return 'Lightspeed'
-      // Map cohort to phase
-      const cohortStr = student.cohort !== null ? String(student.cohort) : null
-      const foundPhase = Object.entries(cohortPhaseMap).find(([, v]) => v === cohortStr)?.[0]
-      return foundPhase || 'Unassigned'
+      // Use the new alumni-aware function
+      return getStudentProgram(cohortPhaseMap as Record<string, string>, student.cohort) || 'Unassigned'
     }
     // Group students by phase
     const studentsByPhaseMap: Record<string, number> = {}

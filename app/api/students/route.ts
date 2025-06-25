@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getStudentsNeedingInteraction } from '@/lib/interaction-formula'
+import { getStudentProgram } from '@/lib/utils'
 
 // Build CORS headers per request to support credentials
 function buildCorsHeaders(request: NextRequest) {
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const cohort = searchParams.get('cohort')
+    const program = searchParams.get('program')
     const needsInteraction = searchParams.get('needsInteraction')
 
     // Build where clause for filtering
@@ -31,6 +33,13 @@ export async function GET(request: NextRequest) {
     
     if (cohort && cohort !== 'all') {
       whereClause.cohort = parseInt(cohort)
+    }
+
+    // Fetch system settings for cohortPhaseMap (needed for program filtering)
+    const systemSettings = await db.systemSettings.findFirst({ orderBy: { updatedAt: 'desc' } })
+    let cohortPhaseMap: Record<string, string> = {}
+    if (systemSettings?.cohortPhaseMap && typeof systemSettings.cohortPhaseMap === 'object' && !Array.isArray(systemSettings.cohortPhaseMap)) {
+      cohortPhaseMap = systemSettings.cohortPhaseMap as Record<string, string>
     }
 
     const students = await db.student.findMany({
@@ -41,25 +50,38 @@ export async function GET(request: NextRequest) {
       take: 10000 // Remove or increase limit to ensure all students are returned
     })
 
+    // Filter by program if specified
+    let filteredStudents = students
+    if (program && program !== 'all') {
+      filteredStudents = students.filter(student => {
+        const studentProgram = getStudentProgram(cohortPhaseMap, student.cohort)
+        return studentProgram === program
+      })
+    }
+
     // If we need students requiring interaction, use the new formula system
     if (needsInteraction === 'true') {
-      // Fetch system settings for cohortPhaseMap
-      const systemSettings = await db.systemSettings.findFirst({ orderBy: { updatedAt: 'desc' } })
-      let cohortPhaseMap: Record<string, string> = {}
-      if (systemSettings?.cohortPhaseMap && typeof systemSettings.cohortPhaseMap === 'object' && !Array.isArray(systemSettings.cohortPhaseMap)) {
-        cohortPhaseMap = systemSettings.cohortPhaseMap as Record<string, string>
-      }
       // Pass the callback to derive program/phase
       const studentsNeedingInteraction = await getStudentsNeedingInteraction(whereClause, (student) => {
-        return cohortPhaseMap[student.cohort?.toString() || ''] || 'default'
+        return getStudentProgram(cohortPhaseMap, student.cohort) || 'default'
       })
-      return NextResponse.json(studentsNeedingInteraction, { headers: buildCorsHeaders(request) })
+      
+      // Apply program filter to interaction results too
+      let finalStudents = studentsNeedingInteraction
+      if (program && program !== 'all') {
+        finalStudents = studentsNeedingInteraction.filter(student => {
+          const studentProgram = getStudentProgram(cohortPhaseMap, student.cohort)
+          return studentProgram === program
+        })
+      }
+      
+      return NextResponse.json(finalStudents, { headers: buildCorsHeaders(request) })
     }
 
     // For the standard students list (not filtered), add "All Students" option for compatibility
     const studentsWithAll = [
       { id: "all", firstName: "All", lastName: "Students", cohort: null, program: "" },
-      ...students
+      ...filteredStudents
     ]
     return NextResponse.json(studentsWithAll, { headers: buildCorsHeaders(request) })
 

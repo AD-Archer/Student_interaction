@@ -15,6 +15,7 @@ export interface InteractionFormula {
   liftoffInteractionDays: number
   lightspeedInteractionDays: number
   program101InteractionDays: number
+  alumniInteractionDays: number
   priorityEscalationDays: number
   enablePriorityEscalation: boolean
   followUpGracePeriodDays: number
@@ -36,6 +37,7 @@ export async function getInteractionFormula(): Promise<InteractionFormula> {
         liftoffInteractionDays?: number
         lightspeedInteractionDays?: number
         program101InteractionDays?: number
+        alumniInteractionDays?: number
         priorityEscalationDays?: number
         enablePriorityEscalation?: boolean
         followUpGracePeriodDays?: number
@@ -48,6 +50,7 @@ export async function getInteractionFormula(): Promise<InteractionFormula> {
         liftoffInteractionDays: settingsWithNewFields.liftoffInteractionDays ?? 21,
         lightspeedInteractionDays: settingsWithNewFields.lightspeedInteractionDays ?? 7,
         program101InteractionDays: settingsWithNewFields.program101InteractionDays ?? 30,
+        alumniInteractionDays: settingsWithNewFields.alumniInteractionDays ?? 90,
         priorityEscalationDays: settingsWithNewFields.priorityEscalationDays ?? 7,
         enablePriorityEscalation: settingsWithNewFields.enablePriorityEscalation ?? true,
         followUpGracePeriodDays: settingsWithNewFields.followUpGracePeriodDays ?? 3,
@@ -62,6 +65,7 @@ export async function getInteractionFormula(): Promise<InteractionFormula> {
       liftoffInteractionDays: 21,
       lightspeedInteractionDays: 7,
       program101InteractionDays: 30,
+      alumniInteractionDays: 90,
       priorityEscalationDays: 7,
       enablePriorityEscalation: true,
       followUpGracePeriodDays: 3,
@@ -76,6 +80,7 @@ export async function getInteractionFormula(): Promise<InteractionFormula> {
       liftoffInteractionDays: 21,
       lightspeedInteractionDays: 7,
       program101InteractionDays: 30,
+      alumniInteractionDays: 90,
       priorityEscalationDays: 7,
       enablePriorityEscalation: true,
       followUpGracePeriodDays: 3,
@@ -97,6 +102,8 @@ export function getInteractionDaysForProgram(program: string, formula: Interacti
       return formula.lightspeedInteractionDays
     case '101':
       return formula.program101InteractionDays
+    case 'alumni':
+      return formula.alumniInteractionDays
     default:
       return formula.defaultInteractionDays
   }

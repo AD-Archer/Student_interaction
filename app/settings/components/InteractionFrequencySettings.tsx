@@ -24,6 +24,7 @@ interface InteractionSettings {
   lightspeedInteractionDays: number
   pipInteractionDays: number // Custom timer for PIP
   program101InteractionDays: number
+  alumniInteractionDays: number // Custom timer for alumni
   priorityEscalationDays: number
   enablePriorityEscalation: boolean
   followUpGracePeriodDays: number
@@ -38,6 +39,7 @@ export const InteractionFrequencySettings = () => {
     lightspeedInteractionDays: 7,
     pipInteractionDays: 7, // Default for PIP
     program101InteractionDays: 30,
+    alumniInteractionDays: 90, // Default for alumni (quarterly)
     priorityEscalationDays: 7,
     enablePriorityEscalation: true,
     followUpGracePeriodDays: 3,
@@ -65,6 +67,7 @@ export const InteractionFrequencySettings = () => {
           lightspeedInteractionDays: data.lightspeedInteractionDays || 7,
           pipInteractionDays: data.pipInteractionDays || 7,
           program101InteractionDays: data.program101InteractionDays || 30,
+          alumniInteractionDays: data.alumniInteractionDays || 90,
           priorityEscalationDays: data.priorityEscalationDays || 7,
           enablePriorityEscalation: data.enablePriorityEscalation ?? true,
           followUpGracePeriodDays: data.followUpGracePeriodDays || 3,
@@ -216,6 +219,20 @@ export const InteractionFrequencySettings = () => {
               onChange={(e) => handleInputChange('pipInteractionDays', parseInt(e.target.value) || 1)}
               className="w-full"
             />
+            <p className="text-sm text-gray-600">Interaction frequency for students on Performance Improvement Plans</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="alumniInteractionDays">Alumni (graduated students) (days)</Label>
+            <Input
+              id="alumniInteractionDays"
+              type="number"
+              min="1"
+              value={settings.alumniInteractionDays}
+              onChange={(e) => handleInputChange('alumniInteractionDays', parseInt(e.target.value) || 1)}
+              className="w-full"
+            />
+            <p className="text-sm text-gray-600">Interaction frequency for alumni (students who have graduated from the program)</p>
           </div>
         </div>
 

@@ -51,3 +51,38 @@ export function getPhaseForCohort(cohortPhaseMap: Record<string, string>, cohort
   // I find the phase whose value matches the cohort
   return Object.entries(cohortPhaseMap).find(([, v]) => v === cohortStr)?.[0]
 }
+
+/**
+ * Determines if a student is an alumni based on their cohort number.
+ * Students are considered alumni if their cohort is lower than the current Liftoff cohort.
+ * 
+ * @param cohortPhaseMap - The mapping of phase->cohort (e.g. { liftoff: "1", 101: "2", foundations: "3" })
+ * @param studentCohort - The student's cohort number
+ * @returns true if the student is an alumni, false otherwise
+ */
+export function isStudentAlumni(cohortPhaseMap: Record<string, string>, studentCohort: string | number | null | undefined): boolean {
+  if (!studentCohort || !cohortPhaseMap.liftoff) return false
+  
+  const studentCohortNum = typeof studentCohort === 'number' ? studentCohort : parseInt(String(studentCohort), 10)
+  const liftoffCohortNum = parseInt(cohortPhaseMap.liftoff, 10)
+  
+  if (isNaN(studentCohortNum) || isNaN(liftoffCohortNum)) return false
+  
+  return studentCohortNum < liftoffCohortNum
+}
+
+/**
+ * Gets the effective program/phase for a student, including alumni status.
+ * Returns "alumni" for graduated students, or the actual phase for current students.
+ * 
+ * @param cohortPhaseMap - The mapping of phase->cohort
+ * @param studentCohort - The student's cohort number
+ * @returns The program phase or "alumni"
+ */
+export function getStudentProgram(cohortPhaseMap: Record<string, string>, studentCohort: string | number | null | undefined): string {
+  if (isStudentAlumni(cohortPhaseMap, studentCohort)) {
+    return 'alumni'
+  }
+  
+  return getPhaseForCohort(cohortPhaseMap, studentCohort || '') || 'N/A'
+}

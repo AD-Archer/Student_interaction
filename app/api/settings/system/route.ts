@@ -62,6 +62,7 @@ export async function PUT(request: NextRequest) {
       'liftoffInteractionDays',
       'lightspeedInteractionDays',
       'program101InteractionDays',
+      'alumniInteractionDays',
       'priorityEscalationDays',
       'followUpGracePeriodDays'
     ]
