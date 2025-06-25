@@ -38,6 +38,18 @@ const withCalculatedOverdue = (interaction: Interaction): Interaction => {
       },
     }
   }
+  
+  // If interaction is closed or completed, it's not overdue
+  if (interaction.status === "closed" || interaction.status === "completed") {
+    return {
+      ...interaction,
+      followUp: {
+        ...interaction.followUp,
+        overdue: false,
+      },
+    }
+  }
+  
   // Compare follow-up date to today (ignore time)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -69,6 +81,7 @@ export default function Page() {
   const [showArchived, setShowArchived] = useState(false)
   const [selectedStaff, setSelectedStaff] = useState("all")
   const [selectedType, setSelectedType] = useState("all")
+  const [selectedStatus, setSelectedStatus] = useState("all")
   const [cohortPhaseMap, setCohortPhaseMap] = useState<Record<string, string>>({});
   
   // I add state for analytics data from the database
@@ -111,6 +124,40 @@ export default function Page() {
     
     loadData()
   }, [])
+
+  // Set default staff filter to current user when staff data is loaded (only on initial load)
+  const [hasSetDefaultStaff, setHasSetDefaultStaff] = useState(false)
+  useEffect(() => {
+    if (activeUser && staff.length > 0 && selectedStaff === "all" && !hasSetDefaultStaff) {
+      const currentStaffMember = staff.find((s: StaffMember) => 
+        s.firstName === activeUser.firstName && s.lastName === activeUser.lastName
+      )
+      if (currentStaffMember) {
+        setSelectedStaff(currentStaffMember.id)
+        setHasSetDefaultStaff(true)
+      }
+    }
+  }, [activeUser, staff, selectedStaff, hasSetDefaultStaff])
+
+  // Get current user ID for default filter
+  const currentUserId = activeUser && staff.length > 0 
+    ? staff.find((s: StaffMember) => 
+        s.firstName === activeUser.firstName && s.lastName === activeUser.lastName
+      )?.id
+    : undefined
+
+  // Reset all filters to default values
+  const handleResetFilters = () => {
+    setSearchTerm("")
+    setSelectedProgram("all")
+    setDateFrom("")
+    setDateTo("")
+    setSortOrder("mostRecent")
+    setShowArchived(false)
+    setSelectedStaff(currentUserId || "all")
+    setSelectedType("all")
+    setSelectedStatus("all")
+  }
 
   // Fetch system settings for cohort-phase mapping
   useEffect(() => {
@@ -185,7 +232,9 @@ export default function Page() {
 
       const matchesType = selectedType === "all" || interaction.type === selectedType;
 
-      return matchesSearch && matchesProgram && matchesDateFrom && matchesDateTo && matchesArchived && matchesStaff && matchesType;
+      const matchesStatus = selectedStatus === "all" || interaction.status === selectedStatus;
+
+      return matchesSearch && matchesProgram && matchesDateFrom && matchesDateTo && matchesArchived && matchesStaff && matchesType && matchesStatus;
     })
     .sort((a, b) => {
       if (sortOrder === "mostRecent") {
@@ -333,6 +382,10 @@ export default function Page() {
               setSelectedStaff={setSelectedStaff}
               selectedType={selectedType}
               setSelectedType={setSelectedType}
+              selectedStatus={selectedStatus}
+              setSelectedStatus={setSelectedStatus}
+              currentUserId={currentUserId}
+              onResetFilters={handleResetFilters}
             />
 
             {/* Interactions List */}

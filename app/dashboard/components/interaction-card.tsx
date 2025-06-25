@@ -11,6 +11,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AlertCircle, Clock, User, Eye, Edit, Mail, ArchiveRestore, Archive, AlertTriangle } from "lucide-react"
 import { format, formatDistanceToNow } from "date-fns"
 import { useEmailFunctionality } from "@/app/create/hooks/useEmailFunctionality"
@@ -52,7 +53,8 @@ interface InteractionCardProps {
 export function InteractionCard({ interaction, onViewInsights, onArchive, onStatusChange }: InteractionCardProps) {
   const [archiving, setArchiving] = useState(false)
   const [statusChanging, setStatusChanging] = useState(false)
-  const [showConfirm, setShowConfirm] = useState<null | "archive" | "unarchive">(null)
+  const [showConfirm, setShowConfirm] = useState<null | "archive" | "unarchive" | "status-archive">(null)
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null)
   const [showEmailDialog, setShowEmailDialog] = useState(false)
   const [emailFeedback, setEmailFeedback] = useState<string | null>(null)
   const { sendTestEmailWithNotes } = useEmailFunctionality()
@@ -146,9 +148,9 @@ export function InteractionCard({ interaction, onViewInsights, onArchive, onStat
   // Helper function to get status color and styling
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      "open": "bg-green-100 text-green-800 border-green-200",
+      "open": "bg-orange-100 text-orange-800 border-orange-200",
       "closed": "bg-blue-100 text-blue-800 border-blue-200", 
-      "completed": "bg-gray-100 text-gray-800 border-gray-200"
+      "completed": "bg-green-100 text-green-800 border-green-200"
     }
     return colors[status] || "bg-gray-100 text-gray-800 border-gray-200"
   }
@@ -163,13 +165,52 @@ export function InteractionCard({ interaction, onViewInsights, onArchive, onStat
     return statusCycle[currentStatus] || "open"
   }
 
-  // Status change handler
-  const handleStatusChange = async () => {
-    if (!onStatusChange) return
+  // Helper function to get status button color and styling
+  const getStatusButtonColor = (status: string) => {
+    const colors: Record<string, string> = {
+      "open": "bg-orange-50 text-orange-700 border-orange-100 hover:bg-orange-100",
+      "closed": "bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100", 
+      "completed": "bg-green-50 text-green-700 border-green-100 hover:bg-green-100"
+    }
+    return colors[status] || "bg-gray-50 text-gray-700 border-gray-100 hover:bg-gray-100"
+  }
+
+  // Status change handler for dropdown
+  const handleStatusDropdownChange = async (newStatus: string) => {
+    if (!onStatusChange || newStatus === interaction.status) return
+    
+    // If changing to closed or completed, ask about archiving
+    if ((newStatus === "closed" || newStatus === "completed") && !interaction.isArchived) {
+      setPendingStatus(newStatus)
+      setShowConfirm("status-archive")
+      return
+    }
+    
+    // Otherwise, proceed with status change
     setStatusChanging(true)
-    const newStatus = getNextStatus(interaction.status)
     await onStatusChange(interaction.id, newStatus)
     setStatusChanging(false)
+  }
+
+  // Handle status change with optional archiving
+  const handleStatusChangeWithArchive = async (shouldArchive: boolean) => {
+    if (!onStatusChange || !pendingStatus) return
+    
+    setShowConfirm(null)
+    setStatusChanging(true)
+    
+    try {
+      // First update the status
+      await onStatusChange(interaction.id, pendingStatus)
+      
+      // Then archive if requested
+      if (shouldArchive && onArchive) {
+        await onArchive(interaction.id, true)
+      }
+    } finally {
+      setStatusChanging(false)
+      setPendingStatus(null)
+    }
   }
 
   return (
@@ -302,16 +343,37 @@ export function InteractionCard({ interaction, onViewInsights, onArchive, onStat
                 Edit
               </Button>
               {onStatusChange && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 bg-green-50 text-green-700 font-semibold rounded-xl border border-green-100 hover:bg-green-100 transition-all duration-150"
-                  onClick={handleStatusChange}
+                <Select
+                  value={interaction.status}
+                  onValueChange={handleStatusDropdownChange}
                   disabled={interaction.isArchived || statusChanging}
                 >
-                  <Clock className="h-4 w-4 mr-1 text-green-700" />
-                  {statusChanging ? 'Updating...' : `Mark ${getNextStatus(interaction.status)}`}
-                </Button>
+                  <SelectTrigger className={`flex-1 ${getStatusButtonColor(interaction.status)} font-semibold rounded-xl border transition-all duration-150 h-8`}>
+                    <SelectValue>
+                      {statusChanging ? 'Updating...' : `${interaction.status.charAt(0).toUpperCase() + interaction.status.slice(1)}`}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                        Open
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="closed">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                        Closed
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="completed">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        Completed
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               )}
               {interaction.followUp.required && (
                 <Button
@@ -353,24 +415,61 @@ export function InteractionCard({ interaction, onViewInsights, onArchive, onStat
               <span className="flex-1 text-pink-900 font-semibold text-xs">
                 {showConfirm === "archive"
                   ? "Are you sure you want to archive this interaction?"
-                  : "Are you sure you want to unarchive this interaction?"}
+                  : showConfirm === "unarchive"
+                  ? "Are you sure you want to unarchive this interaction?"
+                  : "Would you like to archive this interaction? This interaction will still exist, it will just be hidden from the main view."}
               </span>
-              <Button
-                size="sm"
-                className="bg-pink-600 text-white hover:bg-pink-700 border-pink-600 mr-2 rounded-xl"
-                onClick={handleArchive}
-                disabled={archiving}
-              >
-                Yes
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="rounded-xl"
-                onClick={() => setShowConfirm(null)}
-              >
-                Cancel
-              </Button>
+              {showConfirm === "status-archive" ? (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="bg-pink-600 text-white hover:bg-pink-700 border-pink-600 rounded-xl"
+                    onClick={() => handleStatusChangeWithArchive(true)}
+                    disabled={statusChanging}
+                  >
+                    Yes, Archive
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => handleStatusChangeWithArchive(false)}
+                    disabled={statusChanging}
+                  >
+                    No, Just Update Status
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => {
+                      setShowConfirm(null)
+                      setPendingStatus(null)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="bg-pink-600 text-white hover:bg-pink-700 border-pink-600 rounded-xl"
+                    onClick={handleArchive}
+                    disabled={archiving}
+                  >
+                    Yes
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => setShowConfirm(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
             </div>
           )}
           {/* Email dialog for follow-up */}

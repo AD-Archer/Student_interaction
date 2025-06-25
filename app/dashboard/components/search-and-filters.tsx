@@ -33,6 +33,10 @@ interface SearchAndFiltersProps {
   setSelectedStaff: (staffId: string) => void
   selectedType: string
   setSelectedType: (type: string) => void
+  selectedStatus: string
+  setSelectedStatus: (status: string) => void
+  currentUserId?: string
+  onResetFilters: () => void
 }
 
 export function SearchAndFilters({
@@ -54,9 +58,14 @@ export function SearchAndFilters({
   setSelectedStaff,
   selectedType,
   setSelectedType,
+  selectedStatus,
+  setSelectedStatus,
+  currentUserId,
+  onResetFilters,
 }: SearchAndFiltersProps) {
   const [showFilters, setShowFilters] = useState(true)
   const [interactionTypes, setInteractionTypes] = useState<{ id: number, name: string, isDefault: boolean }[]>([])
+  const [hasLoadedFromStorage, setHasLoadedFromStorage] = useState(false)
 
   // Load filters from localStorage on mount
   useEffect(() => {
@@ -72,10 +81,12 @@ export function SearchAndFilters({
         if (parsed.showArchived !== undefined) setShowArchived(parsed.showArchived)
         if (parsed.selectedStaff !== undefined) setSelectedStaff(parsed.selectedStaff)
         if (parsed.selectedType !== undefined) setSelectedType(parsed.selectedType)
+        if (parsed.selectedStatus !== undefined) setSelectedStatus(parsed.selectedStatus)
       } catch {}
     }
+    setHasLoadedFromStorage(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [currentUserId])
 
   // Save filters to localStorage whenever they change
   useEffect(() => {
@@ -89,10 +100,11 @@ export function SearchAndFilters({
         sortOrder,
         showArchived,
         selectedStaff,
-        selectedType
+        selectedType,
+        selectedStatus
       })
     )
-  }, [searchTerm, selectedProgram, dateFrom, dateTo, sortOrder, showArchived, selectedStaff, selectedType])
+  }, [searchTerm, selectedProgram, dateFrom, dateTo, sortOrder, showArchived, selectedStaff, selectedType, selectedStatus])
 
   // Fetch interaction types from API
   useEffect(() => {
@@ -116,18 +128,28 @@ export function SearchAndFilters({
 
           {/* Filter Toggle */}
           <div className="flex justify-between items-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2"
-            >
-              <Filter className="h-4 w-4" />
-              <span>Filters</span>
-              <ChevronRight
-                className={`h-4 w-4 transition-transform ${showFilters ? "rotate-90" : ""}`}
-              />
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center space-x-2"
+              >
+                <Filter className="h-4 w-4" />
+                <span>Filters</span>
+                <ChevronRight
+                  className={`h-4 w-4 transition-transform ${showFilters ? "rotate-90" : ""}`}
+                />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onResetFilters}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                Reset Filters
+              </Button>
+            </div>
             <Badge variant="outline" className="text-gray-600">
               {filteredCount} results
             </Badge>
@@ -135,7 +157,7 @@ export function SearchAndFilters({
 
           {/* Collapsible Filters */}
           {showFilters && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 pt-4 border-t">
               {/* Program filter */}
               <Select
                 value={selectedProgram}
@@ -219,6 +241,37 @@ export function SearchAndFilters({
                   {interactionTypes.map((type) => (
                     <SelectItem key={type.id} value={type.name}>{type.name}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+
+              {/* Status filter */}
+              <Select
+                value={selectedStatus}
+                onValueChange={setSelectedStatus}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Completion Status</SelectItem>
+                  <SelectItem value="open">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                      Open
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="closed">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                      Closed
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      Completed
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
 
